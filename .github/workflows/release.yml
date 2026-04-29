@@ -1,0 +1,59 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch: {}
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      VSCE_PAT: ${{ secrets.VSCE_PAT }}
+      OVSX_PAT: ${{ secrets.OVSX_PAT }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Audit dependencies
+        run: npm audit
+
+      - name: Test
+        run: npm test
+
+      - name: Package VSIX
+        run: |
+          mkdir -p dist
+          npx @vscode/vsce package --out dist/super-markdown.vsix
+
+      - name: Publish to VS Code Marketplace
+        if: env.VSCE_PAT != ''
+        run: npx @vscode/vsce publish --packagePath dist/super-markdown.vsix -p "$VSCE_PAT"
+
+      - name: Verify Open VSX token
+        if: env.OVSX_PAT != ''
+        run: npx ovsx verify-pat super-markdown -p "$OVSX_PAT"
+
+      - name: Publish to Open VSX
+        if: env.OVSX_PAT != ''
+        run: |
+          npx ovsx publish dist/super-markdown.vsix \
+            --skip-duplicate \
+            --baseContentUrl "https://github.com/${GITHUB_REPOSITORY}/blob/${GITHUB_REF_NAME}/" \
+            --baseImagesUrl "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${GITHUB_REF_NAME}/" \
+            -p "$OVSX_PAT"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/super-markdown.vsix

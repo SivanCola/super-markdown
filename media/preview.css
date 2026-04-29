@@ -1,0 +1,822 @@
+:root {
+  color-scheme: light dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--vscode-editor-background);
+  color: var(--vscode-editor-foreground);
+  font-family: var(--vscode-font-family);
+  font-size: var(--sm-font-size, 14px);
+}
+
+body.sm-theme-light {
+  color-scheme: light;
+  --vscode-editor-background: #ffffff;
+  --vscode-editor-foreground: #24292f;
+  --vscode-sideBar-background: #f6f8fa;
+  --vscode-sideBar-foreground: #24292f;
+  --vscode-sideBar-border: #d0d7de;
+  --vscode-panel-border: #d0d7de;
+  --vscode-button-border: #d0d7de;
+  --vscode-button-secondaryBackground: #f6f8fa;
+  --vscode-button-secondaryForeground: #24292f;
+  --vscode-button-secondaryHoverBackground: #eef2f6;
+  --vscode-focusBorder: #0969da;
+  --vscode-badge-background: #0969da;
+  --vscode-badge-foreground: #ffffff;
+  --vscode-input-background: #ffffff;
+  --vscode-input-foreground: #24292f;
+  --vscode-input-border: #d0d7de;
+  --vscode-descriptionForeground: #57606a;
+  --vscode-list-hoverBackground: #eef2f6;
+  --vscode-list-activeSelectionBackground: #dbeafe;
+  --vscode-list-activeSelectionForeground: #0f172a;
+  --vscode-errorForeground: #cf222e;
+  --vscode-editorWarning-foreground: #9a6700;
+  --vscode-editorInfo-foreground: #0969da;
+  --vscode-editorOverviewRuler-infoForeground: #0969da;
+  --vscode-textLink-foreground: #0969da;
+  --vscode-textLink-activeForeground: #0550ae;
+  --vscode-textBlockQuote-border: #d0d7de;
+  --vscode-textBlockQuote-foreground: #57606a;
+  --vscode-textBlockQuote-background: #f6f8fa;
+  --vscode-editorWidget-background: #f6f8fa;
+  --vscode-textCodeBlock-background: #f6f8fa;
+  --vscode-editorCodeLens-foreground: #6e7781;
+  --vscode-symbolIcon-keywordForeground: #cf222e;
+  --vscode-symbolIcon-stringForeground: #116329;
+  --vscode-symbolIcon-functionForeground: #8250df;
+  --vscode-symbolIcon-numberForeground: #0550ae;
+}
+
+body.sm-theme-dark {
+  color-scheme: dark;
+  --vscode-editor-background: #0d1117;
+  --vscode-editor-foreground: #c9d1d9;
+  --vscode-sideBar-background: #161b22;
+  --vscode-sideBar-foreground: #c9d1d9;
+  --vscode-sideBar-border: #30363d;
+  --vscode-panel-border: #30363d;
+  --vscode-button-border: #30363d;
+  --vscode-button-secondaryBackground: #21262d;
+  --vscode-button-secondaryForeground: #c9d1d9;
+  --vscode-button-secondaryHoverBackground: #30363d;
+  --vscode-focusBorder: #58a6ff;
+  --vscode-badge-background: #1f6feb;
+  --vscode-badge-foreground: #ffffff;
+  --vscode-input-background: #0d1117;
+  --vscode-input-foreground: #c9d1d9;
+  --vscode-input-border: #30363d;
+  --vscode-descriptionForeground: #8b949e;
+  --vscode-list-hoverBackground: #21262d;
+  --vscode-list-activeSelectionBackground: #1f6feb;
+  --vscode-list-activeSelectionForeground: #ffffff;
+  --vscode-errorForeground: #ff7b72;
+  --vscode-editorWarning-foreground: #d29922;
+  --vscode-editorInfo-foreground: #58a6ff;
+  --vscode-editorOverviewRuler-infoForeground: #58a6ff;
+  --vscode-textLink-foreground: #58a6ff;
+  --vscode-textLink-activeForeground: #79c0ff;
+  --vscode-textBlockQuote-border: #3b434b;
+  --vscode-textBlockQuote-foreground: #8b949e;
+  --vscode-textBlockQuote-background: #161b22;
+  --vscode-editorWidget-background: #161b22;
+  --vscode-textCodeBlock-background: #161b22;
+  --vscode-editorCodeLens-foreground: #8b949e;
+  --vscode-symbolIcon-keywordForeground: #ff7b72;
+  --vscode-symbolIcon-stringForeground: #a5d6ff;
+  --vscode-symbolIcon-functionForeground: #d2a8ff;
+  --vscode-symbolIcon-numberForeground: #79c0ff;
+}
+
+body.sm-theme-eye-care-green {
+  color-scheme: light;
+  --vscode-editor-background: #edf6ef;
+  --vscode-editor-foreground: #26372f;
+  --vscode-sideBar-background: #f7fbf7;
+  --vscode-sideBar-foreground: #26372f;
+  --vscode-sideBar-border: #c6d7c8;
+  --vscode-panel-border: #c6d7c8;
+  --vscode-button-border: #b3c8b6;
+  --vscode-button-secondaryBackground: #e2efe3;
+  --vscode-button-secondaryForeground: #22382c;
+  --vscode-button-secondaryHoverBackground: #d5e7d7;
+  --vscode-focusBorder: #3a7d5a;
+  --vscode-badge-background: #3a7d5a;
+  --vscode-badge-foreground: #ffffff;
+  --vscode-input-background: #fbfdf9;
+  --vscode-input-foreground: #26372f;
+  --vscode-input-border: #b3c8b6;
+  --vscode-descriptionForeground: #657568;
+  --vscode-list-hoverBackground: #dfece1;
+  --vscode-list-activeSelectionBackground: #c8dfcd;
+  --vscode-list-activeSelectionForeground: #1f3528;
+  --vscode-errorForeground: #b4232f;
+  --vscode-editorWarning-foreground: #8a6516;
+  --vscode-editorInfo-foreground: #2f6f56;
+  --vscode-editorOverviewRuler-infoForeground: #2f6f56;
+  --vscode-textLink-foreground: #2f6f56;
+  --vscode-textLink-activeForeground: #1f5a40;
+  --vscode-textBlockQuote-border: #8fb79b;
+  --vscode-textBlockQuote-foreground: #4d6656;
+  --vscode-textBlockQuote-background: #e3f0e5;
+  --vscode-editorWidget-background: #f7fbf7;
+  --vscode-textCodeBlock-background: #e3eee4;
+  --vscode-editorCodeLens-foreground: #6f7f72;
+  --vscode-symbolIcon-keywordForeground: #7b3f2b;
+  --vscode-symbolIcon-stringForeground: #2f6f56;
+  --vscode-symbolIcon-functionForeground: #415f8a;
+  --vscode-symbolIcon-numberForeground: #7a5a1f;
+}
+
+body.sm-theme-warm-paper {
+  color-scheme: light;
+  --vscode-editor-background: #fdf3dc;
+  --vscode-editor-foreground: #3f3428;
+  --vscode-sideBar-background: #fff8e9;
+  --vscode-sideBar-foreground: #3f3428;
+  --vscode-sideBar-border: #dfccb0;
+  --vscode-panel-border: #dfccb0;
+  --vscode-button-border: #d0b994;
+  --vscode-button-secondaryBackground: #f3e6cc;
+  --vscode-button-secondaryForeground: #3f3428;
+  --vscode-button-secondaryHoverBackground: #ead9b9;
+  --vscode-focusBorder: #9b6a2f;
+  --vscode-badge-background: #8b5e34;
+  --vscode-badge-foreground: #fff8e9;
+  --vscode-input-background: #fffaf0;
+  --vscode-input-foreground: #3f3428;
+  --vscode-input-border: #d0b994;
+  --vscode-descriptionForeground: #7b6a56;
+  --vscode-list-hoverBackground: #f1e2c6;
+  --vscode-list-activeSelectionBackground: #e4cda4;
+  --vscode-list-activeSelectionForeground: #33281e;
+  --vscode-errorForeground: #9e2a2b;
+  --vscode-editorWarning-foreground: #94620f;
+  --vscode-editorInfo-foreground: #335c67;
+  --vscode-editorOverviewRuler-infoForeground: #335c67;
+  --vscode-textLink-foreground: #8b5e34;
+  --vscode-textLink-activeForeground: #5f3e20;
+  --vscode-textBlockQuote-border: #c6a56d;
+  --vscode-textBlockQuote-foreground: #685540;
+  --vscode-textBlockQuote-background: #f4e5c8;
+  --vscode-editorWidget-background: #fff8e9;
+  --vscode-textCodeBlock-background: #f3e7d0;
+  --vscode-editorCodeLens-foreground: #887560;
+  --vscode-symbolIcon-keywordForeground: #9e2a2b;
+  --vscode-symbolIcon-stringForeground: #4f772d;
+  --vscode-symbolIcon-functionForeground: #335c67;
+  --vscode-symbolIcon-numberForeground: #bc6c25;
+}
+
+body.sm-theme-ink-black {
+  color-scheme: dark;
+  --vscode-editor-background: #0f1115;
+  --vscode-editor-foreground: #d9deea;
+  --vscode-sideBar-background: #171b22;
+  --vscode-sideBar-foreground: #d9deea;
+  --vscode-sideBar-border: #2d3340;
+  --vscode-panel-border: #2d3340;
+  --vscode-button-border: #3a4354;
+  --vscode-button-secondaryBackground: #1f2530;
+  --vscode-button-secondaryForeground: #d9deea;
+  --vscode-button-secondaryHoverBackground: #2a3240;
+  --vscode-focusBorder: #7aa2f7;
+  --vscode-badge-background: #2f6f8f;
+  --vscode-badge-foreground: #ffffff;
+  --vscode-input-background: #10141b;
+  --vscode-input-foreground: #d9deea;
+  --vscode-input-border: #3a4354;
+  --vscode-descriptionForeground: #98a2b3;
+  --vscode-list-hoverBackground: #1f2530;
+  --vscode-list-activeSelectionBackground: #2f6f8f;
+  --vscode-list-activeSelectionForeground: #ffffff;
+  --vscode-errorForeground: #ff8a8a;
+  --vscode-editorWarning-foreground: #e0af68;
+  --vscode-editorInfo-foreground: #7aa2f7;
+  --vscode-editorOverviewRuler-infoForeground: #7aa2f7;
+  --vscode-textLink-foreground: #7aa2f7;
+  --vscode-textLink-activeForeground: #9cc4ff;
+  --vscode-textBlockQuote-border: #455064;
+  --vscode-textBlockQuote-foreground: #aab3c2;
+  --vscode-textBlockQuote-background: #171b22;
+  --vscode-editorWidget-background: #171b22;
+  --vscode-textCodeBlock-background: #11161d;
+  --vscode-editorCodeLens-foreground: #8f99aa;
+  --vscode-symbolIcon-keywordForeground: #ff9e64;
+  --vscode-symbolIcon-stringForeground: #9ece6a;
+  --vscode-symbolIcon-functionForeground: #7aa2f7;
+  --vscode-symbolIcon-numberForeground: #bb9af7;
+}
+
+body.sm-theme-coastal-blue {
+  color-scheme: light;
+  --vscode-editor-background: #f4fbfd;
+  --vscode-editor-foreground: #173642;
+  --vscode-sideBar-background: #ffffff;
+  --vscode-sideBar-foreground: #173642;
+  --vscode-sideBar-border: #bedee7;
+  --vscode-panel-border: #bedee7;
+  --vscode-button-border: #9dccd8;
+  --vscode-button-secondaryBackground: #e4f4f8;
+  --vscode-button-secondaryForeground: #173642;
+  --vscode-button-secondaryHoverBackground: #d5edf4;
+  --vscode-focusBorder: #0081a7;
+  --vscode-badge-background: #0081a7;
+  --vscode-badge-foreground: #ffffff;
+  --vscode-input-background: #ffffff;
+  --vscode-input-foreground: #173642;
+  --vscode-input-border: #9dccd8;
+  --vscode-descriptionForeground: #5f7780;
+  --vscode-list-hoverBackground: #e0f2f7;
+  --vscode-list-activeSelectionBackground: #ccebf2;
+  --vscode-list-activeSelectionForeground: #102f39;
+  --vscode-errorForeground: #b53b32;
+  --vscode-editorWarning-foreground: #9a6a12;
+  --vscode-editorInfo-foreground: #0081a7;
+  --vscode-editorOverviewRuler-infoForeground: #0081a7;
+  --vscode-textLink-foreground: #007e9e;
+  --vscode-textLink-activeForeground: #005f76;
+  --vscode-textBlockQuote-border: #82c7d7;
+  --vscode-textBlockQuote-foreground: #426772;
+  --vscode-textBlockQuote-background: #e8f6fa;
+  --vscode-editorWidget-background: #ffffff;
+  --vscode-textCodeBlock-background: #e8f6fa;
+  --vscode-editorCodeLens-foreground: #687f87;
+  --vscode-symbolIcon-keywordForeground: #9e2a2b;
+  --vscode-symbolIcon-stringForeground: #007f5f;
+  --vscode-symbolIcon-functionForeground: #006d77;
+  --vscode-symbolIcon-numberForeground: #d97706;
+}
+
+body.sm-theme-high-contrast {
+  color-scheme: dark;
+  --vscode-editor-background: #000000;
+  --vscode-editor-foreground: #ffffff;
+  --vscode-sideBar-background: #080808;
+  --vscode-sideBar-foreground: #ffffff;
+  --vscode-sideBar-border: #ffffff;
+  --vscode-panel-border: #ffffff;
+  --vscode-button-border: #ffffff;
+  --vscode-button-secondaryBackground: #111111;
+  --vscode-button-secondaryForeground: #ffffff;
+  --vscode-button-secondaryHoverBackground: #222222;
+  --vscode-focusBorder: #ffd60a;
+  --vscode-badge-background: #ffd60a;
+  --vscode-badge-foreground: #000000;
+  --vscode-input-background: #000000;
+  --vscode-input-foreground: #ffffff;
+  --vscode-input-border: #ffffff;
+  --vscode-descriptionForeground: #d7d7d7;
+  --vscode-list-hoverBackground: #222222;
+  --vscode-list-activeSelectionBackground: #ffd60a;
+  --vscode-list-activeSelectionForeground: #000000;
+  --vscode-errorForeground: #ff6b6b;
+  --vscode-editorWarning-foreground: #ffd60a;
+  --vscode-editorInfo-foreground: #66d9ff;
+  --vscode-editorOverviewRuler-infoForeground: #66d9ff;
+  --vscode-textLink-foreground: #66d9ff;
+  --vscode-textLink-activeForeground: #aeefff;
+  --vscode-textBlockQuote-border: #ffd60a;
+  --vscode-textBlockQuote-foreground: #ffffff;
+  --vscode-textBlockQuote-background: #111111;
+  --vscode-editorWidget-background: #111111;
+  --vscode-textCodeBlock-background: #050505;
+  --vscode-editorCodeLens-foreground: #d7d7d7;
+  --vscode-symbolIcon-keywordForeground: #ff8a00;
+  --vscode-symbolIcon-stringForeground: #73ff9a;
+  --vscode-symbolIcon-functionForeground: #66d9ff;
+  --vscode-symbolIcon-numberForeground: #ffd60a;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+.app-shell {
+  position: relative;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.app-shell.sidebar-collapsed .sidebar {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(12px);
+}
+
+.sidebar {
+  position: absolute;
+  top: 46px;
+  right: 16px;
+  z-index: 4;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) 10px;
+  width: clamp(190px, 22vw, 260px);
+  max-width: calc(100vw - 32px);
+  height: var(--sm-outline-height, min(68vh, 640px));
+  min-height: 178px;
+  max-height: calc(100vh - 62px);
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--vscode-sideBar-background) 94%, transparent);
+  box-shadow: 0 10px 28px rgb(0 0 0 / 22%);
+  color: var(--vscode-sideBar-foreground);
+  transition:
+    opacity 120ms ease,
+    transform 120ms ease,
+    visibility 120ms ease;
+  backdrop-filter: blur(10px);
+}
+
+body.is-resizing-sidebar {
+  cursor: ns-resize;
+  user-select: none;
+}
+
+body.is-resizing-sidebar .sidebar {
+  transition: none;
+}
+
+.sidebar-toggle {
+  position: absolute;
+  top: 10px;
+  right: 16px;
+  z-index: 6;
+  min-height: 24px;
+  padding: 2px 8px;
+  border: 1px solid var(--vscode-button-border, var(--vscode-panel-border));
+  border-radius: 4px;
+  color: var(--vscode-button-secondaryForeground);
+  background: var(--vscode-button-secondaryBackground);
+  cursor: pointer;
+}
+
+.sidebar-toggle:hover,
+.sidebar-toggle:focus {
+  background: var(--vscode-button-secondaryHoverBackground);
+  outline: 1px solid var(--vscode-focusBorder);
+  outline-offset: -1px;
+}
+
+.sidebar-header {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border-bottom: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
+}
+
+.mode-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.mode-label {
+  display: inline-flex;
+  align-items: center;
+  width: auto;
+  max-width: 100%;
+  min-height: 22px;
+  padding: 2px 7px;
+  border: 1px solid var(--vscode-badge-background);
+  border-radius: 4px;
+  color: var(--vscode-badge-foreground);
+  background: var(--vscode-badge-background);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.language-button {
+  display: inline-grid;
+  place-items: center;
+  min-width: 30px;
+  height: 24px;
+  padding: 0 6px;
+  border: 1px solid var(--vscode-button-border, var(--vscode-panel-border));
+  border-radius: 4px;
+  color: var(--vscode-button-secondaryForeground);
+  background: var(--vscode-button-secondaryBackground);
+  cursor: pointer;
+}
+
+.language-button:hover,
+.language-button:focus {
+  background: var(--vscode-button-secondaryHoverBackground);
+  outline: 1px solid var(--vscode-focusBorder);
+  outline-offset: -1px;
+}
+
+#toc-search {
+  width: 100%;
+  height: 28px;
+  padding: 4px 8px;
+  border: 1px solid var(--vscode-input-border, transparent);
+  border-radius: 4px;
+  outline: none;
+  background: var(--vscode-input-background);
+  color: var(--vscode-input-foreground);
+}
+
+#toc-search:focus {
+  border-color: var(--vscode-focusBorder);
+}
+
+.toc {
+  min-width: 0;
+  overflow: auto;
+}
+
+.toc {
+  padding: 8px 8px 10px;
+}
+
+.sidebar-resize-handle {
+  display: grid;
+  place-items: center;
+  border-top: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
+  background: color-mix(in srgb, var(--vscode-sideBar-background) 88%, transparent);
+  cursor: ns-resize;
+  touch-action: none;
+}
+
+.sidebar-resize-handle::before {
+  width: 36px;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--vscode-descriptionForeground);
+  opacity: 0.45;
+  content: "";
+}
+
+.sidebar-resize-handle:hover::before,
+.sidebar-resize-handle:focus::before {
+  opacity: 0.85;
+}
+
+.sidebar-resize-handle:focus {
+  outline: 1px solid var(--vscode-focusBorder);
+  outline-offset: -2px;
+}
+
+.toc ol,
+.issue-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.toc ol ol {
+  padding-left: 12px;
+}
+
+.toc-item {
+  margin: 1px 0;
+}
+
+.toc-item[hidden] {
+  display: none;
+}
+
+.toc a {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr);
+  align-items: center;
+  gap: 6px;
+  min-height: 26px;
+  padding: 3px 6px;
+  border-radius: 4px;
+  color: var(--vscode-sideBar-foreground);
+  text-decoration: none;
+}
+
+.toc a:hover {
+  background: var(--vscode-list-hoverBackground);
+}
+
+.toc a.active {
+  background: var(--vscode-list-activeSelectionBackground);
+  color: var(--vscode-list-activeSelectionForeground);
+}
+
+.toc-level {
+  color: var(--vscode-descriptionForeground);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.toc a.active .toc-level {
+  color: inherit;
+}
+
+.toc-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.health {
+  border-top: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
+}
+
+.section-title {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
+  background: var(--vscode-sideBar-background);
+  color: var(--vscode-descriptionForeground);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.empty-state {
+  padding: 12px;
+  color: var(--vscode-descriptionForeground);
+  font-size: 12px;
+}
+
+.issue button {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  gap: 6px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-bottom: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.issue button:hover,
+.issue button:focus {
+  background: var(--vscode-list-hoverBackground);
+  outline: 1px solid var(--vscode-focusBorder);
+  outline-offset: -1px;
+}
+
+.issue-code,
+.issue-line {
+  color: var(--vscode-descriptionForeground);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.issue-error .issue-code {
+  color: var(--vscode-errorForeground);
+}
+
+.issue-warning .issue-code {
+  color: var(--vscode-editorWarning-foreground);
+}
+
+.issue-info .issue-code {
+  color: var(--vscode-editorInfo-foreground);
+}
+
+.issue-message {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.preview {
+  min-width: 0;
+  height: 100vh;
+  overflow: auto;
+  transition: padding-right 120ms ease;
+}
+
+.markdown-body {
+  width: min(100% - 48px, var(--sm-max-width, 860px));
+  margin: 0 auto;
+  padding: 28px 0 72px;
+  line-height: 1.65;
+}
+
+.markdown-body :first-child {
+  margin-top: 0;
+}
+
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3,
+.markdown-body h4,
+.markdown-body h5,
+.markdown-body h6 {
+  margin: 1.8em 0 0.7em;
+  color: var(--vscode-editor-foreground);
+  font-weight: 650;
+  line-height: 1.25;
+  scroll-margin-top: 24px;
+}
+
+.markdown-body h1 {
+  padding-bottom: 0.35em;
+  border-bottom: 1px solid var(--vscode-panel-border);
+  font-size: 2em;
+}
+
+.markdown-body h2 {
+  padding-bottom: 0.25em;
+  border-bottom: 1px solid var(--vscode-panel-border);
+  font-size: 1.55em;
+}
+
+.markdown-body h3 {
+  font-size: 1.25em;
+}
+
+.markdown-body h4,
+.markdown-body h5,
+.markdown-body h6 {
+  font-size: 1.05em;
+}
+
+.markdown-body p,
+.markdown-body ul,
+.markdown-body ol,
+.markdown-body blockquote,
+.markdown-body table,
+.markdown-body figure {
+  margin: 0 0 1em;
+}
+
+.markdown-body a {
+  color: var(--vscode-textLink-foreground);
+}
+
+.markdown-body a:hover {
+  color: var(--vscode-textLink-activeForeground);
+}
+
+.markdown-body blockquote {
+  padding: 0 1em;
+  border-left: 3px solid var(--vscode-textBlockQuote-border);
+  color: var(--vscode-textBlockQuote-foreground);
+  background: var(--vscode-textBlockQuote-background);
+}
+
+.markdown-body table {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+}
+
+.markdown-body th,
+.markdown-body td {
+  padding: 6px 10px;
+  border: 1px solid var(--vscode-panel-border);
+}
+
+.markdown-body th {
+  background: var(--vscode-editorWidget-background);
+  font-weight: 650;
+}
+
+.markdown-body img {
+  max-width: 100%;
+  height: auto;
+}
+
+.source-line-active {
+  outline: 1px solid var(--vscode-editorOverviewRuler-infoForeground);
+  outline-offset: 3px;
+  background: color-mix(in srgb, var(--vscode-editorInfo-foreground) 10%, transparent);
+}
+
+.code-block,
+.diagram-block {
+  overflow: hidden;
+  border: 1px solid var(--vscode-panel-border);
+  border-radius: 6px;
+  background: var(--vscode-textCodeBlock-background);
+}
+
+.code-block figcaption,
+.diagram-block figcaption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 32px;
+  padding: 0 10px;
+  border-bottom: 1px solid var(--vscode-panel-border);
+  color: var(--vscode-descriptionForeground);
+  font-size: 12px;
+}
+
+.copy-code {
+  height: 24px;
+  padding: 0 8px;
+  border: 1px solid var(--vscode-button-border, transparent);
+  border-radius: 4px;
+  background: var(--vscode-button-secondaryBackground);
+  color: var(--vscode-button-secondaryForeground);
+  cursor: pointer;
+}
+
+.copy-code:hover {
+  background: var(--vscode-button-secondaryHoverBackground);
+}
+
+.code-block pre {
+  margin: 0;
+  padding: 14px;
+  overflow: auto;
+}
+
+.code-block code {
+  font-family: var(--vscode-editor-font-family);
+  font-size: calc(var(--sm-font-size, 14px) - 1px);
+}
+
+.hljs-comment,
+.hljs-quote {
+  color: var(--vscode-editorCodeLens-foreground);
+}
+
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-literal {
+  color: var(--vscode-symbolIcon-keywordForeground);
+}
+
+.hljs-string,
+.hljs-attr {
+  color: var(--vscode-symbolIcon-stringForeground);
+}
+
+.hljs-title,
+.hljs-section {
+  color: var(--vscode-symbolIcon-functionForeground);
+}
+
+.hljs-number,
+.hljs-built_in {
+  color: var(--vscode-symbolIcon-numberForeground);
+}
+
+.diagram-block {
+  padding-bottom: 12px;
+}
+
+.diagram-block .mermaid {
+  display: grid;
+  place-items: center;
+  min-height: 120px;
+  margin: 0;
+  padding: 18px;
+  overflow: auto;
+}
+
+.task-list-item {
+  list-style: none;
+}
+
+.task-list-item input {
+  margin: 0 0.45em 0 -1.25em;
+}
+
+@media (max-width: 860px) {
+  .sidebar {
+    top: 44px;
+    right: 12px;
+    width: min(240px, calc(100vw - 24px));
+    height: var(--sm-outline-height, min(62vh, 560px));
+    max-height: calc(100vh - 58px);
+  }
+
+  .markdown-body {
+    width: min(100% - 28px, var(--sm-max-width, 860px));
+    padding-top: 20px;
+  }
+}
+
+@media (min-width: 1180px) {
+  .app-shell:not(.sidebar-collapsed) .preview {
+    padding-right: 300px;
+  }
+}

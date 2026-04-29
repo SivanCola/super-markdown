@@ -1,0 +1,604 @@
+{
+  "name": "super-markdown",
+  "displayName": "Super Markdown",
+  "description": "Structured Markdown preview, navigation, document health checks, and safe cleanup for VS Code.",
+  "version": "0.0.4",
+  "publisher": "super-markdown",
+  "license": "Apache-2.0",
+  "icon": "images/icon.png",
+  "galleryBanner": {
+    "color": "#102033",
+    "theme": "dark"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SivanCola/super-markdown.git"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Formatters",
+    "Visualization",
+    "Other"
+  ],
+  "keywords": [
+    "markdown",
+    "preview",
+    "toc",
+    "outline",
+    "formatter"
+  ],
+  "activationEvents": [
+    "onLanguage:markdown",
+    "onCommand:superMarkdown.openPreview",
+    "onCommand:superMarkdown.openSplitEditMode",
+    "onCommand:superMarkdown.openWithPreviewEditor",
+    "onCommand:superMarkdown.switchDisplayLanguage",
+    "onCommand:superMarkdown.switchBackgroundTheme",
+    "onCommand:superMarkdown.refreshPreview",
+    "onCommand:superMarkdown.organizeMarkdown",
+    "onCommand:superMarkdown.showDocumentHealth",
+    "onCustomEditor:superMarkdown.previewEditor",
+    "onCommand:superMarkdown.en.openPreview",
+    "onCommand:superMarkdown.zhCN.openPreview",
+    "onCommand:superMarkdown.en.openSplitEditMode",
+    "onCommand:superMarkdown.zhCN.openSplitEditMode",
+    "onCommand:superMarkdown.en.openWithPreviewEditor",
+    "onCommand:superMarkdown.zhCN.openWithPreviewEditor",
+    "onCommand:superMarkdown.en.switchDisplayLanguage",
+    "onCommand:superMarkdown.zhCN.switchDisplayLanguage",
+    "onCommand:superMarkdown.en.switchBackgroundTheme",
+    "onCommand:superMarkdown.zhCN.switchBackgroundTheme",
+    "onCommand:superMarkdown.en.refreshPreview",
+    "onCommand:superMarkdown.zhCN.refreshPreview",
+    "onCommand:superMarkdown.en.organizeMarkdown",
+    "onCommand:superMarkdown.zhCN.organizeMarkdown",
+    "onCommand:superMarkdown.en.showDocumentHealth",
+    "onCommand:superMarkdown.zhCN.showDocumentHealth"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "superMarkdown.openPreview",
+        "title": "%superMarkdown.command.previewMode%",
+        "icon": "$(markdown)"
+      },
+      {
+        "command": "superMarkdown.openSplitEditMode",
+        "title": "%superMarkdown.command.splitEditMode%",
+        "icon": "$(split-horizontal)"
+      },
+      {
+        "command": "superMarkdown.openWithPreviewEditor",
+        "title": "%superMarkdown.command.openWithPreviewEditor%",
+        "icon": "$(open-preview)"
+      },
+      {
+        "command": "superMarkdown.switchDisplayLanguage",
+        "title": "%superMarkdown.command.switchDisplayLanguage%",
+        "icon": "$(globe)"
+      },
+      {
+        "command": "superMarkdown.switchBackgroundTheme",
+        "title": "%superMarkdown.command.switchBackgroundTheme%",
+        "icon": "$(color-mode)"
+      },
+      {
+        "command": "superMarkdown.refreshPreview",
+        "title": "%superMarkdown.command.refreshPreview%",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "superMarkdown.organizeMarkdown",
+        "title": "%superMarkdown.command.organizeMarkdown%",
+        "icon": "$(wand)"
+      },
+      {
+        "command": "superMarkdown.showDocumentHealth",
+        "title": "%superMarkdown.command.showDocumentHealth%",
+        "icon": "$(pulse)"
+      },
+      {
+        "command": "superMarkdown.en.openPreview",
+        "title": "Super Markdown: Preview Mode",
+        "icon": "$(markdown)"
+      },
+      {
+        "command": "superMarkdown.zhCN.openPreview",
+        "title": "Super Markdown：预览模式",
+        "icon": "$(markdown)"
+      },
+      {
+        "command": "superMarkdown.en.openSplitEditMode",
+        "title": "Super Markdown: Split Edit Mode",
+        "icon": "$(split-horizontal)"
+      },
+      {
+        "command": "superMarkdown.zhCN.openSplitEditMode",
+        "title": "Super Markdown：分屏编辑模式",
+        "icon": "$(split-horizontal)"
+      },
+      {
+        "command": "superMarkdown.en.openWithPreviewEditor",
+        "title": "Super Markdown: Open Preview Editor",
+        "icon": "$(open-preview)"
+      },
+      {
+        "command": "superMarkdown.zhCN.openWithPreviewEditor",
+        "title": "Super Markdown：使用预览编辑器打开",
+        "icon": "$(open-preview)"
+      },
+      {
+        "command": "superMarkdown.en.switchDisplayLanguage",
+        "title": "Super Markdown: Switch Display Language",
+        "icon": "$(globe)"
+      },
+      {
+        "command": "superMarkdown.zhCN.switchDisplayLanguage",
+        "title": "Super Markdown：切换界面语言",
+        "icon": "$(globe)"
+      },
+      {
+        "command": "superMarkdown.en.switchBackgroundTheme",
+        "title": "Super Markdown: Switch Background Theme",
+        "icon": "$(color-mode)"
+      },
+      {
+        "command": "superMarkdown.zhCN.switchBackgroundTheme",
+        "title": "Super Markdown：切换背景主题",
+        "icon": "$(color-mode)"
+      },
+      {
+        "command": "superMarkdown.en.refreshPreview",
+        "title": "Super Markdown: Refresh Preview",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "superMarkdown.zhCN.refreshPreview",
+        "title": "Super Markdown：刷新预览",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "superMarkdown.en.organizeMarkdown",
+        "title": "Super Markdown: Organize Markdown",
+        "icon": "$(wand)"
+      },
+      {
+        "command": "superMarkdown.zhCN.organizeMarkdown",
+        "title": "Super Markdown：整理 Markdown",
+        "icon": "$(wand)"
+      },
+      {
+        "command": "superMarkdown.en.showDocumentHealth",
+        "title": "Super Markdown: Show Document Health",
+        "icon": "$(pulse)"
+      },
+      {
+        "command": "superMarkdown.zhCN.showDocumentHealth",
+        "title": "Super Markdown：显示文档健康检查",
+        "icon": "$(pulse)"
+      }
+    ],
+    "customEditors": [
+      {
+        "viewType": "superMarkdown.previewEditor",
+        "displayName": "Super Markdown Preview",
+        "selector": [
+          {
+            "filenamePattern": "*.md"
+          },
+          {
+            "filenamePattern": "*.markdown"
+          },
+          {
+            "filenamePattern": "*.mdown"
+          },
+          {
+            "filenamePattern": "*.mkdn"
+          }
+        ],
+        "priority": "option"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "superMarkdown.openSplitEditMode",
+        "key": "ctrl+alt+m",
+        "mac": "cmd+alt+m",
+        "when": "editorLangId == markdown"
+      }
+    ],
+    "submenus": [
+      {
+        "id": "superMarkdown.editorTitle",
+        "label": "%superMarkdown.submenu.editorTitle%",
+        "icon": {
+          "light": "./media/icons/super-markdown-light.svg",
+          "dark": "./media/icons/super-markdown-dark.svg"
+        }
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "submenu": "superMarkdown.editorTitle",
+          "when": "resourceExtname == .md || resourceExtname == .markdown || resourceExtname == .mdown || resourceExtname == .mkdn",
+          "group": "navigation@20"
+        }
+      ],
+      "superMarkdown.editorTitle": [
+        {
+          "command": "superMarkdown.en.openSplitEditMode",
+          "when": "!superMarkdown.runtimeLanguageZhCN",
+          "group": "navigation@10"
+        },
+        {
+          "command": "superMarkdown.zhCN.openSplitEditMode",
+          "when": "superMarkdown.runtimeLanguageZhCN",
+          "group": "navigation@10"
+        },
+        {
+          "command": "superMarkdown.en.openWithPreviewEditor",
+          "when": "!superMarkdown.runtimeLanguageZhCN",
+          "group": "navigation@30"
+        },
+        {
+          "command": "superMarkdown.zhCN.openWithPreviewEditor",
+          "when": "superMarkdown.runtimeLanguageZhCN",
+          "group": "navigation@30"
+        },
+        {
+          "command": "superMarkdown.en.showDocumentHealth",
+          "when": "!superMarkdown.runtimeLanguageZhCN",
+          "group": "diagnostics@10"
+        },
+        {
+          "command": "superMarkdown.zhCN.showDocumentHealth",
+          "when": "superMarkdown.runtimeLanguageZhCN",
+          "group": "diagnostics@10"
+        },
+        {
+          "command": "superMarkdown.en.organizeMarkdown",
+          "when": "!superMarkdown.runtimeLanguageZhCN",
+          "group": "modification@10"
+        },
+        {
+          "command": "superMarkdown.zhCN.organizeMarkdown",
+          "when": "superMarkdown.runtimeLanguageZhCN",
+          "group": "modification@10"
+        },
+        {
+          "command": "superMarkdown.en.switchDisplayLanguage",
+          "when": "!superMarkdown.runtimeLanguageZhCN",
+          "group": "preferences@10"
+        },
+        {
+          "command": "superMarkdown.zhCN.switchDisplayLanguage",
+          "when": "superMarkdown.runtimeLanguageZhCN",
+          "group": "preferences@10"
+        },
+        {
+          "command": "superMarkdown.en.switchBackgroundTheme",
+          "when": "!superMarkdown.runtimeLanguageZhCN",
+          "group": "preferences@20"
+        },
+        {
+          "command": "superMarkdown.zhCN.switchBackgroundTheme",
+          "when": "superMarkdown.runtimeLanguageZhCN",
+          "group": "preferences@20"
+        }
+      ],
+      "editor/title/context": [
+        {
+          "command": "superMarkdown.en.openWithPreviewEditor",
+          "when": "(resourceExtname == .md || resourceExtname == .markdown || resourceExtname == .mdown || resourceExtname == .mkdn) && !superMarkdown.runtimeLanguageZhCN",
+          "group": "navigation@18"
+        },
+        {
+          "command": "superMarkdown.zhCN.openWithPreviewEditor",
+          "when": "(resourceExtname == .md || resourceExtname == .markdown || resourceExtname == .mdown || resourceExtname == .mkdn) && superMarkdown.runtimeLanguageZhCN",
+          "group": "navigation@18"
+        },
+        {
+          "command": "superMarkdown.en.openSplitEditMode",
+          "when": "(resourceExtname == .md || resourceExtname == .markdown || resourceExtname == .mdown || resourceExtname == .mkdn) && !superMarkdown.runtimeLanguageZhCN",
+          "group": "navigation@20"
+        },
+        {
+          "command": "superMarkdown.zhCN.openSplitEditMode",
+          "when": "(resourceExtname == .md || resourceExtname == .markdown || resourceExtname == .mdown || resourceExtname == .mkdn) && superMarkdown.runtimeLanguageZhCN",
+          "group": "navigation@20"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "superMarkdown.en.openWithPreviewEditor",
+          "when": "(resourceExtname == .md || resourceExtname == .markdown || resourceExtname == .mdown || resourceExtname == .mkdn) && !superMarkdown.runtimeLanguageZhCN",
+          "group": "navigation@18"
+        },
+        {
+          "command": "superMarkdown.zhCN.openWithPreviewEditor",
+          "when": "(resourceExtname == .md || resourceExtname == .markdown || resourceExtname == .mdown || resourceExtname == .mkdn) && superMarkdown.runtimeLanguageZhCN",
+          "group": "navigation@18"
+        },
+        {
+          "command": "superMarkdown.en.openSplitEditMode",
+          "when": "(resourceExtname == .md || resourceExtname == .markdown || resourceExtname == .mdown || resourceExtname == .mkdn) && !superMarkdown.runtimeLanguageZhCN",
+          "group": "navigation@20"
+        },
+        {
+          "command": "superMarkdown.zhCN.openSplitEditMode",
+          "when": "(resourceExtname == .md || resourceExtname == .markdown || resourceExtname == .mdown || resourceExtname == .mkdn) && superMarkdown.runtimeLanguageZhCN",
+          "group": "navigation@20"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "superMarkdown.en.openPreview",
+          "when": "(resourceExtname == .md || resourceExtname == .markdown || resourceExtname == .mdown || resourceExtname == .mkdn) && !superMarkdown.runtimeLanguageZhCN",
+          "group": "navigation@20"
+        },
+        {
+          "command": "superMarkdown.zhCN.openPreview",
+          "when": "(resourceExtname == .md || resourceExtname == .markdown || resourceExtname == .mdown || resourceExtname == .mkdn) && superMarkdown.runtimeLanguageZhCN",
+          "group": "navigation@20"
+        },
+        {
+          "command": "superMarkdown.en.openSplitEditMode",
+          "when": "(resourceExtname == .md || resourceExtname == .markdown || resourceExtname == .mdown || resourceExtname == .mkdn) && !superMarkdown.runtimeLanguageZhCN",
+          "group": "navigation@21"
+        },
+        {
+          "command": "superMarkdown.zhCN.openSplitEditMode",
+          "when": "(resourceExtname == .md || resourceExtname == .markdown || resourceExtname == .mdown || resourceExtname == .mkdn) && superMarkdown.runtimeLanguageZhCN",
+          "group": "navigation@21"
+        },
+        {
+          "command": "superMarkdown.en.organizeMarkdown",
+          "when": "(resourceExtname == .md || resourceExtname == .markdown || resourceExtname == .mdown || resourceExtname == .mkdn) && !superMarkdown.runtimeLanguageZhCN",
+          "group": "1_modification@20"
+        },
+        {
+          "command": "superMarkdown.zhCN.organizeMarkdown",
+          "when": "(resourceExtname == .md || resourceExtname == .markdown || resourceExtname == .mdown || resourceExtname == .mkdn) && superMarkdown.runtimeLanguageZhCN",
+          "group": "1_modification@20"
+        },
+        {
+          "command": "superMarkdown.en.showDocumentHealth",
+          "when": "(resourceExtname == .md || resourceExtname == .markdown || resourceExtname == .mdown || resourceExtname == .mkdn) && !superMarkdown.runtimeLanguageZhCN",
+          "group": "navigation@22"
+        },
+        {
+          "command": "superMarkdown.zhCN.showDocumentHealth",
+          "when": "(resourceExtname == .md || resourceExtname == .markdown || resourceExtname == .mdown || resourceExtname == .mkdn) && superMarkdown.runtimeLanguageZhCN",
+          "group": "navigation@22"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "superMarkdown.openPreview",
+          "when": "false"
+        },
+        {
+          "command": "superMarkdown.openSplitEditMode",
+          "when": "false"
+        },
+        {
+          "command": "superMarkdown.openWithPreviewEditor",
+          "when": "false"
+        },
+        {
+          "command": "superMarkdown.switchDisplayLanguage",
+          "when": "false"
+        },
+        {
+          "command": "superMarkdown.switchBackgroundTheme",
+          "when": "false"
+        },
+        {
+          "command": "superMarkdown.refreshPreview",
+          "when": "false"
+        },
+        {
+          "command": "superMarkdown.organizeMarkdown",
+          "when": "false"
+        },
+        {
+          "command": "superMarkdown.showDocumentHealth",
+          "when": "false"
+        },
+        {
+          "command": "superMarkdown.en.openPreview",
+          "when": "!superMarkdown.runtimeLanguageZhCN"
+        },
+        {
+          "command": "superMarkdown.zhCN.openPreview",
+          "when": "superMarkdown.runtimeLanguageZhCN"
+        },
+        {
+          "command": "superMarkdown.en.openSplitEditMode",
+          "when": "!superMarkdown.runtimeLanguageZhCN"
+        },
+        {
+          "command": "superMarkdown.zhCN.openSplitEditMode",
+          "when": "superMarkdown.runtimeLanguageZhCN"
+        },
+        {
+          "command": "superMarkdown.en.openWithPreviewEditor",
+          "when": "!superMarkdown.runtimeLanguageZhCN"
+        },
+        {
+          "command": "superMarkdown.zhCN.openWithPreviewEditor",
+          "when": "superMarkdown.runtimeLanguageZhCN"
+        },
+        {
+          "command": "superMarkdown.en.switchDisplayLanguage",
+          "when": "!superMarkdown.runtimeLanguageZhCN"
+        },
+        {
+          "command": "superMarkdown.zhCN.switchDisplayLanguage",
+          "when": "superMarkdown.runtimeLanguageZhCN"
+        },
+        {
+          "command": "superMarkdown.en.switchBackgroundTheme",
+          "when": "!superMarkdown.runtimeLanguageZhCN"
+        },
+        {
+          "command": "superMarkdown.zhCN.switchBackgroundTheme",
+          "when": "superMarkdown.runtimeLanguageZhCN"
+        },
+        {
+          "command": "superMarkdown.en.refreshPreview",
+          "when": "!superMarkdown.runtimeLanguageZhCN"
+        },
+        {
+          "command": "superMarkdown.zhCN.refreshPreview",
+          "when": "superMarkdown.runtimeLanguageZhCN"
+        },
+        {
+          "command": "superMarkdown.en.organizeMarkdown",
+          "when": "!superMarkdown.runtimeLanguageZhCN"
+        },
+        {
+          "command": "superMarkdown.zhCN.organizeMarkdown",
+          "when": "superMarkdown.runtimeLanguageZhCN"
+        },
+        {
+          "command": "superMarkdown.en.showDocumentHealth",
+          "when": "!superMarkdown.runtimeLanguageZhCN"
+        },
+        {
+          "command": "superMarkdown.zhCN.showDocumentHealth",
+          "when": "superMarkdown.runtimeLanguageZhCN"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Super Markdown",
+      "properties": {
+        "superMarkdown.preview.theme": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "light",
+            "dark",
+            "eye-care-green",
+            "warm-paper",
+            "ink-black",
+            "coastal-blue",
+            "high-contrast"
+          ],
+          "default": "auto",
+          "description": "%superMarkdown.configuration.preview.theme.description%",
+          "enumDescriptions": [
+            "%superMarkdown.configuration.preview.theme.auto%",
+            "%superMarkdown.configuration.preview.theme.light%",
+            "%superMarkdown.configuration.preview.theme.dark%",
+            "%superMarkdown.configuration.preview.theme.eyeCareGreen%",
+            "%superMarkdown.configuration.preview.theme.warmPaper%",
+            "%superMarkdown.configuration.preview.theme.inkBlack%",
+            "%superMarkdown.configuration.preview.theme.coastalBlue%",
+            "%superMarkdown.configuration.preview.theme.highContrast%"
+          ]
+        },
+        "superMarkdown.preview.fontSize": {
+          "type": "number",
+          "default": 14,
+          "minimum": 10,
+          "maximum": 24,
+          "description": "%superMarkdown.configuration.preview.fontSize.description%"
+        },
+        "superMarkdown.preview.maxWidth": {
+          "type": "number",
+          "default": 860,
+          "minimum": 520,
+          "maximum": 1400,
+          "description": "%superMarkdown.configuration.preview.maxWidth.description%"
+        },
+        "superMarkdown.toc.levels": {
+          "type": "string",
+          "default": "1..6",
+          "pattern": "^[1-6](\\.\\.[1-6])?$",
+          "description": "%superMarkdown.configuration.toc.levels.description%"
+        },
+        "superMarkdown.organize.updateTocOnSave": {
+          "type": "boolean",
+          "default": false,
+          "description": "%superMarkdown.configuration.organize.updateTocOnSave.description%"
+        },
+        "superMarkdown.organize.numberHeadings": {
+          "type": "boolean",
+          "default": false,
+          "description": "%superMarkdown.configuration.organize.numberHeadings.description%"
+        },
+        "superMarkdown.mermaid.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "%superMarkdown.configuration.mermaid.enabled.description%"
+        },
+        "superMarkdown.katex.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "%superMarkdown.configuration.katex.enabled.description%"
+        },
+        "superMarkdown.displayLanguage": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "zh-CN",
+            "en"
+          ],
+          "default": "auto",
+          "description": "%superMarkdown.configuration.displayLanguage.description%",
+          "enumDescriptions": [
+            "%superMarkdown.configuration.displayLanguage.auto%",
+            "%superMarkdown.configuration.displayLanguage.zhCN%",
+            "%superMarkdown.configuration.displayLanguage.en%"
+          ]
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile && npm run bundle && npm run copy-assets",
+    "compile": "tsc -p ./",
+    "bundle": "esbuild src/extension.ts --bundle --platform=node --format=cjs --external:vscode --outfile=out/extension.js --sourcemap",
+    "copy-assets": "node scripts/copy-assets.mjs",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint src --ext ts",
+    "test": "npm run compile && mocha --ui tdd \"out/test/**/*.test.js\"",
+    "package": "vsce package",
+    "openvsx:create-namespace": "ovsx create-namespace super-markdown",
+    "openvsx:verify-token": "ovsx verify-pat super-markdown",
+    "openvsx:publish": "ovsx publish --skip-duplicate"
+  },
+  "devDependencies": {
+    "@types/markdown-it": "^14.1.2",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^22.15.3",
+    "@types/sanitize-html": "^2.16.0",
+    "@types/vscode": "^1.85.0",
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
+    "@vscode/markdown-it-katex": "^1.1.2",
+    "@vscode/vsce": "^3.9.1",
+    "esbuild": "^0.28.0",
+    "eslint": "^8.57.1",
+    "highlight.js": "^11.11.1",
+    "katex": "^0.16.22",
+    "markdown-it": "^14.1.0",
+    "markdown-it-footnote": "^4.0.0",
+    "markdown-it-task-lists": "^2.1.1",
+    "mermaid": "^11.14.0",
+    "mocha": "11.3.0",
+    "ovsx": "^0.10.11",
+    "sanitize-html": "^2.17.0",
+    "typescript": "^5.8.3"
+  },
+  "overrides": {
+    "uuid": "^14.0.0",
+    "serialize-javascript": "^7.0.5"
+  }
+}

@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" role="img" aria-label="Super Markdown extension icon">
+  <defs>
+    <linearGradient id="background" x1="32" y1="20" x2="224" y2="236" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#1f3a5f"/>
+      <stop offset="0.55" stop-color="#102033"/>
+      <stop offset="1" stop-color="#0c3b39"/>
+    </linearGradient>
+    <linearGradient id="panel" x1="128" y1="62" x2="220" y2="190" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#12243b"/>
+      <stop offset="1" stop-color="#0b141f"/>
+    </linearGradient>
+    <filter id="softShadow" x="-25%" y="-25%" width="150%" height="150%" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#020617" flood-opacity="0.32"/>
+    </filter>
+  </defs>
+
+  <rect width="256" height="256" rx="48" fill="url(#background)"/>
+  <path d="M24 185C58 215 106 226 151 212C192 200 223 168 233 128" fill="none" stroke="#36d3bb" stroke-width="8" stroke-linecap="round" opacity="0.28"/>
+  <path d="M26 72C55 37 103 23 151 36C190 47 218 75 230 110" fill="none" stroke="#60a5fa" stroke-width="7" stroke-linecap="round" opacity="0.22"/>
+
+  <g filter="url(#softShadow)">
+    <path d="M50 38H139L178 77V196C178 209.255 167.255 220 154 220H50C36.745 220 26 209.255 26 196V62C26 48.745 36.745 38 50 38Z" fill="#f8fafc"/>
+    <path d="M139 38V68C139 76.837 146.163 84 155 84H178L139 38Z" fill="#c7d2fe"/>
+    <path d="M139 38V69C139 77.284 145.716 84 154 84H178" fill="none" stroke="#93a4c7" stroke-width="4" stroke-linejoin="round"/>
+  </g>
+
+  <path d="M58 85H123" stroke="#94a3b8" stroke-width="9" stroke-linecap="round"/>
+  <path d="M58 113H130" stroke="#cbd5e1" stroke-width="8" stroke-linecap="round"/>
+  <path d="M58 141H108" stroke="#cbd5e1" stroke-width="8" stroke-linecap="round"/>
+
+  <path d="M58 176V153H70L83 170L96 153H108V176" fill="none" stroke="#2563eb" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M124 153V176" stroke="#14b8a6" stroke-width="9" stroke-linecap="round"/>
+  <path d="M113 166L124 177L135 166" fill="none" stroke="#14b8a6" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <g filter="url(#softShadow)">
+    <rect x="126" y="70" width="104" height="134" rx="18" fill="url(#panel)" stroke="#38bdf8" stroke-width="5"/>
+    <rect x="144" y="91" width="57" height="8" rx="4" fill="#e0f2fe"/>
+    <rect x="144" y="115" width="68" height="8" rx="4" fill="#7dd3fc" opacity="0.88"/>
+    <rect x="160" y="137" width="47" height="7" rx="3.5" fill="#94a3b8"/>
+    <rect x="160" y="158" width="54" height="7" rx="3.5" fill="#94a3b8"/>
+    <rect x="144" y="179" width="61" height="8" rx="4" fill="#2dd4bf"/>
+    <circle cx="138" cy="95" r="4" fill="#38bdf8"/>
+    <circle cx="138" cy="119" r="4" fill="#38bdf8"/>
+    <circle cx="154" cy="140.5" r="3.5" fill="#64748b"/>
+    <circle cx="154" cy="161.5" r="3.5" fill="#64748b"/>
+    <circle cx="138" cy="183" r="4" fill="#2dd4bf"/>
+  </g>
+
+  <path d="M209 44L214 57L227 62L214 67L209 80L204 67L191 62L204 57L209 44Z" fill="#facc15"/>
+</svg>

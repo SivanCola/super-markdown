@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Changed the extension publisher namespace to `SivanLiu` for consistent Marketplace and Open VSX identity.
+
 ## 0.0.4
 
 - Split the Chinese README into `README.zh-CN.md` so the default marketplace page opens in English.

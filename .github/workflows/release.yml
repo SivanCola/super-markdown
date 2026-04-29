@@ -42,7 +42,7 @@ jobs:
 
       - name: Verify Open VSX token
         if: env.OVSX_PAT != ''
-        run: npx ovsx verify-pat super-markdown -p "$OVSX_PAT"
+        run: npx ovsx verify-pat SivanLiu -p "$OVSX_PAT"
 
       - name: Publish to Open VSX
         if: env.OVSX_PAT != ''

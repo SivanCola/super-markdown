@@ -5,3 +5,4 @@ out/
 *.log
 .vscode/
 AGENTS.md
+.jumpjump/

@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.0.5
 
 - Changed the extension publisher namespace to `SivanLiu` for consistent Marketplace and Open VSX identity.
 

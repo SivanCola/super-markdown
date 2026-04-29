@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.0.8
+
+- Removed development and local VSIX packaging instructions from the user-facing README.
+- Removed duplicate screenshots from the Chinese README section.
+
 ## 0.0.7
 
 - Reworked the README into a single bilingual Marketplace-friendly page.

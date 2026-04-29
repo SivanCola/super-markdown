@@ -126,21 +126,6 @@ Open VS Code Settings and search for `superMarkdown`.
 - Preview link checks are limited to local links and images that can be resolved from the current document.
 - Cleanup is intentionally conservative and opens a diff before changing your document.
 
-## Development
-
-```bash
-npm install
-npm run compile
-npm test
-npm run package:vsix
-```
-
-Package a local VSIX:
-
-```bash
-npm run package:vsix
-```
-
 ## Privacy
 
 Super Markdown processes Markdown content locally in the editor and does not send your documents to a remote service.
@@ -162,12 +147,6 @@ Super Markdown is licensed under the Apache License, Version 2.0. See [LICENSE](
 Super Markdown 是一个面向 VS Code 的 Markdown 阅读和整理扩展，适合阅读和维护较长的 Markdown 文件：接口文档、产品说明、需求文档、知识库页面、项目文档和使用指南。
 
 它不会强制替换 VS Code 默认 Markdown 编辑器，而是在你需要更好的阅读、分屏编辑、大纲导航、文档检查和安全整理时，提供一套更完整的体验。
-
-## 截图
-
-![源码、预览和悬浮大纲组成的分屏编辑模式](images/screenshots/split-edit-mode.png)
-
-![文档健康检查和整理 Markdown 的 diff 预览](images/screenshots/document-health.png)
 
 ## 最新版亮点
 
@@ -265,21 +244,6 @@ Super Markdown 是一个面向 VS Code 的 Markdown 阅读和整理扩展，适�
 - Super Markdown 专注于 Markdown 文件。
 - 预览链接检查仅覆盖能从当前文档解析到的本地链接和图片。
 - 整理功能保持保守，会先打开 diff，再修改你的文档。
-
-## 开发
-
-```bash
-npm install
-npm run compile
-npm test
-npm run package:vsix
-```
-
-打包本地 VSIX：
-
-```bash
-npm run package:vsix
-```
 
 ## 隐私
 

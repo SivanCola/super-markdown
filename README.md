@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img alt="version" src="https://img.shields.io/badge/version-0.0.5-2f80d0">
+  <img alt="version" src="https://img.shields.io/badge/version-0.0.6-2f80d0">
   <img alt="platform" src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-8b8b8b">
   <img alt="VS Code" src="https://img.shields.io/badge/VS%20Code-%5E1.85.0-007acc">
   <img alt="license" src="https://img.shields.io/badge/license-Apache--2.0-35a853">
@@ -17,8 +17,8 @@
 
 <p align="center">
   <a href="#english">English</a> |
-  <a href="README.zh-CN.md">中文</a> |
-  <a href="CHANGELOG.md">Changelog</a>
+  <a href="https://github.com/SivanCola/super-markdown/blob/main/README.zh-CN.md">中文</a> |
+  <a href="https://github.com/SivanCola/super-markdown/blob/main/CHANGELOG.md">Changelog</a>
 </p>
 
 ---

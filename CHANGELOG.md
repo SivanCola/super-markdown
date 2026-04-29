@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.0.6
+
+- Fixed Marketplace and Open VSX README navigation links for the Chinese README and changelog.
+
 ## 0.0.5
 
 - Changed the extension publisher namespace to `SivanLiu` for consistent Marketplace and Open VSX identity.

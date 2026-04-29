@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.0.7
+
+- Reworked the README into a single bilingual Marketplace-friendly page.
+- Removed the separate Chinese README to avoid duplicated documentation.
+- Standardized local VSIX packaging under `dist/` with `npm run package:vsix`.
+
 ## 0.0.6
 
 - Fixed Marketplace and Open VSX README navigation links for the Chinese README and changelog.

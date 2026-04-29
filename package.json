@@ -2,7 +2,7 @@
   "name": "super-markdown",
   "displayName": "Super Markdown",
   "description": "Structured Markdown preview, navigation, document health checks, and safe cleanup for VS Code.",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "publisher": "SivanLiu",
   "license": "Apache-2.0",
   "icon": "images/icon.png",
@@ -569,7 +569,8 @@
     "watch": "tsc -watch -p ./",
     "lint": "eslint src --ext ts",
     "test": "npm run compile && mocha --ui tdd \"out/test/**/*.test.js\"",
-    "package": "vsce package",
+    "package": "npm run package:vsix",
+    "package:vsix": "node -e \"require('fs').mkdirSync('dist',{ recursive: true })\" && vsce package --out dist/super-markdown.vsix",
     "openvsx:create-namespace": "ovsx create-namespace SivanLiu",
     "openvsx:verify-token": "ovsx verify-pat SivanLiu",
     "openvsx:publish": "ovsx publish --skip-duplicate"

@@ -4,6 +4,5 @@ dist/
 .vscode-test/
 *.vsix
 *.log
-.vscode/
 AGENTS.md
 .jumpjump/

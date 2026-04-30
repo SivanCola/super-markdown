@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.0.9
+
+- Updated the Marketplace icon with transparent corners and sharper small-size rendering.
+- Removed unused screenshot SVG source files from packaged resources.
+
 ## 0.0.8
 
 - Removed development and local VSIX packaging instructions from the user-facing README.

@@ -76,10 +76,11 @@ export function renderMarkdown(options: RenderMarkdownOptions): string {
 
     const highlighted = highlightCode(token.content, language);
     const copyCode = t("webview.copyCode");
+    const codeTheme = t("webview.codeTheme");
     const copy = t("webview.copy");
     return [
       `<figure class="code-block" data-source-line="${line}">`,
-      `<figcaption><span>${escapeHtml(label)}</span><button type="button" class="copy-code" aria-label="${escapeHtml(copyCode)}">${escapeHtml(copy)}</button></figcaption>`,
+      `<figcaption><span>${escapeHtml(label)}</span><div class="code-actions"><button type="button" class="code-color-toggle" data-toggle-code-colors aria-label="${escapeHtml(codeTheme)}" title="${escapeHtml(codeTheme)}"></button><button type="button" class="copy-code" aria-label="${escapeHtml(copyCode)}">${escapeHtml(copy)}</button></div></figcaption>`,
       `<pre><code class="hljs language-${escapeAttribute(language)}">${highlighted}</code></pre>`,
       `</figure>`
     ].join("");

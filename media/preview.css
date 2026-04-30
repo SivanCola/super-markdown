@@ -14,46 +14,101 @@ body {
 }
 
 body {
-  background: var(--vscode-editor-background);
-  color: var(--vscode-editor-foreground);
+  --sm-page-bg: var(--vscode-editor-background);
+  --sm-text: var(--vscode-editor-foreground);
+  --sm-heading: var(--vscode-editor-foreground);
+  --sm-muted: var(--vscode-descriptionForeground);
+  --sm-border: var(--vscode-panel-border);
+  --sm-border-strong: var(--vscode-panel-border);
+  --sm-link: var(--vscode-textLink-foreground);
+  --sm-link-hover: var(--vscode-textLink-activeForeground);
+  --sm-inline-code-bg: var(--vscode-textCodeBlock-background);
+  --sm-inline-code-text: var(--vscode-editor-foreground);
+  --sm-code-bg: var(--vscode-textCodeBlock-background);
+  --sm-code-border: var(--vscode-panel-border);
+  --sm-code-header-bg: var(--vscode-editorWidget-background);
+  --sm-code-text: var(--vscode-editor-foreground);
+  --sm-syntax-comment: var(--vscode-editorCodeLens-foreground);
+  --sm-syntax-keyword: var(--vscode-symbolIcon-keywordForeground);
+  --sm-syntax-string: var(--vscode-symbolIcon-stringForeground);
+  --sm-syntax-function: var(--vscode-symbolIcon-functionForeground);
+  --sm-syntax-number: var(--vscode-symbolIcon-numberForeground);
+  --sm-quote-bg: var(--vscode-textBlockQuote-background);
+  --sm-quote-border: var(--vscode-textBlockQuote-border);
+  --sm-quote-text: var(--vscode-textBlockQuote-foreground);
+  --sm-table-header-bg: var(--vscode-editorWidget-background);
+  --sm-focus: var(--vscode-focusBorder);
+
+  background: var(--sm-page-bg);
+  color: var(--sm-text);
   font-family: var(--vscode-font-family);
   font-size: var(--sm-font-size, 14px);
 }
 
+body.sm-theme-system.vscode-light {
+  --sm-inline-code-bg: color-mix(in srgb, var(--vscode-textCodeBlock-background) 82%, var(--vscode-textLink-foreground));
+  --sm-inline-code-text: var(--vscode-textLink-foreground);
+}
+
+body.sm-theme-system.vscode-dark,
+body.sm-theme-system.vscode-high-contrast,
+body.sm-theme-system.vscode-high-contrast-light {
+  --sm-inline-code-bg: color-mix(in srgb, var(--vscode-textCodeBlock-background) 86%, var(--vscode-textLink-foreground));
+  --sm-inline-code-text: var(--vscode-textLink-foreground);
+}
+
 body.sm-theme-light {
   color-scheme: light;
-  --vscode-editor-background: #ffffff;
-  --vscode-editor-foreground: #24292f;
+  --sm-page-bg: #ffffff;
+  --sm-text: #24292f;
+  --sm-heading: #1f2328;
+  --sm-muted: #57606a;
+  --sm-border: #d8dee4;
+  --sm-border-strong: #afb8c1;
+  --sm-link: #0969da;
+  --sm-link-hover: #0550ae;
+  --sm-inline-code-bg: #eff3f6;
+  --sm-inline-code-text: #8250df;
+  --sm-code-bg: #f6f8fa;
+  --sm-code-border: #d8dee4;
+  --sm-code-header-bg: #f1f4f7;
+  --sm-quote-bg: #f6f8fa;
+  --sm-quote-border: #d0d7de;
+  --sm-quote-text: #57606a;
+  --sm-table-header-bg: #f6f8fa;
+  --sm-focus: #0969da;
+  --vscode-editor-background: var(--sm-page-bg);
+  --vscode-editor-foreground: var(--sm-text);
   --vscode-sideBar-background: #f6f8fa;
-  --vscode-sideBar-foreground: #24292f;
-  --vscode-sideBar-border: #d0d7de;
-  --vscode-panel-border: #d0d7de;
-  --vscode-button-border: #d0d7de;
+  --vscode-sideBar-foreground: var(--sm-text);
+  --vscode-sideBar-border: var(--sm-border);
+  --vscode-panel-border: var(--sm-border);
+  --vscode-button-border: var(--sm-border);
   --vscode-button-secondaryBackground: #f6f8fa;
-  --vscode-button-secondaryForeground: #24292f;
+  --vscode-button-secondaryForeground: var(--sm-text);
   --vscode-button-secondaryHoverBackground: #eef2f6;
-  --vscode-focusBorder: #0969da;
-  --vscode-badge-background: #0969da;
+  --vscode-focusBorder: var(--sm-focus);
+  --vscode-badge-background: var(--sm-link);
   --vscode-badge-foreground: #ffffff;
   --vscode-input-background: #ffffff;
-  --vscode-input-foreground: #24292f;
-  --vscode-input-border: #d0d7de;
-  --vscode-descriptionForeground: #57606a;
+  --vscode-input-foreground: var(--sm-text);
+  --vscode-input-border: var(--sm-border);
+  --vscode-descriptionForeground: var(--sm-muted);
   --vscode-list-hoverBackground: #eef2f6;
   --vscode-list-activeSelectionBackground: #dbeafe;
   --vscode-list-activeSelectionForeground: #0f172a;
   --vscode-errorForeground: #cf222e;
   --vscode-editorWarning-foreground: #9a6700;
-  --vscode-editorInfo-foreground: #0969da;
-  --vscode-editorOverviewRuler-infoForeground: #0969da;
-  --vscode-textLink-foreground: #0969da;
-  --vscode-textLink-activeForeground: #0550ae;
-  --vscode-textBlockQuote-border: #d0d7de;
-  --vscode-textBlockQuote-foreground: #57606a;
-  --vscode-textBlockQuote-background: #f6f8fa;
-  --vscode-editorWidget-background: #f6f8fa;
-  --vscode-textCodeBlock-background: #f6f8fa;
-  --vscode-editorCodeLens-foreground: #6e7781;
+  --vscode-editorInfo-foreground: var(--sm-link);
+  --vscode-editorOverviewRuler-infoForeground: var(--sm-link);
+  --vscode-textLink-foreground: var(--sm-link);
+  --vscode-textLink-activeForeground: var(--sm-link-hover);
+  --vscode-textBlockQuote-border: var(--sm-quote-border);
+  --vscode-textBlockQuote-foreground: var(--sm-quote-text);
+  --vscode-textBlockQuote-background: var(--sm-quote-bg);
+  --vscode-editorWidget-background: var(--sm-code-header-bg);
+  --vscode-textCodeBlock-background: var(--sm-code-bg);
+  --vscode-editorCodeLens-foreground: var(--sm-muted);
   --vscode-symbolIcon-keywordForeground: #cf222e;
   --vscode-symbolIcon-stringForeground: #116329;
   --vscode-symbolIcon-functionForeground: #8250df;
@@ -62,242 +117,374 @@ body.sm-theme-light {
 
 body.sm-theme-dark {
   color-scheme: dark;
-  --vscode-editor-background: #0d1117;
-  --vscode-editor-foreground: #c9d1d9;
+  --sm-page-bg: #0d1117;
+  --sm-text: #c9d1d9;
+  --sm-heading: #f0f6fc;
+  --sm-muted: #8b949e;
+  --sm-border: #30363d;
+  --sm-border-strong: #484f58;
+  --sm-link: #58a6ff;
+  --sm-link-hover: #79c0ff;
+  --sm-inline-code-bg: #1f2937;
+  --sm-inline-code-text: #a5d6ff;
+  --sm-code-bg: #161b22;
+  --sm-code-border: #30363d;
+  --sm-code-header-bg: #21262d;
+  --sm-quote-bg: #161b22;
+  --sm-quote-border: #3b434b;
+  --sm-quote-text: #b1bac4;
+  --sm-table-header-bg: #161b22;
+  --sm-focus: #58a6ff;
+  --vscode-editor-background: var(--sm-page-bg);
+  --vscode-editor-foreground: var(--sm-text);
   --vscode-sideBar-background: #161b22;
-  --vscode-sideBar-foreground: #c9d1d9;
-  --vscode-sideBar-border: #30363d;
-  --vscode-panel-border: #30363d;
-  --vscode-button-border: #30363d;
+  --vscode-sideBar-foreground: var(--sm-text);
+  --vscode-sideBar-border: var(--sm-border);
+  --vscode-panel-border: var(--sm-border);
+  --vscode-button-border: var(--sm-border);
   --vscode-button-secondaryBackground: #21262d;
-  --vscode-button-secondaryForeground: #c9d1d9;
+  --vscode-button-secondaryForeground: var(--sm-text);
   --vscode-button-secondaryHoverBackground: #30363d;
-  --vscode-focusBorder: #58a6ff;
+  --vscode-focusBorder: var(--sm-focus);
   --vscode-badge-background: #1f6feb;
   --vscode-badge-foreground: #ffffff;
-  --vscode-input-background: #0d1117;
-  --vscode-input-foreground: #c9d1d9;
-  --vscode-input-border: #30363d;
-  --vscode-descriptionForeground: #8b949e;
+  --vscode-input-background: var(--sm-page-bg);
+  --vscode-input-foreground: var(--sm-text);
+  --vscode-input-border: var(--sm-border);
+  --vscode-descriptionForeground: var(--sm-muted);
   --vscode-list-hoverBackground: #21262d;
   --vscode-list-activeSelectionBackground: #1f6feb;
   --vscode-list-activeSelectionForeground: #ffffff;
   --vscode-errorForeground: #ff7b72;
   --vscode-editorWarning-foreground: #d29922;
-  --vscode-editorInfo-foreground: #58a6ff;
-  --vscode-editorOverviewRuler-infoForeground: #58a6ff;
-  --vscode-textLink-foreground: #58a6ff;
-  --vscode-textLink-activeForeground: #79c0ff;
-  --vscode-textBlockQuote-border: #3b434b;
-  --vscode-textBlockQuote-foreground: #8b949e;
-  --vscode-textBlockQuote-background: #161b22;
-  --vscode-editorWidget-background: #161b22;
-  --vscode-textCodeBlock-background: #161b22;
-  --vscode-editorCodeLens-foreground: #8b949e;
+  --vscode-editorInfo-foreground: var(--sm-link);
+  --vscode-editorOverviewRuler-infoForeground: var(--sm-link);
+  --vscode-textLink-foreground: var(--sm-link);
+  --vscode-textLink-activeForeground: var(--sm-link-hover);
+  --vscode-textBlockQuote-border: var(--sm-quote-border);
+  --vscode-textBlockQuote-foreground: var(--sm-quote-text);
+  --vscode-textBlockQuote-background: var(--sm-quote-bg);
+  --vscode-editorWidget-background: var(--sm-code-header-bg);
+  --vscode-textCodeBlock-background: var(--sm-code-bg);
+  --vscode-editorCodeLens-foreground: var(--sm-muted);
   --vscode-symbolIcon-keywordForeground: #ff7b72;
   --vscode-symbolIcon-stringForeground: #a5d6ff;
   --vscode-symbolIcon-functionForeground: #d2a8ff;
   --vscode-symbolIcon-numberForeground: #79c0ff;
 }
 
-body.sm-theme-eye-care-green {
+body.sm-theme-sage {
   color-scheme: light;
-  --vscode-editor-background: #edf6ef;
-  --vscode-editor-foreground: #26372f;
-  --vscode-sideBar-background: #f7fbf7;
-  --vscode-sideBar-foreground: #26372f;
-  --vscode-sideBar-border: #c6d7c8;
-  --vscode-panel-border: #c6d7c8;
-  --vscode-button-border: #b3c8b6;
-  --vscode-button-secondaryBackground: #e2efe3;
-  --vscode-button-secondaryForeground: #22382c;
-  --vscode-button-secondaryHoverBackground: #d5e7d7;
-  --vscode-focusBorder: #3a7d5a;
-  --vscode-badge-background: #3a7d5a;
+  --sm-page-bg: #f3f8f1;
+  --sm-text: #21352a;
+  --sm-heading: #17281f;
+  --sm-muted: #5b7161;
+  --sm-border: #bfd4c0;
+  --sm-border-strong: #8fb79b;
+  --sm-link: #1f6b4a;
+  --sm-link-hover: #134a34;
+  --sm-inline-code-bg: #e1eee2;
+  --sm-inline-code-text: #22543d;
+  --sm-code-bg: #eef6ed;
+  --sm-code-border: #b8d1ba;
+  --sm-code-header-bg: #e4f0e3;
+  --sm-quote-bg: #e8f2e6;
+  --sm-quote-border: #7faa88;
+  --sm-quote-text: #3f5f49;
+  --sm-table-header-bg: #e8f2e6;
+  --sm-focus: #2f7d58;
+  --vscode-editor-background: var(--sm-page-bg);
+  --vscode-editor-foreground: var(--sm-text);
+  --vscode-sideBar-background: #f9fcf8;
+  --vscode-sideBar-foreground: var(--sm-text);
+  --vscode-sideBar-border: var(--sm-border);
+  --vscode-panel-border: var(--sm-border);
+  --vscode-button-border: var(--sm-border);
+  --vscode-button-secondaryBackground: #e8f2e6;
+  --vscode-button-secondaryForeground: var(--sm-text);
+  --vscode-button-secondaryHoverBackground: #dcebdd;
+  --vscode-focusBorder: var(--sm-focus);
+  --vscode-badge-background: var(--sm-link);
   --vscode-badge-foreground: #ffffff;
   --vscode-input-background: #fbfdf9;
-  --vscode-input-foreground: #26372f;
-  --vscode-input-border: #b3c8b6;
-  --vscode-descriptionForeground: #657568;
-  --vscode-list-hoverBackground: #dfece1;
-  --vscode-list-activeSelectionBackground: #c8dfcd;
+  --vscode-input-foreground: var(--sm-text);
+  --vscode-input-border: var(--sm-border);
+  --vscode-descriptionForeground: var(--sm-muted);
+  --vscode-list-hoverBackground: #e1eee2;
+  --vscode-list-activeSelectionBackground: #c7dfca;
   --vscode-list-activeSelectionForeground: #1f3528;
   --vscode-errorForeground: #b4232f;
   --vscode-editorWarning-foreground: #8a6516;
-  --vscode-editorInfo-foreground: #2f6f56;
-  --vscode-editorOverviewRuler-infoForeground: #2f6f56;
-  --vscode-textLink-foreground: #2f6f56;
-  --vscode-textLink-activeForeground: #1f5a40;
-  --vscode-textBlockQuote-border: #8fb79b;
-  --vscode-textBlockQuote-foreground: #4d6656;
-  --vscode-textBlockQuote-background: #e3f0e5;
-  --vscode-editorWidget-background: #f7fbf7;
-  --vscode-textCodeBlock-background: #e3eee4;
-  --vscode-editorCodeLens-foreground: #6f7f72;
+  --vscode-editorInfo-foreground: var(--sm-link);
+  --vscode-editorOverviewRuler-infoForeground: var(--sm-link);
+  --vscode-textLink-foreground: var(--sm-link);
+  --vscode-textLink-activeForeground: var(--sm-link-hover);
+  --vscode-textBlockQuote-border: var(--sm-quote-border);
+  --vscode-textBlockQuote-foreground: var(--sm-quote-text);
+  --vscode-textBlockQuote-background: var(--sm-quote-bg);
+  --vscode-editorWidget-background: var(--sm-code-header-bg);
+  --vscode-textCodeBlock-background: var(--sm-code-bg);
+  --vscode-editorCodeLens-foreground: var(--sm-muted);
   --vscode-symbolIcon-keywordForeground: #7b3f2b;
-  --vscode-symbolIcon-stringForeground: #2f6f56;
-  --vscode-symbolIcon-functionForeground: #415f8a;
+  --vscode-symbolIcon-stringForeground: #1f6b4a;
+  --vscode-symbolIcon-functionForeground: #2f5f82;
   --vscode-symbolIcon-numberForeground: #7a5a1f;
 }
 
-body.sm-theme-warm-paper {
+body.sm-theme-paper {
   color-scheme: light;
-  --vscode-editor-background: #fdf3dc;
-  --vscode-editor-foreground: #3f3428;
+  --sm-page-bg: #fbf2df;
+  --sm-text: #3a3028;
+  --sm-heading: #2d241d;
+  --sm-muted: #725f4c;
+  --sm-border: #dec9a9;
+  --sm-border-strong: #bd9e6d;
+  --sm-link: #7a4e1d;
+  --sm-link-hover: #543514;
+  --sm-inline-code-bg: #efe0c3;
+  --sm-inline-code-text: #7a3d1d;
+  --sm-code-bg: #f5e8d1;
+  --sm-code-border: #d8c29c;
+  --sm-code-header-bg: #ead7b8;
+  --sm-quote-bg: #f3e5c9;
+  --sm-quote-border: #b88a4b;
+  --sm-quote-text: #604d3a;
+  --sm-table-header-bg: #f2e4ca;
+  --sm-focus: #9b6a2f;
+  --vscode-editor-background: var(--sm-page-bg);
+  --vscode-editor-foreground: var(--sm-text);
   --vscode-sideBar-background: #fff8e9;
-  --vscode-sideBar-foreground: #3f3428;
-  --vscode-sideBar-border: #dfccb0;
-  --vscode-panel-border: #dfccb0;
-  --vscode-button-border: #d0b994;
-  --vscode-button-secondaryBackground: #f3e6cc;
-  --vscode-button-secondaryForeground: #3f3428;
-  --vscode-button-secondaryHoverBackground: #ead9b9;
-  --vscode-focusBorder: #9b6a2f;
-  --vscode-badge-background: #8b5e34;
+  --vscode-sideBar-foreground: var(--sm-text);
+  --vscode-sideBar-border: var(--sm-border);
+  --vscode-panel-border: var(--sm-border);
+  --vscode-button-border: var(--sm-border);
+  --vscode-button-secondaryBackground: #f2e2c5;
+  --vscode-button-secondaryForeground: var(--sm-text);
+  --vscode-button-secondaryHoverBackground: #ead5b1;
+  --vscode-focusBorder: var(--sm-focus);
+  --vscode-badge-background: var(--sm-link);
   --vscode-badge-foreground: #fff8e9;
   --vscode-input-background: #fffaf0;
-  --vscode-input-foreground: #3f3428;
-  --vscode-input-border: #d0b994;
-  --vscode-descriptionForeground: #7b6a56;
+  --vscode-input-foreground: var(--sm-text);
+  --vscode-input-border: var(--sm-border);
+  --vscode-descriptionForeground: var(--sm-muted);
   --vscode-list-hoverBackground: #f1e2c6;
   --vscode-list-activeSelectionBackground: #e4cda4;
   --vscode-list-activeSelectionForeground: #33281e;
   --vscode-errorForeground: #9e2a2b;
   --vscode-editorWarning-foreground: #94620f;
   --vscode-editorInfo-foreground: #335c67;
-  --vscode-editorOverviewRuler-infoForeground: #335c67;
-  --vscode-textLink-foreground: #8b5e34;
-  --vscode-textLink-activeForeground: #5f3e20;
-  --vscode-textBlockQuote-border: #c6a56d;
-  --vscode-textBlockQuote-foreground: #685540;
-  --vscode-textBlockQuote-background: #f4e5c8;
-  --vscode-editorWidget-background: #fff8e9;
-  --vscode-textCodeBlock-background: #f3e7d0;
-  --vscode-editorCodeLens-foreground: #887560;
+  --vscode-editorOverviewRuler-infoForeground: var(--sm-link);
+  --vscode-textLink-foreground: var(--sm-link);
+  --vscode-textLink-activeForeground: var(--sm-link-hover);
+  --vscode-textBlockQuote-border: var(--sm-quote-border);
+  --vscode-textBlockQuote-foreground: var(--sm-quote-text);
+  --vscode-textBlockQuote-background: var(--sm-quote-bg);
+  --vscode-editorWidget-background: var(--sm-code-header-bg);
+  --vscode-textCodeBlock-background: var(--sm-code-bg);
+  --vscode-editorCodeLens-foreground: var(--sm-muted);
   --vscode-symbolIcon-keywordForeground: #9e2a2b;
   --vscode-symbolIcon-stringForeground: #4f772d;
   --vscode-symbolIcon-functionForeground: #335c67;
   --vscode-symbolIcon-numberForeground: #bc6c25;
 }
 
-body.sm-theme-ink-black {
-  color-scheme: dark;
-  --vscode-editor-background: #0f1115;
-  --vscode-editor-foreground: #d9deea;
-  --vscode-sideBar-background: #171b22;
-  --vscode-sideBar-foreground: #d9deea;
-  --vscode-sideBar-border: #2d3340;
-  --vscode-panel-border: #2d3340;
-  --vscode-button-border: #3a4354;
-  --vscode-button-secondaryBackground: #1f2530;
-  --vscode-button-secondaryForeground: #d9deea;
-  --vscode-button-secondaryHoverBackground: #2a3240;
-  --vscode-focusBorder: #7aa2f7;
-  --vscode-badge-background: #2f6f8f;
-  --vscode-badge-foreground: #ffffff;
-  --vscode-input-background: #10141b;
-  --vscode-input-foreground: #d9deea;
-  --vscode-input-border: #3a4354;
-  --vscode-descriptionForeground: #98a2b3;
-  --vscode-list-hoverBackground: #1f2530;
-  --vscode-list-activeSelectionBackground: #2f6f8f;
-  --vscode-list-activeSelectionForeground: #ffffff;
-  --vscode-errorForeground: #ff8a8a;
-  --vscode-editorWarning-foreground: #e0af68;
-  --vscode-editorInfo-foreground: #7aa2f7;
-  --vscode-editorOverviewRuler-infoForeground: #7aa2f7;
-  --vscode-textLink-foreground: #7aa2f7;
-  --vscode-textLink-activeForeground: #9cc4ff;
-  --vscode-textBlockQuote-border: #455064;
-  --vscode-textBlockQuote-foreground: #aab3c2;
-  --vscode-textBlockQuote-background: #171b22;
-  --vscode-editorWidget-background: #171b22;
-  --vscode-textCodeBlock-background: #11161d;
-  --vscode-editorCodeLens-foreground: #8f99aa;
-  --vscode-symbolIcon-keywordForeground: #ff9e64;
-  --vscode-symbolIcon-stringForeground: #9ece6a;
-  --vscode-symbolIcon-functionForeground: #7aa2f7;
-  --vscode-symbolIcon-numberForeground: #bb9af7;
-}
-
-body.sm-theme-coastal-blue {
+body.sm-theme-ocean {
   color-scheme: light;
-  --vscode-editor-background: #f4fbfd;
-  --vscode-editor-foreground: #173642;
-  --vscode-sideBar-background: #ffffff;
-  --vscode-sideBar-foreground: #173642;
-  --vscode-sideBar-border: #bedee7;
-  --vscode-panel-border: #bedee7;
-  --vscode-button-border: #9dccd8;
+  --sm-page-bg: #f0f8fb;
+  --sm-text: #173442;
+  --sm-heading: #0f2c38;
+  --sm-muted: #536f7a;
+  --sm-border: #b9d9e3;
+  --sm-border-strong: #76b7ca;
+  --sm-link: #006d8f;
+  --sm-link-hover: #004f69;
+  --sm-inline-code-bg: #dff0f5;
+  --sm-inline-code-text: #005f76;
+  --sm-code-bg: #e8f5f8;
+  --sm-code-border: #b3d5df;
+  --sm-code-header-bg: #d9edf3;
+  --sm-quote-bg: #e2f1f5;
+  --sm-quote-border: #69aebf;
+  --sm-quote-text: #3c6572;
+  --sm-table-header-bg: #e1f0f4;
+  --sm-focus: #0081a7;
+  --vscode-editor-background: var(--sm-page-bg);
+  --vscode-editor-foreground: var(--sm-text);
+  --vscode-sideBar-background: #fbfeff;
+  --vscode-sideBar-foreground: var(--sm-text);
+  --vscode-sideBar-border: var(--sm-border);
+  --vscode-panel-border: var(--sm-border);
+  --vscode-button-border: var(--sm-border);
   --vscode-button-secondaryBackground: #e4f4f8;
-  --vscode-button-secondaryForeground: #173642;
-  --vscode-button-secondaryHoverBackground: #d5edf4;
-  --vscode-focusBorder: #0081a7;
-  --vscode-badge-background: #0081a7;
+  --vscode-button-secondaryForeground: var(--sm-text);
+  --vscode-button-secondaryHoverBackground: #d2ebf2;
+  --vscode-focusBorder: var(--sm-focus);
+  --vscode-badge-background: var(--sm-link);
   --vscode-badge-foreground: #ffffff;
   --vscode-input-background: #ffffff;
-  --vscode-input-foreground: #173642;
-  --vscode-input-border: #9dccd8;
-  --vscode-descriptionForeground: #5f7780;
+  --vscode-input-foreground: var(--sm-text);
+  --vscode-input-border: var(--sm-border);
+  --vscode-descriptionForeground: var(--sm-muted);
   --vscode-list-hoverBackground: #e0f2f7;
   --vscode-list-activeSelectionBackground: #ccebf2;
   --vscode-list-activeSelectionForeground: #102f39;
   --vscode-errorForeground: #b53b32;
   --vscode-editorWarning-foreground: #9a6a12;
-  --vscode-editorInfo-foreground: #0081a7;
-  --vscode-editorOverviewRuler-infoForeground: #0081a7;
-  --vscode-textLink-foreground: #007e9e;
-  --vscode-textLink-activeForeground: #005f76;
-  --vscode-textBlockQuote-border: #82c7d7;
-  --vscode-textBlockQuote-foreground: #426772;
-  --vscode-textBlockQuote-background: #e8f6fa;
-  --vscode-editorWidget-background: #ffffff;
-  --vscode-textCodeBlock-background: #e8f6fa;
-  --vscode-editorCodeLens-foreground: #687f87;
+  --vscode-editorInfo-foreground: var(--sm-link);
+  --vscode-editorOverviewRuler-infoForeground: var(--sm-link);
+  --vscode-textLink-foreground: var(--sm-link);
+  --vscode-textLink-activeForeground: var(--sm-link-hover);
+  --vscode-textBlockQuote-border: var(--sm-quote-border);
+  --vscode-textBlockQuote-foreground: var(--sm-quote-text);
+  --vscode-textBlockQuote-background: var(--sm-quote-bg);
+  --vscode-editorWidget-background: var(--sm-code-header-bg);
+  --vscode-textCodeBlock-background: var(--sm-code-bg);
+  --vscode-editorCodeLens-foreground: var(--sm-muted);
   --vscode-symbolIcon-keywordForeground: #9e2a2b;
   --vscode-symbolIcon-stringForeground: #007f5f;
   --vscode-symbolIcon-functionForeground: #006d77;
   --vscode-symbolIcon-numberForeground: #d97706;
 }
 
+body.sm-theme-ink {
+  color-scheme: dark;
+  --sm-page-bg: #0f1115;
+  --sm-text: #d9deea;
+  --sm-heading: #f4f7fb;
+  --sm-muted: #98a2b3;
+  --sm-border: #2f3746;
+  --sm-border-strong: #4d5a70;
+  --sm-link: #8cb8ff;
+  --sm-link-hover: #b2d0ff;
+  --sm-inline-code-bg: #1f2937;
+  --sm-inline-code-text: #a8c7ff;
+  --sm-code-bg: #121821;
+  --sm-code-border: #303948;
+  --sm-code-header-bg: #1a2230;
+  --sm-quote-bg: #171d27;
+  --sm-quote-border: #53617a;
+  --sm-quote-text: #b6c0cf;
+  --sm-table-header-bg: #171d27;
+  --sm-focus: #8cb8ff;
+  --vscode-editor-background: var(--sm-page-bg);
+  --vscode-editor-foreground: var(--sm-text);
+  --vscode-sideBar-background: #171b22;
+  --vscode-sideBar-foreground: var(--sm-text);
+  --vscode-sideBar-border: var(--sm-border);
+  --vscode-panel-border: var(--sm-border);
+  --vscode-button-border: var(--sm-border);
+  --vscode-button-secondaryBackground: #1f2530;
+  --vscode-button-secondaryForeground: var(--sm-text);
+  --vscode-button-secondaryHoverBackground: #2a3240;
+  --vscode-focusBorder: var(--sm-focus);
+  --vscode-badge-background: #2f6f8f;
+  --vscode-badge-foreground: #ffffff;
+  --vscode-input-background: #10141b;
+  --vscode-input-foreground: var(--sm-text);
+  --vscode-input-border: var(--sm-border);
+  --vscode-descriptionForeground: var(--sm-muted);
+  --vscode-list-hoverBackground: #1f2530;
+  --vscode-list-activeSelectionBackground: #2f6f8f;
+  --vscode-list-activeSelectionForeground: #ffffff;
+  --vscode-errorForeground: #ff8a8a;
+  --vscode-editorWarning-foreground: #e0af68;
+  --vscode-editorInfo-foreground: var(--sm-link);
+  --vscode-editorOverviewRuler-infoForeground: var(--sm-link);
+  --vscode-textLink-foreground: var(--sm-link);
+  --vscode-textLink-activeForeground: var(--sm-link-hover);
+  --vscode-textBlockQuote-border: var(--sm-quote-border);
+  --vscode-textBlockQuote-foreground: var(--sm-quote-text);
+  --vscode-textBlockQuote-background: var(--sm-quote-bg);
+  --vscode-editorWidget-background: var(--sm-code-header-bg);
+  --vscode-textCodeBlock-background: var(--sm-code-bg);
+  --vscode-editorCodeLens-foreground: var(--sm-muted);
+  --vscode-symbolIcon-keywordForeground: #ff9e64;
+  --vscode-symbolIcon-stringForeground: #9ece6a;
+  --vscode-symbolIcon-functionForeground: #8cb8ff;
+  --vscode-symbolIcon-numberForeground: #bb9af7;
+}
+
 body.sm-theme-high-contrast {
   color-scheme: dark;
-  --vscode-editor-background: #000000;
-  --vscode-editor-foreground: #ffffff;
+  --sm-page-bg: #000000;
+  --sm-text: #ffffff;
+  --sm-heading: #ffffff;
+  --sm-muted: #d7d7d7;
+  --sm-border: #ffffff;
+  --sm-border-strong: #ffffff;
+  --sm-link: #66d9ff;
+  --sm-link-hover: #aeefff;
+  --sm-inline-code-bg: #111111;
+  --sm-inline-code-text: #ffd60a;
+  --sm-code-bg: #050505;
+  --sm-code-border: #ffffff;
+  --sm-code-header-bg: #111111;
+  --sm-quote-bg: #111111;
+  --sm-quote-border: #ffd60a;
+  --sm-quote-text: #ffffff;
+  --sm-table-header-bg: #111111;
+  --sm-focus: #ffd60a;
+  --vscode-editor-background: var(--sm-page-bg);
+  --vscode-editor-foreground: var(--sm-text);
   --vscode-sideBar-background: #080808;
-  --vscode-sideBar-foreground: #ffffff;
-  --vscode-sideBar-border: #ffffff;
-  --vscode-panel-border: #ffffff;
-  --vscode-button-border: #ffffff;
+  --vscode-sideBar-foreground: var(--sm-text);
+  --vscode-sideBar-border: var(--sm-border);
+  --vscode-panel-border: var(--sm-border);
+  --vscode-button-border: var(--sm-border);
   --vscode-button-secondaryBackground: #111111;
-  --vscode-button-secondaryForeground: #ffffff;
+  --vscode-button-secondaryForeground: var(--sm-text);
   --vscode-button-secondaryHoverBackground: #222222;
-  --vscode-focusBorder: #ffd60a;
-  --vscode-badge-background: #ffd60a;
+  --vscode-focusBorder: var(--sm-focus);
+  --vscode-badge-background: var(--sm-focus);
   --vscode-badge-foreground: #000000;
-  --vscode-input-background: #000000;
-  --vscode-input-foreground: #ffffff;
-  --vscode-input-border: #ffffff;
-  --vscode-descriptionForeground: #d7d7d7;
+  --vscode-input-background: var(--sm-page-bg);
+  --vscode-input-foreground: var(--sm-text);
+  --vscode-input-border: var(--sm-border);
+  --vscode-descriptionForeground: var(--sm-muted);
   --vscode-list-hoverBackground: #222222;
-  --vscode-list-activeSelectionBackground: #ffd60a;
+  --vscode-list-activeSelectionBackground: var(--sm-focus);
   --vscode-list-activeSelectionForeground: #000000;
   --vscode-errorForeground: #ff6b6b;
-  --vscode-editorWarning-foreground: #ffd60a;
-  --vscode-editorInfo-foreground: #66d9ff;
-  --vscode-editorOverviewRuler-infoForeground: #66d9ff;
-  --vscode-textLink-foreground: #66d9ff;
-  --vscode-textLink-activeForeground: #aeefff;
-  --vscode-textBlockQuote-border: #ffd60a;
-  --vscode-textBlockQuote-foreground: #ffffff;
-  --vscode-textBlockQuote-background: #111111;
-  --vscode-editorWidget-background: #111111;
-  --vscode-textCodeBlock-background: #050505;
-  --vscode-editorCodeLens-foreground: #d7d7d7;
+  --vscode-editorWarning-foreground: var(--sm-focus);
+  --vscode-editorInfo-foreground: var(--sm-link);
+  --vscode-editorOverviewRuler-infoForeground: var(--sm-link);
+  --vscode-textLink-foreground: var(--sm-link);
+  --vscode-textLink-activeForeground: var(--sm-link-hover);
+  --vscode-textBlockQuote-border: var(--sm-quote-border);
+  --vscode-textBlockQuote-foreground: var(--sm-quote-text);
+  --vscode-textBlockQuote-background: var(--sm-quote-bg);
+  --vscode-editorWidget-background: var(--sm-code-header-bg);
+  --vscode-textCodeBlock-background: var(--sm-code-bg);
+  --vscode-editorCodeLens-foreground: var(--sm-muted);
   --vscode-symbolIcon-keywordForeground: #ff8a00;
   --vscode-symbolIcon-stringForeground: #73ff9a;
-  --vscode-symbolIcon-functionForeground: #66d9ff;
-  --vscode-symbolIcon-numberForeground: #ffd60a;
+  --vscode-symbolIcon-functionForeground: var(--sm-link);
+  --vscode-symbolIcon-numberForeground: var(--sm-focus);
+}
+
+body[data-code-color-mode="light"] {
+  --sm-code-bg: #f6f8fa;
+  --sm-code-border: #d0d7de;
+  --sm-code-header-bg: #eef2f6;
+  --sm-code-text: #24292f;
+  --sm-syntax-comment: #6e7781;
+  --sm-syntax-keyword: #cf222e;
+  --sm-syntax-string: #116329;
+  --sm-syntax-function: #8250df;
+  --sm-syntax-number: #0550ae;
+}
+
+body[data-code-color-mode="dark"] {
+  --sm-code-bg: #0d1117;
+  --sm-code-border: #30363d;
+  --sm-code-header-bg: #161b22;
+  --sm-code-text: #c9d1d9;
+  --sm-syntax-comment: #8b949e;
+  --sm-syntax-keyword: #ff7b72;
+  --sm-syntax-string: #a5d6ff;
+  --sm-syntax-function: #d2a8ff;
+  --sm-syntax-number: #79c0ff;
 }
 
 button,
@@ -613,6 +800,7 @@ body.is-resizing-sidebar .sidebar {
   width: min(100% - 48px, var(--sm-max-width, 860px));
   margin: 0 auto;
   padding: 28px 0 72px;
+  color: var(--sm-text);
   line-height: 1.65;
 }
 
@@ -627,7 +815,7 @@ body.is-resizing-sidebar .sidebar {
 .markdown-body h5,
 .markdown-body h6 {
   margin: 1.8em 0 0.7em;
-  color: var(--vscode-editor-foreground);
+  color: var(--sm-heading);
   font-weight: 650;
   line-height: 1.25;
   scroll-margin-top: 24px;
@@ -635,13 +823,13 @@ body.is-resizing-sidebar .sidebar {
 
 .markdown-body h1 {
   padding-bottom: 0.35em;
-  border-bottom: 1px solid var(--vscode-panel-border);
+  border-bottom: 1px solid var(--sm-border-strong);
   font-size: 2em;
 }
 
 .markdown-body h2 {
   padding-bottom: 0.25em;
-  border-bottom: 1px solid var(--vscode-panel-border);
+  border-bottom: 1px solid var(--sm-border);
   font-size: 1.55em;
 }
 
@@ -665,18 +853,32 @@ body.is-resizing-sidebar .sidebar {
 }
 
 .markdown-body a {
-  color: var(--vscode-textLink-foreground);
+  color: var(--sm-link);
+  font-weight: 550;
+  text-decoration-color: color-mix(in srgb, var(--sm-link) 46%, transparent);
+  text-underline-offset: 0.18em;
 }
 
 .markdown-body a:hover {
-  color: var(--vscode-textLink-activeForeground);
+  color: var(--sm-link-hover);
+  text-decoration-color: currentColor;
+}
+
+.markdown-body :not(pre) > code {
+  padding: 0.12em 0.34em;
+  border: 1px solid color-mix(in srgb, var(--sm-inline-code-text) 16%, transparent);
+  border-radius: 4px;
+  background: var(--sm-inline-code-bg);
+  color: var(--sm-inline-code-text);
+  font-family: var(--vscode-editor-font-family);
+  font-size: 0.92em;
 }
 
 .markdown-body blockquote {
-  padding: 0 1em;
-  border-left: 3px solid var(--vscode-textBlockQuote-border);
-  color: var(--vscode-textBlockQuote-foreground);
-  background: var(--vscode-textBlockQuote-background);
+  padding: 0.75em 1em;
+  border-left: 3px solid var(--sm-quote-border);
+  color: var(--sm-quote-text);
+  background: var(--sm-quote-bg);
 }
 
 .markdown-body table {
@@ -689,11 +891,11 @@ body.is-resizing-sidebar .sidebar {
 .markdown-body th,
 .markdown-body td {
   padding: 6px 10px;
-  border: 1px solid var(--vscode-panel-border);
+  border: 1px solid var(--sm-border);
 }
 
 .markdown-body th {
-  background: var(--vscode-editorWidget-background);
+  background: var(--sm-table-header-bg);
   font-weight: 650;
 }
 
@@ -703,17 +905,17 @@ body.is-resizing-sidebar .sidebar {
 }
 
 .source-line-active {
-  outline: 1px solid var(--vscode-editorOverviewRuler-infoForeground);
+  outline: 1px solid var(--sm-focus);
   outline-offset: 3px;
-  background: color-mix(in srgb, var(--vscode-editorInfo-foreground) 10%, transparent);
+  background: color-mix(in srgb, var(--sm-focus) 10%, transparent);
 }
 
 .code-block,
 .diagram-block {
   overflow: hidden;
-  border: 1px solid var(--vscode-panel-border);
+  border: 1px solid var(--sm-code-border);
   border-radius: 6px;
-  background: var(--vscode-textCodeBlock-background);
+  background: var(--sm-code-bg);
 }
 
 .code-block figcaption,
@@ -723,11 +925,19 @@ body.is-resizing-sidebar .sidebar {
   justify-content: space-between;
   min-height: 32px;
   padding: 0 10px;
-  border-bottom: 1px solid var(--vscode-panel-border);
-  color: var(--vscode-descriptionForeground);
+  border-bottom: 1px solid var(--sm-code-border);
+  background: var(--sm-code-header-bg);
+  color: var(--sm-muted);
   font-size: 12px;
 }
 
+.code-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.code-color-toggle,
 .copy-code {
   height: 24px;
   padding: 0 8px;
@@ -738,45 +948,64 @@ body.is-resizing-sidebar .sidebar {
   cursor: pointer;
 }
 
+.code-color-toggle:hover,
 .copy-code:hover {
   background: var(--vscode-button-secondaryHoverBackground);
+}
+
+.code-color-toggle:focus,
+.copy-code:focus {
+  outline: 1px solid var(--vscode-focusBorder);
+  outline-offset: -1px;
 }
 
 .code-block pre {
   margin: 0;
   padding: 14px;
   overflow: auto;
+  background: var(--sm-code-bg);
 }
 
 .code-block code {
+  display: block;
+  min-width: max-content;
+  background: transparent;
+  color: var(--sm-code-text);
   font-family: var(--vscode-editor-font-family);
   font-size: calc(var(--sm-font-size, 14px) - 1px);
+  line-height: 1.55;
+}
+
+.code-block code *,
+.code-block .hljs,
+.code-block .hljs * {
+  background: transparent;
 }
 
 .hljs-comment,
 .hljs-quote {
-  color: var(--vscode-editorCodeLens-foreground);
+  color: var(--sm-syntax-comment);
 }
 
 .hljs-keyword,
 .hljs-selector-tag,
 .hljs-literal {
-  color: var(--vscode-symbolIcon-keywordForeground);
+  color: var(--sm-syntax-keyword);
 }
 
 .hljs-string,
 .hljs-attr {
-  color: var(--vscode-symbolIcon-stringForeground);
+  color: var(--sm-syntax-string);
 }
 
 .hljs-title,
 .hljs-section {
-  color: var(--vscode-symbolIcon-functionForeground);
+  color: var(--sm-syntax-function);
 }
 
 .hljs-number,
 .hljs-built_in {
-  color: var(--vscode-symbolIcon-numberForeground);
+  color: var(--sm-syntax-number);
 }
 
 .diagram-block {

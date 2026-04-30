@@ -1,7 +1,10 @@
 node_modules/
-out/
-dist/
+/out/
+/dist/
 .vscode-test/
+.dev/
+.DS_Store
+media/vendor/vditor/
 *.vsix
 *.log
 AGENTS.md

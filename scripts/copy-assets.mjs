@@ -16,6 +16,10 @@ const assets = [
   {
     from: "node_modules/katex/dist/fonts",
     to: "media/vendor/katex/fonts"
+  },
+  {
+    from: "node_modules/vditor/dist",
+    to: "media/vendor/vditor/dist"
   }
 ];
 

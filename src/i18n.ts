@@ -17,26 +17,27 @@ type TranslationKey =
   | "language.changed"
   | "language.button.label"
   | "language.button.title"
-  | "theme.auto.label"
-  | "theme.auto.detail"
+  | "theme.system.label"
+  | "theme.system.detail"
   | "theme.light.label"
   | "theme.light.detail"
   | "theme.dark.label"
   | "theme.dark.detail"
-  | "theme.eyeCareGreen.label"
-  | "theme.eyeCareGreen.detail"
-  | "theme.warmPaper.label"
-  | "theme.warmPaper.detail"
-  | "theme.inkBlack.label"
-  | "theme.inkBlack.detail"
-  | "theme.coastalBlue.label"
-  | "theme.coastalBlue.detail"
+  | "theme.sage.label"
+  | "theme.sage.detail"
+  | "theme.paper.label"
+  | "theme.paper.detail"
+  | "theme.ink.label"
+  | "theme.ink.detail"
+  | "theme.ocean.label"
+  | "theme.ocean.detail"
   | "theme.highContrast.label"
   | "theme.highContrast.detail"
   | "theme.current"
   | "theme.changed"
   | "mode.preview"
   | "mode.splitEdit"
+  | "mode.wysiwyg"
   | "webview.navigation"
   | "webview.searchHeadings"
   | "webview.headings"
@@ -50,17 +51,53 @@ type TranslationKey =
   | "webview.copy"
   | "webview.copied"
   | "webview.copyCode"
+  | "webview.codeTheme"
+  | "webview.codeThemeAuto"
+  | "webview.codeThemeLight"
+  | "webview.codeThemeDark"
+  | "webview.save"
+  | "webview.copyMarkdown"
+  | "webview.copyHtml"
+  | "export.quickPickTitle"
+  | "export.quickPickPlaceholder"
+  | "export.settings.label"
+  | "export.settings.detail"
+  | "export.pdf.label"
+  | "export.pdf.detail"
+  | "export.html.label"
+  | "export.html.detail"
+  | "export.png.label"
+  | "export.png.detail"
+  | "export.jpeg.label"
+  | "export.jpeg.detail"
+  | "export.all.label"
+  | "export.all.detail"
   | "message.noMarkdownRefresh"
   | "message.noMarkdownRun"
   | "message.selectMarkdownFile"
   | "message.noMarkdownFiles"
   | "message.noOrganizeChanges"
-  | "message.organizeApply"
+  | "message.organizeNoChangesWithIssues"
+  | "message.organizeSummary"
   | "message.duplicateAnchorWarnings"
   | "message.applyFailed"
   | "message.noHealthIssues"
   | "message.previewError"
+  | "message.copiedMarkdown"
+  | "message.copiedHtml"
+  | "message.wysiwygError"
+  | "message.fileBackedOnly"
+  | "message.chromiumUnavailable"
+  | "message.exportDone"
+  | "message.exportFailed"
+  | "message.exportSkipped"
+  | "message.tableJsonCopied"
+  | "message.tableJsonFailed"
+  | "message.jsonTableCopied"
+  | "message.jsonTableFailed"
   | "action.applyChanges"
+  | "action.viewDiff"
+  | "action.viewReport"
   | "action.cancel"
   | "health.outputTitle"
   | "health.quickPickTitle"
@@ -77,7 +114,7 @@ type TranslationKey =
 
 const EN: Record<TranslationKey, string> = {
   "command.switchDisplayLanguage.title": "Switch Display Language",
-  "command.switchBackgroundTheme.title": "Switch Background Theme",
+  "command.switchBackgroundTheme.title": "Switch Reading Theme",
   "language.auto.label": "$(sync) Follow VS Code",
   "language.auto.detail": "Use the current VS Code display language.",
   "language.zhCN.label": "简体中文",
@@ -88,29 +125,30 @@ const EN: Record<TranslationKey, string> = {
   "language.changed": "Super Markdown display language switched to {0}.",
   "language.button.label": "EN",
   "language.button.title": "Switch display language",
-  "theme.auto.label": "$(sync) Follow VS Code",
-  "theme.auto.detail": "Use the current VS Code color theme.",
+  "theme.system.label": "$(sync) System",
+  "theme.system.detail": "Follow the current VS Code color theme.",
   "theme.light.label": "$(color-mode) Light",
-  "theme.light.detail": "Use a light preview background.",
+  "theme.light.detail": "Use a neutral light reading theme.",
   "theme.dark.label": "$(color-mode) Dark",
-  "theme.dark.detail": "Use a dark preview background.",
-  "theme.eyeCareGreen.label": "$(eye) Eye-Care Green",
-  "theme.eyeCareGreen.detail": "Use a low-saturation green background for long reading.",
-  "theme.warmPaper.label": "$(book) Warm Paper",
-  "theme.warmPaper.detail": "Use a warm paper-like reading background.",
-  "theme.inkBlack.label": "$(circle-filled) Ink Black",
-  "theme.inkBlack.detail": "Use a soft black night-reading background.",
-  "theme.coastalBlue.label": "$(symbol-color) Coastal Blue",
-  "theme.coastalBlue.detail": "Use a clean blue-tinted reading background.",
+  "theme.dark.detail": "Use a neutral dark reading theme.",
+  "theme.sage.label": "$(eye) Sage",
+  "theme.sage.detail": "Use a calm green reading theme.",
+  "theme.paper.label": "$(book) Paper",
+  "theme.paper.detail": "Use a warm paper reading theme.",
+  "theme.ink.label": "$(circle-filled) Ink",
+  "theme.ink.detail": "Use a soft black night-reading theme.",
+  "theme.ocean.label": "$(symbol-color) Ocean",
+  "theme.ocean.detail": "Use a crisp blue reading theme.",
   "theme.highContrast.label": "$(circle-large-filled) High Contrast",
   "theme.highContrast.detail": "Use maximum contrast for accessibility.",
   "theme.current": "Current",
-  "theme.changed": "Super Markdown background theme switched to {0}.",
+  "theme.changed": "Super Markdown reading theme switched to {0}.",
   "mode.preview": "Preview Mode",
   "mode.splitEdit": "Split Edit Mode",
+  "mode.wysiwyg": "WYSIWYG Mode",
   "webview.navigation": "Document navigation",
-  "webview.searchHeadings": "Search headings",
-  "webview.headings": "Headings",
+  "webview.searchHeadings": "Search outline",
+  "webview.headings": "Outline",
   "webview.health": "Health",
   "webview.markdownPreview": "Markdown preview",
   "webview.noHeadings": "No headings",
@@ -121,17 +159,53 @@ const EN: Record<TranslationKey, string> = {
   "webview.copy": "Copy",
   "webview.copied": "Copied",
   "webview.copyCode": "Copy code",
+  "webview.codeTheme": "Code colors",
+  "webview.codeThemeAuto": "Auto",
+  "webview.codeThemeLight": "Light",
+  "webview.codeThemeDark": "Dark",
+  "webview.save": "Save",
+  "webview.copyMarkdown": "Copy Markdown",
+  "webview.copyHtml": "Copy HTML",
+  "export.quickPickTitle": "Super Markdown Export",
+  "export.quickPickPlaceholder": "Choose an export target",
+  "export.settings.label": "$(settings-gear) Use Settings",
+  "export.settings.detail": "Export using superMarkdown.export.type.",
+  "export.pdf.label": "$(file-pdf) PDF",
+  "export.pdf.detail": "Render the current Markdown document to PDF.",
+  "export.html.label": "$(file-code) HTML",
+  "export.html.detail": "Render the current Markdown document to a standalone HTML file.",
+  "export.png.label": "$(file-media) PNG",
+  "export.png.detail": "Render the current Markdown document to a PNG image.",
+  "export.jpeg.label": "$(file-media) JPEG",
+  "export.jpeg.detail": "Render the current Markdown document to a JPEG image.",
+  "export.all.label": "$(files) All Formats",
+  "export.all.detail": "Export HTML, PDF, PNG, and JPEG.",
   "message.noMarkdownRefresh": "Open a Markdown file before refreshing Super Markdown preview.",
   "message.noMarkdownRun": "Open a Markdown file before running Super Markdown.",
   "message.selectMarkdownFile": "Select a Markdown file",
   "message.noMarkdownFiles": "No Markdown files were found in this workspace.",
   "message.noOrganizeChanges": "Super Markdown found no organize changes.",
-  "message.organizeApply": "Apply {0} Super Markdown change{1}?{2}",
+  "message.organizeNoChangesWithIssues": "Super Markdown found no organize changes. {0} health issue{1} found; see the report.",
+  "message.organizeSummary": "Super Markdown found {0} organize change{1} and {2} health issue{3}.{4}",
   "message.duplicateAnchorWarnings": " {0} duplicate anchor warning{1}.",
   "message.applyFailed": "Super Markdown could not apply organize changes.",
   "message.noHealthIssues": "Super Markdown found no document health issues.",
   "message.previewError": "Super Markdown preview: {0}",
+  "message.copiedMarkdown": "Markdown copied.",
+  "message.copiedHtml": "HTML copied.",
+  "message.wysiwygError": "Super Markdown WYSIWYG editor: {0}",
+  "message.fileBackedOnly": "Image uploads require a file-backed Markdown document.",
+  "message.chromiumUnavailable": "No usable Chrome or Chromium executable is available.",
+  "message.exportDone": "Super Markdown exported: {0}",
+  "message.exportFailed": "Super Markdown export failed: {0}",
+  "message.exportSkipped": "Super Markdown export skipped this document.",
+  "message.tableJsonCopied": "Markdown table JSON copied.",
+  "message.tableJsonFailed": "Select a valid Markdown table before converting it to JSON.",
+  "message.jsonTableCopied": "Markdown table copied.",
+  "message.jsonTableFailed": "Select a valid JSON array before converting it to a Markdown table.",
   "action.applyChanges": "Apply Changes",
+  "action.viewDiff": "View Diff",
+  "action.viewReport": "View Report",
   "action.cancel": "Cancel",
   "health.outputTitle": "Super Markdown Health: {0}",
   "health.quickPickTitle": "Super Markdown Document Health",
@@ -149,7 +223,7 @@ const EN: Record<TranslationKey, string> = {
 
 const ZH_CN: Record<TranslationKey, string> = {
   "command.switchDisplayLanguage.title": "切换界面语言",
-  "command.switchBackgroundTheme.title": "切换背景主题",
+  "command.switchBackgroundTheme.title": "切换阅读主题",
   "language.auto.label": "$(sync) 跟随 VS Code",
   "language.auto.detail": "使用当前 VS Code 显示语言。",
   "language.zhCN.label": "简体中文",
@@ -160,29 +234,30 @@ const ZH_CN: Record<TranslationKey, string> = {
   "language.changed": "Super Markdown 界面语言已切换为{0}。",
   "language.button.label": "中",
   "language.button.title": "切换界面语言",
-  "theme.auto.label": "$(sync) 跟随 VS Code",
-  "theme.auto.detail": "使用当前 VS Code 配色主题。",
+  "theme.system.label": "$(sync) 系统",
+  "theme.system.detail": "跟随当前 VS Code 配色主题。",
   "theme.light.label": "$(color-mode) 浅色",
-  "theme.light.detail": "使用浅色预览背景。",
+  "theme.light.detail": "使用中性的浅色阅读主题。",
   "theme.dark.label": "$(color-mode) 深色",
-  "theme.dark.detail": "使用深色预览背景。",
-  "theme.eyeCareGreen.label": "$(eye) 护眼绿",
-  "theme.eyeCareGreen.detail": "使用低饱和绿色背景，适合长时间阅读。",
-  "theme.warmPaper.label": "$(book) 暖纸色",
-  "theme.warmPaper.detail": "使用接近纸张的暖色阅读背景。",
-  "theme.inkBlack.label": "$(circle-filled) 墨水黑",
-  "theme.inkBlack.detail": "使用柔和黑色背景，适合夜间阅读。",
-  "theme.coastalBlue.label": "$(symbol-color) 海岸蓝",
-  "theme.coastalBlue.detail": "使用清爽的蓝色调阅读背景。",
+  "theme.dark.detail": "使用中性的深色阅读主题。",
+  "theme.sage.label": "$(eye) 柔绿",
+  "theme.sage.detail": "使用低饱和绿色阅读主题。",
+  "theme.paper.label": "$(book) 纸页",
+  "theme.paper.detail": "使用接近纸张的暖色阅读主题。",
+  "theme.ink.label": "$(circle-filled) 墨黑",
+  "theme.ink.detail": "使用柔和黑色夜读主题。",
+  "theme.ocean.label": "$(symbol-color) 海蓝",
+  "theme.ocean.detail": "使用清爽的蓝色阅读主题。",
   "theme.highContrast.label": "$(circle-large-filled) 高对比",
   "theme.highContrast.detail": "使用最高对比度，提升可访问性。",
   "theme.current": "当前",
-  "theme.changed": "Super Markdown 背景主题已切换为{0}。",
+  "theme.changed": "Super Markdown 阅读主题已切换为{0}。",
   "mode.preview": "预览模式",
   "mode.splitEdit": "分屏编辑模式",
+  "mode.wysiwyg": "所见即所得模式",
   "webview.navigation": "文档导航",
-  "webview.searchHeadings": "搜索标题",
-  "webview.headings": "标题",
+  "webview.searchHeadings": "搜索目录",
+  "webview.headings": "目录",
   "webview.health": "健康检查",
   "webview.markdownPreview": "Markdown 预览",
   "webview.noHeadings": "没有标题",
@@ -193,17 +268,53 @@ const ZH_CN: Record<TranslationKey, string> = {
   "webview.copy": "复制",
   "webview.copied": "已复制",
   "webview.copyCode": "复制代码",
+  "webview.codeTheme": "代码配色",
+  "webview.codeThemeAuto": "自动",
+  "webview.codeThemeLight": "浅色",
+  "webview.codeThemeDark": "深色",
+  "webview.save": "保存",
+  "webview.copyMarkdown": "复制 Markdown",
+  "webview.copyHtml": "复制 HTML",
+  "export.quickPickTitle": "Super Markdown 导出",
+  "export.quickPickPlaceholder": "选择导出目标",
+  "export.settings.label": "$(settings-gear) 按设置导出",
+  "export.settings.detail": "使用 superMarkdown.export.type 配置导出。",
+  "export.pdf.label": "$(file-pdf) PDF",
+  "export.pdf.detail": "将当前 Markdown 文档渲染为 PDF。",
+  "export.html.label": "$(file-code) HTML",
+  "export.html.detail": "将当前 Markdown 文档渲染为独立 HTML 文件。",
+  "export.png.label": "$(file-media) PNG",
+  "export.png.detail": "将当前 Markdown 文档渲染为 PNG 图片。",
+  "export.jpeg.label": "$(file-media) JPEG",
+  "export.jpeg.detail": "将当前 Markdown 文档渲染为 JPEG 图片。",
+  "export.all.label": "$(files) 全部格式",
+  "export.all.detail": "导出 HTML、PDF、PNG 和 JPEG。",
   "message.noMarkdownRefresh": "请先打开一个 Markdown 文件，再刷新 Super Markdown 预览。",
   "message.noMarkdownRun": "请先打开一个 Markdown 文件，再运行 Super Markdown。",
   "message.selectMarkdownFile": "选择 Markdown 文件",
   "message.noMarkdownFiles": "当前工作区没有找到 Markdown 文件。",
   "message.noOrganizeChanges": "Super Markdown 没有发现需要整理的内容。",
-  "message.organizeApply": "是否应用 {0} 项 Super Markdown 修改？{2}",
+  "message.organizeNoChangesWithIssues": "Super Markdown 没有发现需要整理的内容。发现 {0} 个健康问题，请查看报告。",
+  "message.organizeSummary": "Super Markdown 发现 {0} 项整理修改和 {2} 个健康问题。{4}",
   "message.duplicateAnchorWarnings": " 有 {0} 个重复锚点警告。",
   "message.applyFailed": "Super Markdown 无法应用整理修改。",
   "message.noHealthIssues": "Super Markdown 没有发现文档健康问题。",
   "message.previewError": "Super Markdown 预览：{0}",
+  "message.copiedMarkdown": "已复制 Markdown。",
+  "message.copiedHtml": "已复制 HTML。",
+  "message.wysiwygError": "Super Markdown 所见即所得编辑器：{0}",
+  "message.fileBackedOnly": "上传图片需要基于文件的 Markdown 文档。",
+  "message.chromiumUnavailable": "没有可用的 Chrome 或 Chromium 可执行文件。",
+  "message.exportDone": "Super Markdown 已导出：{0}",
+  "message.exportFailed": "Super Markdown 导出失败：{0}",
+  "message.exportSkipped": "Super Markdown 已跳过当前文档导出。",
+  "message.tableJsonCopied": "已复制 Markdown 表格 JSON。",
+  "message.tableJsonFailed": "请先选中有效的 Markdown 表格，再转换为 JSON。",
+  "message.jsonTableCopied": "已复制 Markdown 表格。",
+  "message.jsonTableFailed": "请先选中有效的 JSON 数组，再转换为 Markdown 表格。",
   "action.applyChanges": "应用修改",
+  "action.viewDiff": "查看差异",
+  "action.viewReport": "查看报告",
   "action.cancel": "取消",
   "health.outputTitle": "Super Markdown 健康检查：{0}",
   "health.quickPickTitle": "Super Markdown 文档健康检查",
@@ -256,13 +367,13 @@ export function getLanguageDisplayName(language: DisplayLanguage): string {
 export function getThemeDisplayName(theme: PreviewTheme): string {
   const language = getRuntimeLanguage();
   const names: Record<PreviewTheme, { en: string; "zh-CN": string }> = {
-    auto: { en: "Follow VS Code", "zh-CN": "跟随 VS Code" },
+    system: { en: "System", "zh-CN": "系统" },
     light: { en: "Light", "zh-CN": "浅色" },
     dark: { en: "Dark", "zh-CN": "深色" },
-    "eye-care-green": { en: "Eye-Care Green", "zh-CN": "护眼绿" },
-    "warm-paper": { en: "Warm Paper", "zh-CN": "暖纸色" },
-    "ink-black": { en: "Ink Black", "zh-CN": "墨水黑" },
-    "coastal-blue": { en: "Coastal Blue", "zh-CN": "海岸蓝" },
+    sage: { en: "Sage", "zh-CN": "柔绿" },
+    paper: { en: "Paper", "zh-CN": "纸页" },
+    ink: { en: "Ink", "zh-CN": "墨黑" },
+    ocean: { en: "Ocean", "zh-CN": "海蓝" },
     "high-contrast": { en: "High Contrast", "zh-CN": "高对比" }
   };
   return names[theme][language];
@@ -270,20 +381,20 @@ export function getThemeDisplayName(theme: PreviewTheme): string {
 
 export function getThemeQuickPickLabel(theme: PreviewTheme): string {
   switch (theme) {
-    case "auto":
-      return t("theme.auto.label");
+    case "system":
+      return t("theme.system.label");
     case "light":
       return t("theme.light.label");
     case "dark":
       return t("theme.dark.label");
-    case "eye-care-green":
-      return t("theme.eyeCareGreen.label");
-    case "warm-paper":
-      return t("theme.warmPaper.label");
-    case "ink-black":
-      return t("theme.inkBlack.label");
-    case "coastal-blue":
-      return t("theme.coastalBlue.label");
+    case "sage":
+      return t("theme.sage.label");
+    case "paper":
+      return t("theme.paper.label");
+    case "ink":
+      return t("theme.ink.label");
+    case "ocean":
+      return t("theme.ocean.label");
     case "high-contrast":
       return t("theme.highContrast.label");
   }
@@ -291,20 +402,20 @@ export function getThemeQuickPickLabel(theme: PreviewTheme): string {
 
 export function getThemeQuickPickDetail(theme: PreviewTheme): string {
   switch (theme) {
-    case "auto":
-      return t("theme.auto.detail");
+    case "system":
+      return t("theme.system.detail");
     case "light":
       return t("theme.light.detail");
     case "dark":
       return t("theme.dark.detail");
-    case "eye-care-green":
-      return t("theme.eyeCareGreen.detail");
-    case "warm-paper":
-      return t("theme.warmPaper.detail");
-    case "ink-black":
-      return t("theme.inkBlack.detail");
-    case "coastal-blue":
-      return t("theme.coastalBlue.detail");
+    case "sage":
+      return t("theme.sage.detail");
+    case "paper":
+      return t("theme.paper.detail");
+    case "ink":
+      return t("theme.ink.detail");
+    case "ocean":
+      return t("theme.ocean.detail");
     case "high-contrast":
       return t("theme.highContrast.detail");
   }
@@ -315,6 +426,10 @@ export function getWebviewTranslations(): Record<string, string> {
     copy: t("webview.copy"),
     copied: t("webview.copied"),
     copyCode: t("webview.copyCode"),
+    codeTheme: t("webview.codeTheme"),
+    codeThemeAuto: t("webview.codeThemeAuto"),
+    codeThemeLight: t("webview.codeThemeLight"),
+    codeThemeDark: t("webview.codeThemeDark"),
     showOutline: t("webview.showOutline"),
     hideOutline: t("webview.hideOutline"),
     resizeOutline: t("webview.resizeOutline")

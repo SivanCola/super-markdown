@@ -1,0 +1,128 @@
+{
+  "Disable Super Markdown Formatting": {
+    "prefix": [
+      "disable",
+      "sm-disable"
+    ],
+    "body": [
+      "<!-- /* md-file-format-disable */ -->"
+    ],
+    "description": "Disable Super Markdown formatting for the current file."
+  },
+  "Ignore Formatting Block": {
+    "prefix": [
+      "ignore-block",
+      "sm-ignore"
+    ],
+    "body": [
+      "<!-- md-ignore-block-start -->",
+      "$1",
+      "<!-- md-ignore-block-end -->"
+    ],
+    "description": "Protect a Markdown block from Super Markdown formatting."
+  },
+  "Create Image": {
+    "prefix": [
+      "img",
+      "image"
+    ],
+    "body": [
+      "![${2:alt}](${1:path-or-url})"
+    ],
+    "description": "Insert a Markdown image."
+  },
+  "Create Table": {
+    "prefix": "table",
+    "body": [
+      "| ${1:Column} | ${2:Column} | ${3:Column} |",
+      "| --- | --- | --- |",
+      "| ${4:Value} | ${5:Value} | ${6:Value} |"
+    ],
+    "description": "Insert a Markdown table."
+  },
+  "JavaScript Code Block": {
+    "prefix": [
+      "js",
+      "javascript"
+    ],
+    "body": [
+      "```javascript",
+      "${1:// JavaScript}",
+      "```",
+      "$2"
+    ],
+    "description": "Insert a JavaScript fenced code block."
+  },
+  "HTML Code Block": {
+    "prefix": "html",
+    "body": [
+      "```html",
+      "${1:<!-- HTML -->}",
+      "```",
+      "$2"
+    ],
+    "description": "Insert an HTML fenced code block."
+  },
+  "CSS Code Block": {
+    "prefix": "css",
+    "body": [
+      "```css",
+      "${1:/* CSS */}",
+      "```",
+      "$2"
+    ],
+    "description": "Insert a CSS fenced code block."
+  },
+  "Python Code Block": {
+    "prefix": "python",
+    "body": [
+      "```python",
+      "${1:# Python}",
+      "```",
+      "$2"
+    ],
+    "description": "Insert a Python fenced code block."
+  },
+  "Bash Code Block": {
+    "prefix": "bash",
+    "body": [
+      "```bash",
+      "${1:# Bash}",
+      "```",
+      "$2"
+    ],
+    "description": "Insert a Bash fenced code block."
+  },
+  "Unordered List": {
+    "prefix": "ul",
+    "body": [
+      "- ${1:first}",
+      "- ${2:second}",
+      "- ${3:third}"
+    ],
+    "description": "Insert an unordered list."
+  },
+  "Ordered List": {
+    "prefix": "ol",
+    "body": [
+      "1. ${1:first}",
+      "2. ${2:second}",
+      "3. ${3:third}"
+    ],
+    "description": "Insert an ordered list."
+  },
+  "Current Time": {
+    "prefix": "time",
+    "body": [
+      "$CURRENT_DAY_NAME $CURRENT_MONTH_NAME $CURRENT_DATE, $CURRENT_YEAR $CURRENT_HOUR:$CURRENT_MINUTE:$CURRENT_SECOND"
+    ],
+    "description": "Insert the current time."
+  },
+  "Current Date Time": {
+    "prefix": "ymd",
+    "body": [
+      "$CURRENT_YEAR/$CURRENT_MONTH/$CURRENT_DATE $CURRENT_HOUR:$CURRENT_MINUTE:$CURRENT_SECOND"
+    ],
+    "description": "Insert the current date and time."
+  }
+}

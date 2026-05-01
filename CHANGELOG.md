@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.0
+
+- Promoted the Super Markdown Editor overhaul from `dev` to `main`.
+- Rebuilt the default Markdown workbench around source, split preview, preview-only, and WYSIWYG modes sharing one document pipeline.
+- Added the self-hosted Markdown parser and renderer for headings, links, lists, tables, footnotes, safe inline HTML, code blocks, KaTeX math, Mermaid diagrams, source-line mapping, formatting, document health, and export.
+- Rebuilt WYSIWYG editing on Milkdown / ProseMirror with toolbar actions, editable tables/lists/math/code blocks, local image insertion, undo/redo, outline navigation, and Mermaid diagram previews.
+- Added serialized Mermaid rendering across split preview, WYSIWYG, HTML export, PDF export, and image export.
+- Added the Chromium/CDP export bridge, bundled runtime assets, VSIX content verification, and Playwright Webview toolbar regression coverage.
+
 ## 0.0.9
 
 - Documented the Milkdown / ProseMirror boundary: WYSIWYG editing uses Milkdown / ProseMirror, while parsing, preview, formatting, and export continue to use Super Markdown's own Markdown pipeline.

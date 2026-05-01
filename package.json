@@ -2,7 +2,7 @@
   "name": "super-markdown",
   "displayName": "Super Markdown",
   "description": "Structured Markdown preview, navigation, document health checks, and safe cleanup for VS Code.",
-  "version": "0.0.9",
+  "version": "0.1.0",
   "publisher": "SivanLiu",
   "license": "Apache-2.0",
   "icon": "images/icon.png",

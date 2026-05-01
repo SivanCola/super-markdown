@@ -17,10 +17,11 @@ suite("health", () => {
   });
 
   test("reports broken local targets", async () => {
-    const issues = await analyzeMarkdownHealth("# Title\n![Missing](missing.png)", {
+    const issues = await analyzeMarkdownHealth("# Title\n![Missing](<missing image.png> 'Missing image')", {
       levels,
       fileExists: async () => false
     });
     assert.equal(issues.some((issue) => issue.code === "broken-image"), true);
+    assert.equal(issues.find((issue) => issue.code === "broken-image")?.target, "missing image.png");
   });
 });

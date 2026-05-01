@@ -21,6 +21,12 @@
   "engines": {
     "vscode": "^1.85.0"
   },
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "description": "Markdown editing, preview, toolbar interactions, and split scroll sync are available in Restricted Mode. File-writing actions such as image upload and export only run after an explicit user command."
+    }
+  },
   "categories": [
     "Formatters",
     "Visualization",
@@ -77,13 +83,18 @@
   "main": "./out/extension.js",
   "files": [
     "out/extension.js",
-    "media/**",
+    "media/preview.css",
+    "media/export/markdown.css",
+    "media/icons/**",
+    "media/vendor/katex/katex.min.css",
+    "media/vendor/katex/fonts/**",
+    "media/vendor/mermaid/mermaid.min.js",
+    "media/vendor/codicons/codicon.css",
+    "media/vendor/codicons/codicon.ttf",
+    "media/wysiwyg/editor.css",
+    "media/wysiwyg/editor.js",
     "images/**",
-    "docs/markdown-syntax/**",
-    "syntaxes/**",
-    "snippets/**",
-    "language-configuration.json",
-    "THIRD_PARTY_NOTICES.md",
+    "docs/super-markdown/**",
     "README.md",
     "LICENSE",
     "package.json",
@@ -299,35 +310,6 @@
         "priority": "default"
       }
     ],
-    "snippets": [
-      {
-        "language": "markdown",
-        "path": "./snippets/markdown.json"
-      }
-    ],
-    "languages": [
-      {
-        "id": "markdown",
-        "aliases": [
-          "Markdown",
-          "Pandoc Markdown"
-        ],
-        "extensions": [
-          ".md",
-          ".markdown",
-          ".mdown",
-          ".mkdn"
-        ],
-        "configuration": "./language-configuration.json"
-      }
-    ],
-    "grammars": [
-      {
-        "language": "markdown",
-        "scopeName": "text.html.markdown",
-        "path": "./syntaxes/markdown.tmLanguage.json"
-      }
-    ],
     "keybindings": [
       {
         "command": "superMarkdown.openSplitEditMode",
@@ -422,16 +404,6 @@
           "command": "superMarkdown.export.choose",
           "when": "resourceExtname == .md || resourceExtname == .markdown || resourceExtname == .mdown || resourceExtname == .mkdn",
           "group": "navigation@23"
-        },
-        {
-          "command": "superMarkdown.en.organizeMarkdown",
-          "when": "(resourceExtname == .md || resourceExtname == .markdown || resourceExtname == .mdown || resourceExtname == .mkdn) && !superMarkdown.runtimeLanguageZhCN",
-          "group": "navigation@24"
-        },
-        {
-          "command": "superMarkdown.zhCN.organizeMarkdown",
-          "when": "(resourceExtname == .md || resourceExtname == .markdown || resourceExtname == .mdown || resourceExtname == .mkdn) && superMarkdown.runtimeLanguageZhCN",
-          "group": "navigation@24"
         }
       ],
       "commandPalette": [
@@ -816,7 +788,7 @@
         },
         "superMarkdown.export.highlightStyle": {
           "type": "string",
-          "default": "tomorrow.css",
+          "default": "super-markdown",
           "description": "%superMarkdown.configuration.export.highlightStyle.description%"
         },
         "superMarkdown.export.emoji": {
@@ -988,12 +960,16 @@
     "vscode:prepublish": "npm run compile && npm run bundle && npm run copy-assets",
     "build": "npm run compile && npm run bundle && npm run copy-assets",
     "compile": "tsc -p ./",
-    "bundle": "esbuild src/extension.ts --bundle --platform=node --format=cjs --external:vscode --outfile=out/extension.js --sourcemap",
+    "bundle": "npm run bundle:extension && npm run bundle:webview",
+    "bundle:extension": "esbuild src/extension.ts --bundle --platform=node --format=cjs --external:vscode --outfile=out/extension.js --sourcemap",
+    "bundle:webview": "esbuild media/wysiwyg/editor-runtime.ts --bundle --format=iife --target=es2022 --minify --outfile=media/wysiwyg/editor.js --sourcemap",
     "copy-assets": "node scripts/copy-assets.mjs",
     "dev:host": "node scripts/open-dev-host.mjs",
     "watch": "tsc -watch -p ./",
     "lint": "eslint src --ext ts",
     "test": "npm run compile && mocha --ui tdd \"out/test/**/*.test.js\"",
+    "test:webview-toolbar": "npm run bundle:webview && playwright test -c playwright.webview.config.ts",
+    "verify:vsix-contents": "node scripts/verify-vsix-contents.mjs",
     "package": "npm run package:vsix",
     "package:vsix": "node -e \"require('fs').mkdirSync('dist',{ recursive: true })\" && vsce package --out dist/super-markdown.vsix",
     "openvsx:create-namespace": "ovsx create-namespace SivanLiu",
@@ -1001,28 +977,18 @@
     "openvsx:publish": "ovsx publish --skip-duplicate"
   },
   "devDependencies": {
-    "@types/js-beautify": "^1.14.3",
-    "@types/js-yaml": "^4.0.9",
-    "@types/markdown-it": "^14.1.2",
+    "@playwright/test": "^1.59.1",
     "@types/mocha": "^10.0.10",
-    "@types/node": "^22.15.3",
-    "@types/sanitize-html": "^2.16.0",
-    "@types/vscode": "^1.85.0",
+    "@types/node": "18.19.130",
+    "@types/vscode": "1.85.0",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",
-    "@vscode/markdown-it-katex": "^1.1.2",
+    "@vscode/codicons": "^0.0.45",
     "@vscode/vsce": "^3.9.1",
     "esbuild": "^0.28.0",
     "eslint": "^8.57.1",
-    "highlight.js": "^11.11.1",
-    "katex": "^0.16.22",
-    "markdown-it": "^14.1.0",
-    "markdown-it-footnote": "^4.0.0",
-    "markdown-it-task-lists": "^2.1.1",
-    "mermaid": "^11.14.0",
     "mocha": "11.3.0",
     "ovsx": "^0.10.11",
-    "sanitize-html": "^2.17.0",
     "typescript": "^5.8.3"
   },
   "overrides": {
@@ -1030,14 +996,10 @@
     "serialize-javascript": "^7.0.5"
   },
   "dependencies": {
-    "@puppeteer/browsers": "^2.13.0",
-    "emoji-images": "^0.1.1",
-    "js-beautify": "^1.15.4",
-    "js-yaml": "^4.1.1",
-    "markdown-it-container": "^4.0.0",
-    "markdown-it-emoji": "^3.0.0",
-    "markdown-it-plantuml": "^1.4.1",
-    "puppeteer-core": "^24.42.0",
-    "vditor": "^3.11.2"
+    "@milkdown/kit": "^7.20.0",
+    "katex": "^0.16.22",
+    "mermaid": "^11.14.0",
+    "remark-math": "^6.0.0",
+    "shiki": "^4.0.2"
   }
 }

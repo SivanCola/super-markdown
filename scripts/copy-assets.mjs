@@ -14,12 +14,20 @@ const assets = [
     to: "media/vendor/katex/katex.min.css"
   },
   {
+    from: "node_modules/katex/dist/katex.min.js",
+    to: "media/vendor/katex/katex.min.js"
+  },
+  {
     from: "node_modules/katex/dist/fonts",
     to: "media/vendor/katex/fonts"
   },
   {
-    from: "node_modules/vditor/dist",
-    to: "media/vendor/vditor/dist"
+    from: "node_modules/@vscode/codicons/dist/codicon.css",
+    to: "media/vendor/codicons/codicon.css"
+  },
+  {
+    from: "node_modules/@vscode/codicons/dist/codicon.ttf",
+    to: "media/vendor/codicons/codicon.ttf"
   }
 ];
 

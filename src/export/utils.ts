@@ -1,17 +1,18 @@
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import yaml from "js-yaml";
+import { parseMarkdownResourceTarget, pathToFileUrl } from "../markdown/resource";
 import { ExportSettings, ExportType } from "../types";
+
+export { pathToFileUrl } from "../markdown/resource";
 
 export function parseFrontMatter(text: string): { data: Record<string, unknown>; content: string } {
   const match = text.match(/^(?:\uFEFF)?---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)([\s\S]*)$/);
   if (!match) {
     return { data: {}, content: text };
   }
-  const parsed = yaml.load(match[1]);
   return {
-    data: isPlainRecord(parsed) ? parsed : {},
+    data: parseSimpleYamlRecord(match[1]),
     content: match[2]
   };
 }
@@ -56,19 +57,19 @@ export function resolveOutputPath(
 }
 
 export function rewriteImageSource(src: string, sourcePath: string, forHtml: boolean, outputPath?: string): string {
-  if (/^(https?:|data:|file:)/i.test(src)) {
-    return src;
+  const target = parseMarkdownResourceTarget(src, sourcePath);
+  if (target.kind !== "local") {
+    return target.normalized;
   }
-  const decoded = decodeURIComponent(src).replace(/["']/g, "");
-  const absolute = path.isAbsolute(decoded) ? decoded : path.resolve(path.dirname(sourcePath), decoded);
+  const absolute = target.absolutePath ?? target.decodedPath;
   if (forHtml) {
     if (!outputPath) {
-      return decoded;
+      return target.decodedPath;
     }
     const relative = path.relative(path.dirname(outputPath), absolute).replace(/\\/g, "/");
     return encodeURI(relative || path.basename(absolute));
   }
-  return pathToFileUrl(absolute.replace(/#/g, "%23"));
+  return pathToFileUrl(absolute);
 }
 
 export function resolveStylePath(style: string, sourcePath: string, extensionPath: string): string {
@@ -85,18 +86,23 @@ export function resolveStylePath(style: string, sourcePath: string, extensionPat
   return pathToFileUrl(path.resolve(extensionPath, style));
 }
 
-export function pathToFileUrl(filename: string): string {
-  const normalized = filename.replace(/\\/g, "/");
-  if (normalized.startsWith("/")) {
-    return `file://${normalized}`;
+function parseSimpleYamlRecord(source: string): Record<string, unknown> {
+  const data: Record<string, unknown> = {};
+  for (const line of source.split(/\r?\n/)) {
+    const match = line.match(/^([A-Za-z0-9_.-]+)\s*:\s*(.*)$/);
+    if (!match) {
+      continue;
+    }
+    const raw = match[2].trim();
+    if ((raw.startsWith('"') && raw.endsWith('"')) || (raw.startsWith("'") && raw.endsWith("'"))) {
+      data[match[1]] = raw.slice(1, -1);
+    } else if (raw === "true" || raw === "false") {
+      data[match[1]] = raw === "true";
+    } else if (/^-?\d+(?:\.\d+)?$/.test(raw)) {
+      data[match[1]] = Number(raw);
+    } else {
+      data[match[1]] = raw;
+    }
   }
-  return `file:///${normalized}`;
-}
-
-function isPlainRecord(value: unknown): value is Record<string, unknown> {
-  if (typeof value !== "object" || value === null || Array.isArray(value)) {
-    return false;
-  }
-  const prototype = Object.getPrototypeOf(value);
-  return prototype === Object.prototype || prototype === null;
+  return data;
 }

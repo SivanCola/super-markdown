@@ -4,9 +4,10 @@ import * as path from "node:path";
 import { prepareUploadedImage, resolveImageDirectory, sanitizeFilename } from "../wysiwyg/assets";
 import { resolveWysiwygDefaultMode } from "../wysiwyg/mode";
 
-suite("wysiwyg assets", () => {
+suite("visual editor assets", () => {
   test("resolves relative image directory near document", () => {
     assert.equal(resolveImageDirectory(path.join(path.sep, "tmp", "doc.md"), { imageDirectory: "assets" }), path.join(path.sep, "tmp", "assets"));
+    assert.equal(resolveImageDirectory(path.join(path.sep, "tmp", "doc.md"), { imageDirectory: "   " }), path.join(path.sep, "tmp", "assets"));
   });
 
   test("sanitizes filenames and infers extension", () => {
@@ -25,175 +26,240 @@ suite("wysiwyg assets", () => {
     assert.equal(image.buffer.toString("utf8"), "a");
   });
 
-  test("uses editor default mode unless wysiwyg mode is explicitly configured", () => {
-    assert.equal(resolveWysiwygDefaultMode("source"), "sv");
-    assert.equal(resolveWysiwygDefaultMode("ir"), "ir");
-    assert.equal(resolveWysiwygDefaultMode("wysiwyg", "sv"), "sv");
+  test("maps legacy visual mode settings to the self-hosted editor modes", () => {
+    assert.equal(resolveWysiwygDefaultMode("source"), "source");
+    assert.equal(resolveWysiwygDefaultMode("ir"), "wysiwyg");
+    assert.equal(resolveWysiwygDefaultMode("wysiwyg", "sv"), "source");
   });
 
-  test("webview mode switch avoids removed Vditor API and keeps a fallback editor", () => {
-    const script = fs.readFileSync(path.join(__dirname, "..", "..", "media", "wysiwyg", "editor.js"), "utf8");
-    assert.equal(script.includes(".setMode("), false);
-    assert.equal(script.includes("function initFallbackEditor"), true);
-    assert.equal(script.includes("renderSidePanels(currentMarkdown);"), true);
+  test("webview loads one bundled Milkdown runtime with explicit diagnostics", () => {
+    const providerSource = readProjectFile("src/wysiwyg/SuperMarkdownWysiwygEditorProvider.ts");
+    const packageJson = readProjectFile("package.json");
+    const copyAssets = readProjectFile("scripts/copy-assets.mjs");
+    const runtimeSource = readProjectFile("media/wysiwyg/editor-runtime.ts");
+    const bundledScript = readProjectFile("media/wysiwyg/editor.js");
+    const style = readProjectFile("media/wysiwyg/editor.css");
+
+    assert.equal(providerSource.includes('data-script-state="html-rendered"'), true);
+    assert.equal(providerSource.includes("const versionedMedia"), true);
+    assert.equal(providerSource.includes('versionedMedia("media/wysiwyg/editor.js")'), true);
+    assert.equal(providerSource.includes('versionedMedia("media/wysiwyg/editor.css")'), true);
+    assert.equal(providerSource.includes('versionedMedia("media/preview.css")'), true);
+    assert.equal(providerSource.includes('<template id="payload">'), false);
+    assert.equal(providerSource.includes('type="application/json"'), true);
+    assert.equal(providerSource.includes("escapeJsonForScript"), true);
+    assert.equal(providerSource.includes("mermaidScript"), true);
+    assert.equal(providerSource.includes("media/vendor/mermaid/mermaid.min.js"), true);
+    assert.equal(providerSource.includes("media/vendor/codicons/codicon.css"), true);
+    assert.equal(packageJson.includes("media/vendor/codicons/codicon.css"), true);
+    assert.equal(packageJson.includes("media/vendor/codicons/codicon.ttf"), true);
+    assert.equal(copyAssets.includes("node_modules/@vscode/codicons/dist/codicon.css"), true);
+    assert.equal(copyAssets.includes("node_modules/@vscode/codicons/dist/codicon.ttf"), true);
+    assert.equal(providerSource.includes("media/vendor/katex/katex.min.js"), false);
+    assert.equal(providerSource.includes("formatWebviewError"), true);
+    assert.equal(providerSource.includes("lastWebviewErrors"), true);
+    assert.equal(providerSource.includes("csp-timeout"), true);
+    assert.equal(providerSource.includes("runtime-ready"), true);
+    assert.equal(packageJson.includes("bundle:webview"), true);
+    assert.equal(packageJson.includes("media/wysiwyg/editor-runtime.ts --bundle"), true);
+    assert.equal(packageJson.includes("remark-math"), true);
+    assert.equal(providerSource.includes('from "./toolbar"'), true);
+    assert.equal(runtimeSource.includes("../../src/wysiwyg/toolbar"), true);
+    assert.equal(runtimeSource.includes("renderToolbarIcon"), true);
+    assert.equal(runtimeSource.includes("@milkdown/kit/core"), true);
+    assert.equal(runtimeSource.includes("Editor.make()"), true);
+    assert.equal(runtimeSource.includes(".use(commonmark)"), true);
+    assert.equal(runtimeSource.includes(".use(gfm)"), true);
+    assert.equal(runtimeSource.includes(".use(remarkMathPlugin)"), true);
+    assert.equal(runtimeSource.includes(".use(mathInlineSchema)"), true);
+    assert.equal(runtimeSource.includes(".use(mathBlockSchema)"), true);
+    assert.equal(runtimeSource.includes(".use(safeHtmlInlineSchema)"), true);
+    assert.equal(runtimeSource.includes("listenerCtx"), true);
+    assert.equal(runtimeSource.includes('import mermaid from "mermaid"'), false);
+    assert.equal(runtimeSource.includes("loadMermaid"), true);
+    assert.equal(runtimeSource.includes("window.mermaid"), true);
+    assert.equal(runtimeSource.includes("markMermaidRenderError"), true);
+    assert.equal(runtimeSource.includes("superMarkdownMermaidError"), true);
+    assert.equal(runtimeSource.includes("getErrorMessage(message.error)"), true);
+    assert.equal(runtimeSource.includes("JSON.stringify(error)"), true);
+    assert.equal(packageJson.includes("--minify"), true);
+    assert.equal(bundledScript.includes("new " + "V" + "ditor"), false);
+    assert.equal(style.includes("show-delayed-runtime-diagnostic"), true);
+    assert.equal(style.includes(".toolbar-icon .codicon"), true);
+    assert.equal(style.includes(".toolbar-custom-icon"), true);
+    assert.equal(readProjectFile("media/preview.css").includes(".diagram-block .mermaid-render-error"), true);
+    assert.equal(style.includes('body[data-script-state="bootstrap-ran"] .editor-toolbar-slot::after'), false);
+    assert.equal(style.includes('body[data-script-state="runtime-loading"] .editor-toolbar-slot::after'), false);
+    assert.equal(style.includes("Editor runtime loading"), false);
   });
 
-  test("webview payload reads template content before text fallback", () => {
-    const script = fs.readFileSync(path.join(__dirname, "..", "..", "media", "wysiwyg", "editor.js"), "utf8");
-    assert.equal(script.includes("payloadElement.content?.textContent || payloadElement.textContent"), true);
-    assert.equal(script.includes("const translations = payload.translations || {};"), true);
-  });
+  test("toolbar actions are backed by ProseMirror commands and host fallbacks", () => {
+    const runtimeSource = readProjectFile("media/wysiwyg/editor-runtime.ts");
+    const providerSource = readProjectFile("src/wysiwyg/SuperMarkdownWysiwygEditorProvider.ts");
+    const extensionSource = readProjectFile("src/extension.ts");
+    const toolbarSource = readProjectFile("src/wysiwyg/toolbar.ts");
+    const style = readProjectFile("media/wysiwyg/editor.css");
 
-  test("preview-only layout does not initialize the editor pane", () => {
-    const script = fs.readFileSync(path.join(__dirname, "..", "..", "media", "wysiwyg", "editor.js"), "utf8");
-    const providerSource = fs.readFileSync(
-      path.join(__dirname, "..", "..", "src", "wysiwyg", "SuperMarkdownWysiwygEditorProvider.ts"),
-      "utf8"
-    );
-    assert.equal(script.includes("if (currentLayout === \"previewOnly\") {\n      clearEditorForPreview();"), true);
-    assert.equal(script.includes("if (currentLayout !== \"previewOnly\") {\n    initVditor(currentMode);"), true);
-    assert.equal(providerSource.includes('<div class="toolbar">'), false);
-  });
-
-  test("webview supports distinct split edit layout", () => {
-    const script = fs.readFileSync(path.join(__dirname, "..", "..", "media", "wysiwyg", "editor.js"), "utf8");
-    const style = fs.readFileSync(path.join(__dirname, "..", "..", "media", "wysiwyg", "editor.css"), "utf8");
-    assert.equal(script.includes("\"splitEdit\""), true);
-    assert.equal(script.includes("layout-splitEdit"), true);
-    assert.equal(style.includes("body.layout-splitEdit .workbench-shell"), true);
-    assert.equal(/body\.layout-splitEdit\s+\.side-panel\s*{[^}]*display:\s*none/s.test(style), false);
-    assert.equal(/body\.layout-splitEdit\s+\.preview-panel\s*{[^}]*display:\s*none/s.test(style), false);
-  });
-
-  test("split edit mode syncs editor scroll to preview scroll", () => {
-    const script = fs.readFileSync(path.join(__dirname, "..", "..", "media", "wysiwyg", "editor.js"), "utf8");
-    assert.equal(script.includes("function bindEditorScrollSync()"), true);
-    assert.equal(script.includes('currentLayout !== "splitEdit"'), true);
-    assert.equal(script.includes('editorElement.querySelector(".vditor-sv")'), true);
-    assert.equal(script.includes('editorElement.querySelector(".vditor-ir")'), true);
-    assert.equal(script.includes('editorElement.querySelector(".vditor-wysiwyg")'), true);
-    assert.equal(script.includes('scrollElement.addEventListener("scroll", onScroll, { passive: true })'), true);
-    assert.equal(script.includes("function syncPreviewScrollFromEditor"), true);
-    assert.equal(script.includes("previewElement.scrollTop = Math.round(previewMax * ratio);"), true);
-  });
-
-  test("focused layouts keep navigation and scroll content panes", () => {
-    const htmlSource = fs.readFileSync(
-      path.join(__dirname, "..", "wysiwyg", "SuperMarkdownWysiwygEditorProvider.js"),
-      "utf8"
-    );
-    const script = fs.readFileSync(path.join(__dirname, "..", "..", "media", "wysiwyg", "editor.js"), "utf8");
-    const style = fs.readFileSync(path.join(__dirname, "..", "..", "media", "wysiwyg", "editor.css"), "utf8");
-    assert.equal(htmlSource.includes('<main id="preview" class="markdown-preview">'), true);
-    assert.equal(htmlSource.includes('<article class="markdown-body">${preview.html}</article>'), true);
-    assert.equal(/body\.layout-editorOnly\s+\.side-panel\s*{[^}]*display:\s*none/s.test(style), false);
-    assert.equal(style.includes("body.layout-previewOnly .side-panel"), true);
-    assert.equal(style.includes("body.layout-previewOnly .preview-panel"), true);
-    assert.equal(style.includes("#editor .vditor-wysiwyg"), true);
-    assert.equal(style.includes("#editor .vditor-ir"), true);
-    assert.equal(script.includes("function setPreviewHtml"), true);
-    assert.equal(script.includes("previewElement.scrollTo({"), true);
-  });
-
-  test("layouts use collapsible outline navigation", () => {
-    const providerSource = fs.readFileSync(
-      path.join(__dirname, "..", "..", "src", "wysiwyg", "SuperMarkdownWysiwygEditorProvider.ts"),
-      "utf8"
-    );
-    const script = fs.readFileSync(path.join(__dirname, "..", "..", "media", "wysiwyg", "editor.js"), "utf8");
-    const style = fs.readFileSync(path.join(__dirname, "..", "..", "media", "wysiwyg", "editor.css"), "utf8");
-    assert.equal(providerSource.includes('id="side-panel-toggle"'), true);
-    assert.equal(providerSource.includes('id="side-panel"'), true);
-    assert.equal(script.includes("const sidePanelToggleElement = document.getElementById(\"side-panel-toggle\");"), true);
-    assert.equal(script.includes("function setSidePanelOpen(open)"), true);
-    assert.equal(script.includes("function shouldAutoCloseSidePanel()"), true);
-    assert.equal(script.includes('return currentLayout !== "previewOnly" && currentLayout !== "splitEdit" && currentMode !== "wysiwyg";'), true);
-    assert.equal(script.includes("side-panel-open"), true);
-    assert.equal(style.includes(".side-panel-toggle"), true);
-    assert.equal(style.includes("body:not(.layout-previewOnly) .side-panel"), true);
-    assert.equal(style.includes("transform: translateX(calc(-100% - 24px))"), true);
-    assert.equal(style.includes("body.side-panel-open .side-panel"), true);
-    assert.equal(style.includes("body.layout-splitEdit.side-panel-open .workbench-shell"), true);
-    assert.equal(style.includes("grid-template-columns: var(--side-panel-dock-width) minmax(0, 1fr) minmax(0, 1fr);"), true);
-    assert.equal(style.includes("body.layout-splitEdit.side-panel-open .editor-toolbar-slot"), true);
-    assert.equal(style.includes("grid-column: 2 / -1;"), true);
-    assert.equal(style.includes("body.layout-splitEdit.side-panel-open .editor-panel"), true);
-    assert.equal(style.includes("body.layout-splitEdit.side-panel-open .preview-panel"), true);
-    assert.equal(style.includes("grid-column: 1 / -1"), true);
-    assert.equal(script.includes("setSidePanelOpen(false);"), true);
-    assert.equal(style.includes("body.layout-previewOnly:not(.side-panel-open) .workbench-shell"), false);
-    assert.equal(style.includes("body.layout-previewOnly:not(.side-panel-open) .preview-panel"), false);
-  });
-
-  test("webview side panel is only for the heading outline", () => {
-    const providerSource = fs.readFileSync(
-      path.join(__dirname, "..", "..", "src", "wysiwyg", "SuperMarkdownWysiwygEditorProvider.ts"),
-      "utf8"
-    );
-    const script = fs.readFileSync(path.join(__dirname, "..", "..", "media", "wysiwyg", "editor.js"), "utf8");
-    const style = fs.readFileSync(path.join(__dirname, "..", "..", "media", "wysiwyg", "editor.css"), "utf8");
-    assert.equal(providerSource.includes('class="panel-heading"'), true);
-    assert.equal(providerSource.includes('data-panel="health"'), false);
-    assert.equal(providerSource.includes('id="health"'), false);
-    assert.equal(script.includes("healthElement"), false);
-    assert.equal(script.includes("function renderHealth"), false);
-    assert.equal(style.includes(".panel-tab"), false);
-    assert.equal(style.includes(".health-list"), false);
-  });
-
-  test("outline headings scroll the visible editor before the hidden preview", () => {
-    const script = fs.readFileSync(path.join(__dirname, "..", "..", "media", "wysiwyg", "editor.js"), "utf8");
-    assert.equal(script.includes('data-heading-index="${index}"'), true);
-    assert.equal(script.includes("function scrollEditorToHeading"), true);
-    assert.equal(script.includes("outlineElement.contains(target)"), true);
-    assert.equal(script.includes("scrollToNavigationTarget(target);"), true);
-    assert.equal(script.includes("scrollPreviewToElement(document.getElementById(target.dataset.slug))"), false);
-  });
-
-  test("webview initializes the product toolbar through Vditor", () => {
-    const script = fs.readFileSync(path.join(__dirname, "..", "..", "media", "wysiwyg", "editor.js"), "utf8");
-    const style = fs.readFileSync(path.join(__dirname, "..", "..", "media", "wysiwyg", "editor.css"), "utf8");
-    const providerSource = fs.readFileSync(
-      path.join(__dirname, "..", "..", "src", "wysiwyg", "SuperMarkdownWysiwygEditorProvider.ts"),
-      "utf8"
-    );
-    assert.equal(script.includes("function buildToolbar()"), true);
-    assert.equal(script.includes("function relocateToolbar()"), true);
-    assert.equal(script.includes("function collapseToolbarPanels()"), true);
-    assert.equal(script.includes("function enhanceToolbarA11y()"), true);
-    assert.equal(script.includes("toolbar: buildToolbar()"), true);
-    assert.equal(script.includes("toolbarConfig: { pin: true }"), true);
-    assert.equal(script.includes('mode: "editor",'), true);
-    assert.equal(script.includes('builtInToolbarItem("bold"'), true);
-    assert.equal(script.includes('iconLabel(`${toolbarLabel("more", "More")} ▾`)'), true);
-    assert.equal(script.includes("xlink:href"), false);
-    assert.equal(providerSource.includes('id="editor-toolbar-slot"'), true);
-    assert.equal(style.includes(".editor-toolbar-slot"), true);
-    assert.equal(style.includes("body.layout-editorOnly .editor-toolbar-slot"), true);
-    assert.equal(style.includes("body.layout-splitEdit .editor-toolbar-slot"), true);
-    assert.equal(style.includes("justify-content: flex-start"), true);
-    assert.equal(style.includes("background: #ffffff"), true);
-    assert.equal(style.includes("min-height: 44px"), true);
-    assert.equal(style.includes("width: 21px"), true);
-    assert.equal(style.includes('data-type="more"'), true);
-    assert.equal(style.includes("top: calc(100% + 6px)"), true);
-    assert.equal(style.includes("body.layout-splitEdit .preview-title"), true);
-  });
-
-  test("webview toolbar keeps custom markdown actions and removes old mode buttons", () => {
-    const script = fs.readFileSync(path.join(__dirname, "..", "..", "media", "wysiwyg", "editor.js"), "utf8");
-    const providerSource = fs.readFileSync(
-      path.join(__dirname, "..", "..", "src", "wysiwyg", "SuperMarkdownWysiwygEditorProvider.ts"),
-      "utf8"
-    );
-    for (const name of ["underline", "mark", "math", "mermaid", "more"]) {
-      assert.equal(script.includes(`name: "${name}"`), true);
+    for (const command of [
+      "toggleStrongCommand",
+      "toggleEmphasisCommand",
+      "toggleStrikethroughCommand",
+      "toggleInlineCodeCommand",
+      "wrapInHeadingCommand",
+      "insertHrCommand",
+      "wrapInBlockquoteCommand",
+      "wrapInBulletListCommand",
+      "wrapInOrderedListCommand",
+      "createCodeBlockCommand",
+      "insertTableCommand"
+    ]) {
+      assert.equal(runtimeSource.includes(command), true);
     }
-    assert.equal(script.includes("[data-command]"), false);
-    assert.equal(providerSource.includes('data-command="mode-sv"'), false);
-    assert.equal(providerSource.includes('data-command="mode-ir"'), false);
-    assert.equal(providerSource.includes('data-command="mode-wysiwyg"'), false);
-    assert.equal(providerSource.includes("Source</button>"), false);
-    assert.equal(providerSource.includes("WYSIWYG</button>"), false);
+    for (const action of ["bold", "italic", "underline", "highlight", "ordered-list", "task-checked", "table", "math", "mermaid", "toc", "organizeMarkdown", "help", "export-pdf", "export-all"]) {
+      assert.equal(runtimeSource.includes(action), true);
+    }
+    assert.equal(runtimeSource.includes('post("toolbarCommand"'), true);
+    assert.equal(runtimeSource.includes('post("openLink", { href: SUPER_MARKDOWN_ISSUES_URL })'), true);
+    assert.equal(toolbarSource.includes("TOOLBAR_CODICON_ACTIONS"), true);
+    assert.equal(toolbarSource.includes('SUPER_MARKDOWN_ISSUES_URL = "https://github.com/SivanCola/super-markdown/issues"'), true);
+    assert.equal(toolbarSource.includes('bold: "bold"'), true);
+    assert.equal(toolbarSource.includes('"inline-code": "code"'), true);
+    assert.equal(toolbarSource.includes("TOOLBAR_CUSTOM_ICONS"), true);
+    assert.equal(toolbarSource.includes("highlight: customSvg"), true);
+    assert.equal(toolbarSource.includes("math: customSvg"), true);
+    assert.equal(toolbarSource.includes("mermaid: customSvg"), true);
+    assert.equal(providerSource.includes("renderToolbarIcon(action)"), true);
+    assert.equal(providerSource.includes("vscode.env.openExternal(vscode.Uri.parse(SUPER_MARKDOWN_ISSUES_URL))"), true);
+    assert.equal(runtimeSource.includes("toolbarActionIcons"), false);
+    assert.equal(providerSource.includes("enableCommandUris: [SUPER_MARKDOWN_TOOLBAR_COMMAND]"), true);
+    assert.equal(providerSource.includes('case "toolbarCommand"'), true);
+    assert.equal(extensionSource.includes("superMarkdownEditorProvider.handleToolbarCommand"), true);
+    assert.equal(style.includes(".visual-editor .ProseMirror"), true);
+    assert.equal(style.includes(".toolbar-menu"), true);
+  });
+
+  test("split editor syncs by source line anchors rather than scroll percentage", () => {
+    const runtimeSource = readProjectFile("media/wysiwyg/editor-runtime.ts");
+    const style = readProjectFile("media/wysiwyg/editor.css");
+
+    assert.equal(runtimeSource.includes("sourceEditor.onscroll"), true);
+    assert.equal(runtimeSource.includes("previewElement.onscroll"), true);
+    assert.equal(runtimeSource.includes("[data-source-line]"), true);
+    assert.equal(runtimeSource.includes("findPreviewElementForLine"), true);
+    assert.equal(runtimeSource.includes("getFirstVisiblePreviewSourceLine"), true);
+    assert.equal(runtimeSource.includes("syncPreviewToSourceLine(getFirstVisibleSourceLine())"), true);
+    assert.equal(runtimeSource.includes("syncSourceToPreviewLine(line)"), true);
+    assert.equal(runtimeSource.includes("scrollSyncSuppressTarget"), true);
+    assert.equal(runtimeSource.includes("getMaxPreviewScrollTop"), false);
+    assert.equal(runtimeSource.includes("mapScrollTop"), false);
+    assert.equal(style.includes("body.mode-split .editor-toolbar-slot {\n  display: none;"), false);
+    assert.equal(style.includes("body.mode-wysiwyg .editor-toolbar-slot {\n  display: none;"), false);
+  });
+
+  test("preview outline and image upload remain wired through the webview host protocol", () => {
+    const runtimeSource = readProjectFile("media/wysiwyg/editor-runtime.ts");
+    const providerSource = readProjectFile("src/wysiwyg/SuperMarkdownWysiwygEditorProvider.ts");
+    const style = readProjectFile("media/wysiwyg/editor.css");
+
+    for (const name of ["chooseImagesForInsert", "readImageFileData", "uploadImages", "uploadImagesResult"]) {
+      assert.equal(runtimeSource.includes(name), true);
+    }
+    for (const name of ["extractHeadings", "renderOutline", "updateActiveOutlineFromScroll", "data-outline-id"]) {
+      assert.equal(runtimeSource.includes(name), true);
+    }
+    assert.equal(providerSource.includes('id="outline-current"'), true);
+    assert.equal(providerSource.includes('id="side-panel-collapse"'), true);
+    assert.equal(style.includes("--outline-rail-width: 44px;"), true);
+    assert.equal(style.includes(".outline-item.is-active"), true);
+  });
+
+  test("shared resources keep Milkdown visuals aligned with the host preview", () => {
+    const runtimeSource = readProjectFile("media/wysiwyg/editor-runtime.ts");
+    const providerSource = readProjectFile("src/wysiwyg/SuperMarkdownWysiwygEditorProvider.ts");
+    const renderSource = readProjectFile("src/markdown/render.ts");
+    const style = readProjectFile("media/wysiwyg/editor.css");
+
+    assert.equal(renderSource.includes("export function resolveImageSrc"), true);
+    assert.equal(providerSource.includes("collectImageResources"), true);
+    assert.equal(providerSource.includes('from "../markdown/links"'), true);
+    assert.equal(providerSource.includes("extractMarkdownInlineLinks(document.getText())"), true);
+    assert.equal(providerSource.includes("imageResources: this.collectImageResources"), true);
+    assert.equal(providerSource.includes("katexEnabled: previewSettings.katexEnabled"), true);
+    assert.equal(providerSource.includes("rawHtmlEscaped"), true);
+    assert.equal(providerSource.includes("mathEdit"), true);
+    assert.equal(providerSource.includes("codeExpand"), false);
+    assert.equal(providerSource.includes("codeCollapse"), false);
+    assert.equal(providerSource.includes("resolveImageSrc(source, document, webview)"), true);
+    assert.equal(runtimeSource.includes("normalizeImageResources"), true);
+    assert.equal(runtimeSource.includes("../../src/markdown/codeBlockActions"), true);
+    assert.equal(runtimeSource.includes("../../src/markdown/features"), true);
+    assert.equal(runtimeSource.includes("./highlight-runtime"), true);
+    assert.equal(readProjectFile("media/wysiwyg/highlight-runtime.ts").includes("shiki/core"), true);
+    assert.equal(runtimeSource.includes("renderKatexHtml"), true);
+    assert.equal(runtimeSource.includes("renderInertInlineHtml"), true);
+    assert.equal(runtimeSource.includes("resolveFootnoteReference"), true);
+    assert.equal(runtimeSource.includes("enhanceVisualCodeBlocks"), false);
+    assert.equal(runtimeSource.includes("visual-code-action-block"), false);
+    assert.equal(runtimeSource.includes("nodeViewCtx"), true);
+    assert.equal(runtimeSource.includes("createCodeBlockNodeView"), true);
+    assert.equal(runtimeSource.includes("registerVisualNodeViews"), true);
+    assert.equal(runtimeSource.includes("visual-code-node-view"), true);
+    assert.equal(runtimeSource.includes("visual-code-highlight"), true);
+    assert.equal(runtimeSource.includes("highlightCodeBlockHtml"), true);
+    assert.equal(runtimeSource.includes("visual-code-expand"), false);
+    assert.equal(runtimeSource.includes("visual-code-language-input"), true);
+    assert.equal(runtimeSource.includes("visual-math-edit"), true);
+    assert.equal(runtimeSource.includes("visual-math-done"), true);
+    assert.equal(runtimeSource.includes("visual-math-inline-input"), true);
+    assert.equal(runtimeSource.includes("visual-html-label"), true);
+    assert.equal(runtimeSource.includes("contentDOM: code"), true);
+    assert.equal(runtimeSource.includes("bindCodeBlockActionButton"), true);
+    assert.equal(runtimeSource.includes("stopEvent(event)"), true);
+    assert.equal(runtimeSource.includes("ignoreMutation(mutation)"), true);
+    assert.equal(runtimeSource.includes("mutation.target === dom"), true);
+    assert.equal(runtimeSource.includes("visual-admonition-title"), true);
+    assert.equal(runtimeSource.includes("visual-admonition-body"), true);
+    assert.equal(runtimeSource.includes("visual-admonition-source"), true);
+    for (const name of [
+      "createMathInlineNodeView",
+      "createMathBlockNodeView",
+      "createFootnoteReferenceNodeView",
+      "createFootnoteDefinitionNodeView",
+      "createHtmlNodeView",
+      "createSafeHtmlInlineNodeView",
+      "createBlockquoteNodeView",
+      "math_inline",
+      "math_block",
+      "footnote_reference",
+      "footnote_definition",
+      "safe_html_inline"
+    ]) {
+      assert.equal(runtimeSource.includes(name), true);
+    }
+    assert.equal(runtimeSource.includes("handleCodeBlockActionClick"), true);
+    assert.equal(style.includes(".visual-code-node-view.render-block-tone-light"), true);
+    assert.equal(style.includes(".visual-code-node-view.render-block-tone-dark"), true);
+    assert.equal(style.includes(".visual-code-node-view.is-expanded .visual-code-frame"), false);
+    assert.equal(style.includes("max-height: min(62vh, 560px);"), false);
+    assert.equal(style.includes("line-height: 1.55;"), true);
+    assert.equal(style.includes(".visual-blockquote-node-view.admonition"), true);
+    assert.equal(style.includes(".visual-admonition-title"), true);
+    assert.equal(style.includes(".visual-admonition-body"), true);
+    assert.equal(style.includes(".visual-admonition-source"), true);
+    assert.equal(style.includes(".visual-math-node-view.is-editing .visual-math-source"), true);
+    assert.equal(style.includes(".visual-html-label"), true);
+    assert.equal(style.includes("display: grid;"), true);
+    assert.equal(style.includes("white-space: pre-wrap;"), true);
+    assert.equal(runtimeSource.includes("resolveVisualImagesSoon"), true);
+    assert.equal(runtimeSource.includes("startVisualImageObserver"), true);
+    assert.equal(runtimeSource.includes("new MutationObserver"), true);
+    assert.equal(runtimeSource.includes('visualEditor.querySelectorAll<HTMLImageElement>("img")'), true);
+    assert.equal(runtimeSource.includes("scrollVisualEditorToHeading"), true);
+    assert.equal(runtimeSource.includes("findVisualHeadingForLine"), true);
+    assert.equal(runtimeSource.includes("getFirstVisibleVisualHeadingLine"), true);
   });
 });
+
+function readProjectFile(relativePath: string): string {
+  return fs.readFileSync(path.join(__dirname, "..", "..", relativePath), "utf8");
+}

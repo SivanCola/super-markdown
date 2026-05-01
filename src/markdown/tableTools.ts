@@ -1,3 +1,7 @@
+import { displayWidth, escapeMarkdownTableCell, isMarkdownTableDelimiter, splitMarkdownTableRow } from "./table";
+
+export { splitMarkdownTableRow } from "./table";
+
 export function mdTableToJson(text: string): Array<Record<string, string | null>> {
   const lines = text
     .trim()
@@ -5,7 +9,7 @@ export function mdTableToJson(text: string): Array<Record<string, string | null>
     .map((line) => line.trim())
     .filter(Boolean);
 
-  if (lines.length < 2 || !isSeparatorRow(lines[1])) {
+  if (lines.length < 2 || !isMarkdownTableDelimiter(lines[1])) {
     throw new Error("Selection is not a Markdown table.");
   }
 
@@ -55,50 +59,6 @@ export function jsonToMarkdownTable(value: unknown): string {
   return [headerRow, separatorRow, ...rows.map((row) => formatCenteredRow(row, widths))].join("\n");
 }
 
-export function splitMarkdownTableRow(line: string): string[] {
-  const trimmed = line.trim().replace(/^\|/, "").replace(/\|$/, "");
-  const cells: string[] = [];
-  let current = "";
-  let backtickCount = 0;
-  let escaped = false;
-
-  for (const char of trimmed) {
-    if (escaped) {
-      current += char;
-      escaped = false;
-      continue;
-    }
-
-    if (char === "\\") {
-      current += char;
-      escaped = true;
-      continue;
-    }
-
-    if (char === "`") {
-      backtickCount = backtickCount === 0 ? 1 : 0;
-      current += char;
-      continue;
-    }
-
-    if (char === "|" && backtickCount === 0) {
-      cells.push(unescapeCell(current.trim()));
-      current = "";
-      continue;
-    }
-
-    current += char;
-  }
-
-  cells.push(unescapeCell(current.trim()));
-  return cells;
-}
-
-function isSeparatorRow(line: string): boolean {
-  const cells = splitMarkdownTableRow(line);
-  return cells.length > 0 && cells.every((cell) => /^:?-{3,}:?$/.test(cell.trim()));
-}
-
 function formatCenteredRow(cells: string[], widths: number[]): string {
   return `| ${cells.map((cell, index) => padCentered(cell, widths[index])).join(" | ")} |`;
 }
@@ -115,21 +75,13 @@ function stringifyCell(value: unknown): string {
     return "";
   }
   if (typeof value === "object") {
-    return escapeCell(JSON.stringify(value));
+    return escapeMarkdownTableCell(JSON.stringify(value));
   }
-  return escapeCell(String(value));
-}
-
-function escapeCell(value: string): string {
-  return value.replace(/\|/g, "\\|").replace(/\r?\n/g, "<br>");
-}
-
-function unescapeCell(value: string): string {
-  return value.replace(/\\\|/g, "|");
+  return escapeMarkdownTableCell(String(value));
 }
 
 function displayLength(value: string): number {
-  return Array.from(value).reduce((length, char) => length + (/[\u3400-\u9fff]/.test(char) ? 2 : 1), 0);
+  return displayWidth(value);
 }
 
 function isPlainRecord(value: unknown): value is Record<string, unknown> {

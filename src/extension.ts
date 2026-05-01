@@ -24,6 +24,7 @@ import {
 } from "./preview/document";
 import {
   SUPER_MARKDOWN_EDITOR_VIEW_TYPE,
+  SUPER_MARKDOWN_TOOLBAR_COMMAND,
   SuperMarkdownWysiwygEditorProvider
 } from "./wysiwyg/SuperMarkdownWysiwygEditorProvider";
 import { migratePreviewThemeConfiguration, normalizePreviewTheme, PREVIEW_THEMES } from "./themes";
@@ -73,7 +74,7 @@ export function activate(context: vscode.ExtensionContext): void {
       if (document) {
         await superMarkdownEditorProvider.openDocument(document, SUPER_MARKDOWN_EDITOR_VIEW_TYPE, {
           layout: "editorOnly",
-          mode: "sv"
+          mode: "source"
         });
       }
     }),
@@ -97,9 +98,12 @@ export function activate(context: vscode.ExtensionContext): void {
       if (document) {
         await superMarkdownEditorProvider.openDocument(document, SUPER_MARKDOWN_EDITOR_VIEW_TYPE, {
           layout: "splitEdit",
-          mode: "sv"
+          mode: "source"
         });
       }
+    }),
+    vscode.commands.registerCommand(SUPER_MARKDOWN_TOOLBAR_COMMAND, async (payload?: unknown) => {
+      await superMarkdownEditorProvider.handleToolbarCommand(payload);
     }),
     vscode.commands.registerCommand("superMarkdown.switchDisplayLanguage", async () => {
       const changed = await switchDisplayLanguage();
@@ -469,8 +473,8 @@ async function exportOnSave(context: vscode.ExtensionContext, document: vscode.T
 
 async function openSyntaxGuide(context: vscode.ExtensionContext): Promise<void> {
   const language = getRuntimeLanguage();
-  const filename = language === "zh-CN" ? "markdown_zh-cn.md" : "markdown_en.md";
-  const uri = vscode.Uri.joinPath(context.extensionUri, "docs", "markdown-syntax", filename);
+  const filename = language === "zh-CN" ? "syntax_zh-cn.md" : "syntax_en.md";
+  const uri = vscode.Uri.joinPath(context.extensionUri, "docs", "super-markdown", filename);
   const document = await vscode.workspace.openTextDocument(uri);
   await vscode.window.showTextDocument(document, vscode.ViewColumn.One);
   await vscode.commands.executeCommand("markdown.showPreviewToSide", uri);

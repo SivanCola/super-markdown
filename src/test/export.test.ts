@@ -1,6 +1,5 @@
 import * as assert from "node:assert/strict";
 import * as path from "node:path";
-import { expandIncludes } from "../export/markdownItInclude";
 import { renderExportHtml } from "../export/renderer";
 import { parseFrontMatter, resolveExportTypes, resolveOutputPath, rewriteImageSource } from "../export/utils";
 import { ExportSettings } from "../types";
@@ -14,7 +13,7 @@ const exportSettings: ExportSettings = {
   includeDefaultStyles: false,
   styles: [],
   highlight: true,
-  highlightStyle: "tomorrow.css",
+  highlightStyle: "super-markdown",
   emoji: false,
   breaks: false,
   chromiumExecutablePath: "",
@@ -77,10 +76,11 @@ suite("export utils", () => {
     const source = path.join(path.sep, "tmp", "workspace", "docs", "doc.md");
     const output = path.join(path.sep, "tmp", "workspace", "exports", "doc.html");
     assert.equal(rewriteImageSource("images/a b.png", source, true, output), "../docs/images/a%20b.png");
+    assert.equal(rewriteImageSource("<images/a%20b.png?raw=1#pic>", source, true, output), "../docs/images/a%20b.png");
   });
 
-  test("renders mermaid fences as diagram divs", () => {
-    const html = renderExportHtml({
+  test("renders mermaid fences as diagram divs", async () => {
+    const html = await renderExportHtml({
       markdown: "```mermaid\ngraph TD; A-->B;\n```",
       sourcePath: path.join(path.sep, "tmp", "doc.md"),
       outputPath: path.join(path.sep, "tmp", "doc.html"),
@@ -88,12 +88,22 @@ suite("export utils", () => {
       settings: exportSettings,
       type: "html"
     });
-    assert.match(html, /<div class="mermaid">graph TD; A--&gt;B;\n<\/div>/);
+    assert.match(html, /<pre class="mermaid">graph TD; A--&gt;B;<\/pre>/);
+    assert.match(html, /class="code-color-toggle"/);
+    assert.match(html, /renderBlockTones/);
     assert.doesNotMatch(html, /language-mermaid/);
   });
 
-  test("does not expand include directives inside fences", () => {
-    const text = "```md\n:[x](missing.md)\n```";
-    assert.equal(expandIncludes(text, process.cwd(), []), text);
+  test("renders extension web resources as encoded file urls", async () => {
+    const html = await renderExportHtml({
+      markdown: "```mermaid\ngraph TD; A-->B;\n```",
+      sourcePath: path.join(path.sep, "tmp", "doc.md"),
+      outputPath: path.join(path.sep, "tmp", "doc.html"),
+      extensionPath: path.join(path.sep, "tmp", "extension root"),
+      settings: exportSettings,
+      type: "html"
+    });
+
+    assert.match(html, /src="file:\/\/\/tmp\/extension%20root\/media\/vendor\/mermaid\/mermaid\.min\.js"/);
   });
 });

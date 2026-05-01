@@ -26,6 +26,11 @@ suite("extension manifest", () => {
     });
   });
 
+  test("declares limited Restricted Mode support for webview editing", () => {
+    assert.deepEqual(manifest.capabilities.untrustedWorkspaces.supported, "limited");
+    assert.match(manifest.capabilities.untrustedWorkspaces.description, /split scroll sync/);
+  });
+
   test("does not keep the legacy preview editor command", () => {
     const contributedCommands = manifest.contributes.commands.map((item: { command: string }) => item.command);
     const menuCommands = Object.values(manifest.contributes.menus).flatMap((items) =>
@@ -116,9 +121,7 @@ suite("extension manifest", () => {
       "superMarkdown.zhCN.openSplitEditMode",
       "superMarkdown.en.openWysiwygEditor",
       "superMarkdown.zhCN.openWysiwygEditor",
-      "superMarkdown.export.choose",
-      "superMarkdown.en.organizeMarkdown",
-      "superMarkdown.zhCN.organizeMarkdown"
+      "superMarkdown.export.choose"
     ]);
     assert.deepEqual(
       editorContextItems.map((item) => item.group),
@@ -129,9 +132,7 @@ suite("extension manifest", () => {
         "navigation@21",
         "navigation@22",
         "navigation@22",
-        "navigation@23",
-        "navigation@24",
-        "navigation@24"
+        "navigation@23"
       ]
     );
   });

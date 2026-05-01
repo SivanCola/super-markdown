@@ -1,7 +1,26 @@
+import * as crypto from "node:crypto";
 import * as fs from "node:fs";
+import * as fsp from "node:fs/promises";
+import * as http from "node:http";
+import * as net from "node:net";
+import * as os from "node:os";
 import * as path from "node:path";
-import * as puppeteerBrowsers from "@puppeteer/browsers";
-import puppeteer from "puppeteer-core";
+import { spawn, ChildProcess } from "node:child_process";
+import { ExportSettings, ExportType } from "../types";
+import { pathToFileUrl } from "./utils";
+
+interface DevToolsTarget {
+  type: string;
+  webSocketDebuggerUrl?: string;
+}
+
+interface CdpMessage {
+  id?: number;
+  method?: string;
+  params?: unknown;
+  result?: unknown;
+  error?: { message?: string };
+}
 
 export function findChromiumFromUserSetting(executablePath: string): string | undefined {
   if (!executablePath) {
@@ -11,16 +30,6 @@ export function findChromiumFromUserSetting(executablePath: string): string | un
 }
 
 export function findChromiumFromSystem(): string | undefined {
-  try {
-    return puppeteerBrowsers.computeSystemExecutablePath({
-      browser: puppeteerBrowsers.Browser.CHROME,
-      channel: puppeteerBrowsers.ChromeReleaseChannel.STABLE,
-      platform: puppeteerBrowsers.detectBrowserPlatform()
-    });
-  } catch {
-    // Fall through to manual candidates.
-  }
-
   return getChromiumCandidates().find((candidate) => fs.existsSync(candidate));
 }
 
@@ -58,48 +67,331 @@ export function getChromiumCandidates(): string[] {
   return [];
 }
 
-export async function resolveChromiumPath(
-  userExecutablePath: string,
-  cacheDir: string,
-  onProgress?: (downloadedBytes: number, totalBytes: number) => void
-): Promise<string | undefined> {
-  const configured = findChromiumFromUserSetting(userExecutablePath);
-  if (configured) {
-    return configured;
+export function resolveChromiumPath(userExecutablePath: string): string | undefined {
+  return findChromiumFromUserSetting(userExecutablePath) ?? findChromiumFromSystem();
+}
+
+export async function exportHtmlWithChromium(
+  executablePath: string,
+  html: string,
+  output: string,
+  type: Exclude<ExportType, "html">,
+  settings: ExportSettings
+): Promise<void> {
+  const tempRoot = await fsp.mkdtemp(path.join(os.tmpdir(), "super-markdown-export-"));
+  const htmlPath = path.join(tempRoot, "document.html");
+  const profilePath = path.join(tempRoot, "profile");
+  await fsp.mkdir(profilePath, { recursive: true });
+  await fsp.writeFile(htmlPath, html, "utf8");
+
+  const browser = spawnBrowser(executablePath, profilePath);
+  try {
+    const port = await waitForDevToolsPort(profilePath);
+    const target = await getPageTarget(port);
+    if (!target.webSocketDebuggerUrl) {
+      throw new Error("Chrome DevTools target unavailable.");
+    }
+    const client = await CdpClient.connect(target.webSocketDebuggerUrl);
+    try {
+      await client.send("Page.enable");
+      await client.send("Runtime.enable");
+      const load = client.waitForEvent("Page.loadEventFired", 15000);
+      await client.send("Page.navigate", { url: pathToFileUrl(htmlPath) });
+      await load.catch(() => undefined);
+      await client.send("Runtime.evaluate", {
+        expression: "document.fonts && document.fonts.ready",
+        awaitPromise: true
+      }).catch(() => undefined);
+
+      if (type === "pdf") {
+        const result = await client.send("Page.printToPDF", {
+          printBackground: settings.pdf.printBackground,
+          landscape: settings.pdf.landscape,
+          displayHeaderFooter: settings.pdf.displayHeaderFooter,
+          headerTemplate: settings.pdf.headerTemplate,
+          footerTemplate: settings.pdf.footerTemplate,
+          marginTop: cssLengthToInches(settings.pdf.margin.top),
+          marginRight: cssLengthToInches(settings.pdf.margin.right),
+          marginBottom: cssLengthToInches(settings.pdf.margin.bottom),
+          marginLeft: cssLengthToInches(settings.pdf.margin.left)
+        }) as { data?: string };
+        await fsp.writeFile(output, Buffer.from(result.data ?? "", "base64"));
+      } else {
+        const result = await client.send("Page.captureScreenshot", {
+          format: type === "jpeg" ? "jpeg" : "png",
+          quality: type === "jpeg" ? settings.image.quality : undefined,
+          captureBeyondViewport: settings.image.fullPage,
+          omitBackground: settings.image.omitBackground,
+          clip: settings.image.clip
+        }) as { data?: string };
+        await fsp.writeFile(output, Buffer.from(result.data ?? "", "base64"));
+      }
+    } finally {
+      client.dispose();
+    }
+  } finally {
+    browser.kill();
+    await fsp.rm(tempRoot, { recursive: true, force: true });
+  }
+}
+
+function spawnBrowser(executablePath: string, profilePath: string): ChildProcess {
+  const args = [
+    "--headless=new",
+    "--disable-gpu",
+    "--disable-dev-shm-usage",
+    "--no-first-run",
+    "--no-default-browser-check",
+    "--remote-debugging-port=0",
+    `--user-data-dir=${profilePath}`,
+    "about:blank"
+  ];
+  const child = spawn(executablePath, args, { stdio: ["ignore", "pipe", "pipe"] });
+  child.stderr?.on("data", () => undefined);
+  child.stdout?.on("data", () => undefined);
+  return child;
+}
+
+async function waitForDevToolsPort(profilePath: string): Promise<number> {
+  const filename = path.join(profilePath, "DevToolsActivePort");
+  const deadline = Date.now() + 10000;
+  while (Date.now() < deadline) {
+    try {
+      const content = await fsp.readFile(filename, "utf8");
+      const port = Number(content.split(/\r?\n/)[0]);
+      if (port > 0) {
+        return port;
+      }
+    } catch {
+      // Browser is still starting.
+    }
+    await delay(100);
+  }
+  throw new Error("Timed out waiting for Chrome DevTools.");
+}
+
+async function getPageTarget(port: number): Promise<DevToolsTarget> {
+  const targets = await httpJson<DevToolsTarget[]>(`http://127.0.0.1:${port}/json/list`);
+  const page = targets.find((target) => target.type === "page");
+  if (!page) {
+    throw new Error("No Chrome page target found.");
+  }
+  return page;
+}
+
+function httpJson<T>(url: string): Promise<T> {
+  return new Promise((resolve, reject) => {
+    http.get(url, (response) => {
+      const chunks: Buffer[] = [];
+      response.on("data", (chunk) => chunks.push(Buffer.from(chunk)));
+      response.on("end", () => {
+        try {
+          resolve(JSON.parse(Buffer.concat(chunks).toString("utf8")) as T);
+        } catch (error) {
+          reject(error);
+        }
+      });
+    }).on("error", reject);
+  });
+}
+
+class CdpClient {
+  private nextId = 1;
+  private readonly pending = new Map<number, { resolve: (value: unknown) => void; reject: (error: Error) => void }>();
+  private readonly eventWaiters = new Map<string, Array<(message: CdpMessage) => void>>();
+  private buffer = Buffer.alloc(0);
+
+  private constructor(private readonly socket: net.Socket) {
+    socket.on("data", (chunk) => this.readFrames(Buffer.from(chunk)));
+    socket.on("error", (error) => {
+      for (const waiter of this.pending.values()) {
+        waiter.reject(error);
+      }
+      this.pending.clear();
+    });
   }
 
-  const system = findChromiumFromSystem();
-  if (system) {
-    return system;
+  static async connect(wsUrl: string): Promise<CdpClient> {
+    const url = new URL(wsUrl);
+    const socket = net.connect(Number(url.port), url.hostname);
+    await new Promise<void>((resolve, reject) => {
+      socket.once("error", reject);
+      socket.once("connect", resolve);
+    });
+
+    const key = crypto.randomBytes(16).toString("base64");
+    const request = [
+      `GET ${url.pathname}${url.search} HTTP/1.1`,
+      `Host: ${url.host}`,
+      "Upgrade: websocket",
+      "Connection: Upgrade",
+      `Sec-WebSocket-Key: ${key}`,
+      "Sec-WebSocket-Version: 13",
+      "",
+      ""
+    ].join("\r\n");
+    socket.write(request);
+
+    await new Promise<void>((resolve, reject) => {
+      const chunks: Buffer[] = [];
+      const onData = (chunk: Buffer) => {
+        chunks.push(chunk);
+        const data = Buffer.concat(chunks);
+        const end = data.indexOf("\r\n\r\n");
+        if (end === -1) {
+          return;
+        }
+        socket.off("data", onData);
+        const header = data.slice(0, end).toString("utf8");
+        if (!/^HTTP\/1\.1 101/i.test(header)) {
+          reject(new Error("Chrome DevTools WebSocket upgrade failed."));
+          return;
+        }
+        const leftover = data.slice(end + 4);
+        if (leftover.length > 0) {
+          socket.unshift(leftover);
+        }
+        resolve();
+      };
+      socket.on("data", onData);
+      socket.once("error", reject);
+    });
+
+    return new CdpClient(socket);
   }
 
-  const buildId = (puppeteer as unknown as { PUPPETEER_REVISIONS: { chrome: string } }).PUPPETEER_REVISIONS.chrome;
-  const platform = puppeteerBrowsers.detectBrowserPlatform();
-  if (!platform) {
+  send(method: string, params?: Record<string, unknown>): Promise<unknown> {
+    const id = this.nextId++;
+    const message = JSON.stringify({ id, method, params });
+    this.socket.write(encodeClientFrame(message));
+    return new Promise((resolve, reject) => {
+      this.pending.set(id, { resolve, reject });
+    });
+  }
+
+  waitForEvent(method: string, timeoutMs: number): Promise<CdpMessage> {
+    return new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error(`Timed out waiting for ${method}.`)), timeoutMs);
+      const waiters = this.eventWaiters.get(method) ?? [];
+      waiters.push((message) => {
+        clearTimeout(timeout);
+        resolve(message);
+      });
+      this.eventWaiters.set(method, waiters);
+    });
+  }
+
+  dispose(): void {
+    this.socket.end();
+  }
+
+  private readFrames(chunk: Buffer): void {
+    this.buffer = Buffer.concat([this.buffer, chunk]);
+    while (this.buffer.length >= 2) {
+      const frame = decodeServerFrame(this.buffer);
+      if (!frame) {
+        return;
+      }
+      this.buffer = this.buffer.slice(frame.bytes);
+      if (frame.opcode === 1) {
+        this.handleMessage(frame.payload.toString("utf8"));
+      }
+    }
+  }
+
+  private handleMessage(raw: string): void {
+    const message = JSON.parse(raw) as CdpMessage;
+    if (message.id !== undefined) {
+      const waiter = this.pending.get(message.id);
+      if (!waiter) {
+        return;
+      }
+      this.pending.delete(message.id);
+      if (message.error) {
+        waiter.reject(new Error(message.error.message ?? "Chrome DevTools command failed."));
+      } else {
+        waiter.resolve(message.result);
+      }
+      return;
+    }
+    if (message.method) {
+      const waiters = this.eventWaiters.get(message.method) ?? [];
+      this.eventWaiters.delete(message.method);
+      waiters.forEach((waiter) => waiter(message));
+    }
+  }
+}
+
+function encodeClientFrame(value: string): Buffer {
+  const payload = Buffer.from(value, "utf8");
+  const mask = crypto.randomBytes(4);
+  const header: number[] = [0x81];
+  if (payload.length < 126) {
+    header.push(0x80 | payload.length);
+  } else if (payload.length < 65536) {
+    header.push(0x80 | 126, (payload.length >> 8) & 0xff, payload.length & 0xff);
+  } else {
+    header.push(0x80 | 127, 0, 0, 0, 0, (payload.length >> 24) & 0xff, (payload.length >> 16) & 0xff, (payload.length >> 8) & 0xff, payload.length & 0xff);
+  }
+  const masked = Buffer.alloc(payload.length);
+  for (let index = 0; index < payload.length; index += 1) {
+    masked[index] = payload[index] ^ mask[index % 4];
+  }
+  return Buffer.concat([Buffer.from(header), mask, masked]);
+}
+
+function decodeServerFrame(buffer: Buffer): { opcode: number; payload: Buffer; bytes: number } | undefined {
+  const first = buffer[0];
+  const second = buffer[1];
+  let offset = 2;
+  let length = second & 0x7f;
+  if (length === 126) {
+    if (buffer.length < offset + 2) {
+      return undefined;
+    }
+    length = buffer.readUInt16BE(offset);
+    offset += 2;
+  } else if (length === 127) {
+    if (buffer.length < offset + 8) {
+      return undefined;
+    }
+    const high = buffer.readUInt32BE(offset);
+    const low = buffer.readUInt32BE(offset + 4);
+    length = high * 2 ** 32 + low;
+    offset += 8;
+  }
+  const masked = Boolean(second & 0x80);
+  const maskLength = masked ? 4 : 0;
+  if (buffer.length < offset + maskLength + length) {
     return undefined;
   }
-
-  try {
-    const executablePath = puppeteerBrowsers.computeExecutablePath({
-      browser: puppeteerBrowsers.Browser.CHROME,
-      buildId,
-      cacheDir,
-      platform
-    });
-    if (fs.existsSync(executablePath)) {
-      return executablePath;
-    }
-  } catch {
-    // Download below.
+  let payload = buffer.slice(offset + maskLength, offset + maskLength + length);
+  if (masked) {
+    const mask = buffer.slice(offset, offset + 4);
+    payload = Buffer.from(payload.map((byte, index) => byte ^ mask[index % 4]));
   }
+  return { opcode: first & 0x0f, payload, bytes: offset + maskLength + length };
+}
 
-  fs.mkdirSync(cacheDir, { recursive: true });
-  const browser = await puppeteerBrowsers.install({
-    browser: puppeteerBrowsers.Browser.CHROME,
-    buildId,
-    cacheDir,
-    platform,
-    downloadProgressCallback: onProgress
-  });
-  return browser.executablePath;
+function cssLengthToInches(value: string): number {
+  const match = value.trim().match(/^(\d+(?:\.\d+)?)(px|in|cm|mm)?$/);
+  if (!match) {
+    return 0.4;
+  }
+  const amount = Number(match[1]);
+  const unit = match[2] ?? "px";
+  if (unit === "in") {
+    return amount;
+  }
+  if (unit === "cm") {
+    return amount / 2.54;
+  }
+  if (unit === "mm") {
+    return amount / 25.4;
+  }
+  return amount / 96;
+}
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }

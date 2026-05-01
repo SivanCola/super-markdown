@@ -7,5 +7,4 @@ node_modules/
 media/vendor/vditor/
 *.vsix
 *.log
-AGENTS.md
 .jumpjump/

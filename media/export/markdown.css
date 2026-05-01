@@ -1,218 +1,233 @@
-/* https://github.com/microsoft/vscode/blob/master/extensions/markdown-language-features/media/markdown.css */
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See License.txt in the project root for license information.
- *--------------------------------------------------------------------------------------------*/
+:root {
+  color-scheme: light;
+  --sm-page-bg: #ffffff;
+  --sm-text: #20242a;
+  --sm-muted: #667085;
+  --sm-border: #d8dee8;
+  --sm-accent: #2563eb;
+  --sm-code-bg: #f6f8fb;
+  --sm-code-header-bg: #eef2f7;
+  --sm-code-border: #d8dee8;
+  --sm-code-text: #172033;
+  --sm-syntax-keyword: #7c3aed;
+  --sm-syntax-function: #0f766e;
+  --sm-syntax-string: #b45309;
+}
 
 body {
-	font-family: var(--vscode-markdown-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif);
-	font-size: var(--vscode-markdown-font-size, 14px);
-	padding: 0 26px;
-	line-height: var(--vscode-markdown-line-height, 22px);
-	word-wrap: break-word;
+  margin: 0;
+  color: var(--sm-text);
+  background: var(--sm-page-bg);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: 1.68;
 }
 
-#code-csp-warning {
-	position: fixed;
-	top: 0;
-	right: 0;
-	color: white;
-	margin: 16px;
-	text-align: center;
-	font-size: 12px;
-	font-family: sans-serif;
-	background-color:#444444;
-	cursor: pointer;
-	padding: 6px;
-	box-shadow: 1px 1px 1px rgba(0,0,0,.25);
+.markdown-body {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 44px 54px 72px;
+  box-sizing: border-box;
 }
 
-#code-csp-warning:hover {
-	text-decoration: none;
-	background-color:#007acc;
-	box-shadow: 2px 2px 2px rgba(0,0,0,.25);
-}
-
-body.scrollBeyondLastLine {
-	margin-bottom: calc(100vh - 22px);
-}
-
-body.showEditorSelection .code-line {
-	position: relative;
-}
-
-body.showEditorSelection .code-active-line:before,
-body.showEditorSelection .code-line:hover:before {
-	content: "";
-	display: block;
-	position: absolute;
-	top: 0;
-	left: -12px;
-	height: 100%;
-}
-
-body.showEditorSelection li.code-active-line:before,
-body.showEditorSelection li.code-line:hover:before {
-	left: -30px;
-}
-
-.vscode-light.showEditorSelection .code-active-line:before {
-	border-left: 3px solid rgba(0, 0, 0, 0.15);
-}
-
-.vscode-light.showEditorSelection .code-line:hover:before {
-	border-left: 3px solid rgba(0, 0, 0, 0.40);
-}
-
-.vscode-light.showEditorSelection .code-line .code-line:hover:before {
-	border-left: none;
-}
-
-.vscode-dark.showEditorSelection .code-active-line:before {
-	border-left: 3px solid rgba(255, 255, 255, 0.4);
-}
-
-.vscode-dark.showEditorSelection .code-line:hover:before {
-	border-left: 3px solid rgba(255, 255, 255, 0.60);
-}
-
-.vscode-dark.showEditorSelection .code-line .code-line:hover:before {
-	border-left: none;
-}
-
-.vscode-high-contrast.showEditorSelection .code-active-line:before {
-	border-left: 3px solid rgba(255, 160, 0, 0.7);
-}
-
-.vscode-high-contrast.showEditorSelection .code-line:hover:before {
-	border-left: 3px solid rgba(255, 160, 0, 1);
-}
-
-.vscode-high-contrast.showEditorSelection .code-line .code-line:hover:before {
-	border-left: none;
-}
-
-img {
-	max-width: 100%;
-	max-height: 100%;
-}
-
-a {
-	text-decoration: none;
-}
-
-a:hover {
-	text-decoration: underline;
-}
-
-a:focus,
-input:focus,
-select:focus,
-textarea:focus {
-	outline: 1px solid -webkit-focus-ring-color;
-	outline-offset: -1px;
-}
-
-hr {
-	border: 0;
-	height: 2px;
-	border-bottom: 2px solid;
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin: 1.55em 0 0.65em;
+  line-height: 1.25;
 }
 
 h1 {
-	padding-bottom: 0.3em;
-	line-height: 1.2;
-	border-bottom-width: 1px;
-	border-bottom-style: solid;
+  padding-bottom: 0.35em;
+  border-bottom: 1px solid var(--sm-border);
+  font-size: 2.2em;
 }
 
-h1, h2, h3 {
-	font-weight: normal;
+h2 {
+  padding-bottom: 0.25em;
+  border-bottom: 1px solid var(--sm-border);
+  font-size: 1.65em;
 }
 
-table {
-	border-collapse: collapse;
-}
-
-table > thead > tr > th {
-	text-align: left;
-	border-bottom: 1px solid;
-}
-
-table > thead > tr > th,
-table > thead > tr > td,
-table > tbody > tr > th,
-table > tbody > tr > td {
-	padding: 5px 10px;
-}
-
-table > tbody > tr + tr > td {
-	border-top: 1px solid;
+a {
+  color: var(--sm-accent);
 }
 
 blockquote {
-	margin: 0 7px 0 5px;
-	padding: 0 16px 0 10px;
-	border-left-width: 5px;
-	border-left-style: solid;
+  margin: 1.1em 0;
+  padding: 0.8em 1em;
+  border-left: 4px solid var(--sm-accent);
+  background: #f8fafc;
+  color: #344054;
 }
 
-code {
-	font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", "Courier New", monospace, "Droid Sans Fallback";
-	font-size: 1em;
-	line-height: 1.357em;
+table {
+  width: 100%;
+  margin: 1.2em 0;
+  border-collapse: collapse;
 }
 
-body.wordWrap pre {
-	white-space: pre-wrap;
+th,
+td {
+  padding: 0.58em 0.75em;
+  border: 1px solid var(--sm-border);
 }
 
-pre:not(.hljs),
-pre.hljs code > div {
-	padding: 16px;
-	border-radius: 3px;
-	overflow: auto;
+th {
+  background: #f8fafc;
+  font-weight: 700;
 }
 
-pre code {
-	color: var(--vscode-editor-foreground);
-	tab-size: 4;
+img {
+  max-width: 100%;
+  height: auto;
 }
 
-/** Theming */
-
-.vscode-light pre {
-	background-color: rgba(220, 220, 220, 0.4);
+:not(pre) > code {
+  padding: 0.15em 0.35em;
+  border-radius: 4px;
+  background: var(--sm-code-bg);
+  color: #9f1239;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
-.vscode-dark pre {
-	background-color: rgba(10, 10, 10, 0.4);
+.code-block,
+.diagram-block,
+.math-block {
+  --sm-render-block-bg: var(--sm-code-bg);
+  --sm-render-block-header-bg: var(--sm-code-header-bg);
+  --sm-render-block-border: var(--sm-code-border);
+  --sm-render-block-text: var(--sm-code-text);
+  --sm-render-block-muted: var(--sm-muted);
+  overflow: hidden;
+  margin: 1.2em 0;
+  border: 1px solid var(--sm-render-block-border);
+  border-radius: 6px;
+  background: var(--sm-render-block-bg);
 }
 
-.vscode-high-contrast pre {
-	background-color: rgb(0, 0, 0);
+.code-block figcaption,
+.diagram-block figcaption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.45em 0.75em;
+  border-bottom: 1px solid var(--sm-render-block-border);
+  background: var(--sm-render-block-header-bg);
+  color: var(--sm-render-block-muted);
+  font-size: 0.85em;
 }
 
-.vscode-high-contrast h1 {
-	border-color: rgb(0, 0, 0);
+.code-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
 }
 
-.vscode-light table > thead > tr > th {
-	border-color: rgba(0, 0, 0, 0.69);
+.code-color-toggle,
+.copy-code {
+  min-height: 1.8em;
+  padding: 0 0.65em;
+  border: 1px solid var(--sm-render-block-border);
+  border-radius: 4px;
+  color: var(--sm-render-block-muted);
+  background: transparent;
+  cursor: pointer;
 }
 
-.vscode-dark table > thead > tr > th {
-	border-color: rgba(255, 255, 255, 0.69);
+.code-color-toggle:hover,
+.code-color-toggle:focus,
+.copy-code:hover,
+.copy-code:focus {
+  color: var(--sm-render-block-text);
+  background: var(--sm-render-block-bg);
 }
 
-.vscode-light h1,
-.vscode-light hr,
-.vscode-light table > tbody > tr + tr > td {
-	border-color: rgba(0, 0, 0, 0.18);
+.code-block pre,
+.diagram-block pre {
+  margin: 0;
+  padding: 1em;
+  overflow: auto;
+  background: var(--sm-render-block-bg);
 }
 
-.vscode-dark h1,
-.vscode-dark hr,
-.vscode-dark table > tbody > tr + tr > td {
-	border-color: rgba(255, 255, 255, 0.18);
+.code-block code {
+  display: block;
+  color: var(--sm-render-block-text);
+  background: transparent;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  line-height: 1.55;
+}
+
+.code-block .shiki {
+  color: var(--shiki-light, var(--sm-render-block-text));
+  white-space: normal;
+}
+
+.code-block .shiki span {
+  color: var(--shiki-light, var(--sm-render-block-text));
+}
+
+.code-block .shiki .line {
+  display: block;
+  min-height: 1.55em;
+  white-space: pre;
+}
+
+.code-block.render-block-tone-dark .shiki,
+.code-block.render-block-tone-dark .shiki span {
+  color: var(--shiki-dark, var(--sm-render-block-text));
+}
+
+.code-block.render-block-tone-light .shiki,
+.code-block.render-block-tone-light .shiki span {
+  color: var(--shiki-light, var(--sm-render-block-text));
+}
+
+@media (prefers-color-scheme: dark) {
+  .code-block:not(.render-block-tone-light) .shiki,
+  .code-block:not(.render-block-tone-light) .shiki span {
+    color: var(--shiki-dark, var(--sm-render-block-text));
+  }
+}
+
+.diagram-block .mermaid {
+  color: var(--sm-render-block-text);
+  background: var(--sm-render-block-bg);
+}
+
+.render-block-tone-light {
+  --sm-render-block-bg: #f8fafc;
+  --sm-render-block-header-bg: #eef2f7;
+  --sm-render-block-border: #cbd5e1;
+  --sm-render-block-text: #18202d;
+  --sm-render-block-muted: #475569;
+  --sm-code-text: #18202d;
+}
+
+.render-block-tone-dark {
+  --sm-render-block-bg: #101722;
+  --sm-render-block-header-bg: #1b2432;
+  --sm-render-block-border: #334155;
+  --sm-render-block-text: #f8fafc;
+  --sm-render-block-muted: #cbd5e1;
+  --sm-code-text: #f8fafc;
+}
+
+.math-block {
+  padding: 1em;
+}
+
+.footnotes {
+  margin-top: 2em;
+  padding-top: 1em;
+  border-top: 1px solid var(--sm-border);
+  color: var(--sm-muted);
+  font-size: 0.92em;
+}
+
+@page {
+  margin: 1cm;
 }

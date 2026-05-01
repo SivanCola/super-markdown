@@ -2,6 +2,10 @@
 
 ## 0.0.9
 
+- Documented the Milkdown / ProseMirror boundary: WYSIWYG editing uses Milkdown / ProseMirror, while parsing, preview, formatting, and export continue to use Super Markdown's own Markdown pipeline.
+- Added Playwright Webview toolbar coverage to CI for split and WYSIWYG modes.
+- Added packaged VSIX content verification to keep development-only tests and Playwright runtime code out of the extension package.
+- Expanded WYSIWYG automation coverage for richer editing scenarios.
 - Updated the Marketplace icon with transparent corners and sharper small-size rendering.
 - Removed unused screenshot SVG source files from packaged resources.
 

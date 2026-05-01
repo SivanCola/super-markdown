@@ -1,5 +1,6 @@
 import { Heading } from "../types";
 import { TOC_END, TOC_START } from "./constants";
+import { stripInlineMarkdown } from "./inline";
 import { GithubSlugger } from "./slug";
 
 export interface ExtractHeadingOptions {
@@ -137,13 +138,8 @@ export function flattenHeadingTree(headings: Heading[]): Heading[] {
 }
 
 export function cleanHeadingText(rawText: string): string {
-  return rawText
+  return stripInlineMarkdown(rawText
     .replace(OMIT_FROM_TOC, "")
-    .replace(/\s+#+\s*$/, "")
-    .replace(/!\[([^\]]*)\]\([^)]+\)/g, "$1")
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
-    .replace(/<[^>]+>/g, "")
-    .replace(/`([^`]+)`/g, "$1")
-    .replace(/[*_~]/g, "")
+    .replace(/\s+#+\s*$/, ""))
     .trim();
 }

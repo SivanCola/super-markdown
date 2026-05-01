@@ -1,11 +1,10 @@
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import * as vscode from "vscode";
-import puppeteer from "puppeteer-core";
 import { getExportSettings } from "../config";
 import { t } from "../i18n";
 import { ExportSettings, ExportType } from "../types";
-import { resolveChromiumPath } from "./chromium";
+import { exportHtmlWithChromium, resolveChromiumPath } from "./chromium";
 import { renderExportHtml } from "./renderer";
 import { isExcluded, resolveExportTypes, resolveOutputPath } from "./utils";
 
@@ -31,7 +30,7 @@ export async function exportMarkdownDocument(
     const workspaceFolderPath = vscode.workspace.getWorkspaceFolder(document.uri)?.uri.fsPath;
     const output = resolveOutputPath(document.uri.fsPath, type, settings, workspaceFolderPath);
     await fs.mkdir(path.dirname(output), { recursive: true });
-    const html = renderExportHtml({
+    const html = await renderExportHtml({
       markdown: document.getText(),
       sourcePath: document.uri.fsPath,
       outputPath: output,
@@ -57,49 +56,9 @@ async function exportWithChromium(
   type: Exclude<ExportType, "html">,
   settings: ExportSettings
 ): Promise<void> {
-  const executablePath = await resolveChromiumPath(
-    settings.chromiumExecutablePath,
-    path.join(context.globalStorageUri.fsPath, "chromium"),
-    (downloaded, total) => {
-      if (total > 0) {
-        console.log(`Super Markdown Chromium download ${Math.round((downloaded / total) * 100)}%`);
-      }
-    }
-  );
+  const executablePath = resolveChromiumPath(settings.chromiumExecutablePath);
   if (!executablePath) {
     throw new Error(t("message.chromiumUnavailable"));
   }
-
-  const browser = await puppeteer.launch({
-    executablePath,
-    headless: true,
-    args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"]
-  });
-  try {
-    const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: "networkidle0" });
-    if (type === "pdf") {
-      await page.pdf({
-        path: output,
-        format: settings.pdf.format as "A4",
-        landscape: settings.pdf.landscape,
-        printBackground: settings.pdf.printBackground,
-        displayHeaderFooter: settings.pdf.displayHeaderFooter,
-        headerTemplate: settings.pdf.headerTemplate,
-        footerTemplate: settings.pdf.footerTemplate,
-        margin: settings.pdf.margin
-      });
-    } else {
-      await page.screenshot({
-        path: output,
-        type,
-        quality: type === "jpeg" ? settings.image.quality : undefined,
-        fullPage: settings.image.fullPage,
-        omitBackground: settings.image.omitBackground,
-        clip: settings.image.clip
-      });
-    }
-  } finally {
-    await browser.close();
-  }
+  await exportHtmlWithChromium(executablePath, html, output, type, settings);
 }

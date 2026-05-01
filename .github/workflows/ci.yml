@@ -29,10 +29,17 @@ jobs:
       - name: Test
         run: npm test
 
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Test Webview toolbar
+        run: npm run test:webview-toolbar
+
       - name: Package VSIX
-        run: |
-          mkdir -p dist
-          npx @vscode/vsce package --out dist/super-markdown.vsix
+        run: npm run package:vsix
+
+      - name: Verify VSIX contents
+        run: npm run verify:vsix-contents
 
       - name: Upload VSIX
         uses: actions/upload-artifact@v4

@@ -109,7 +109,8 @@ export interface ExportSettings {
   };
 }
 
-export type WysiwygMode = "wysiwyg" | "ir" | "sv";
+export type EditorMode = "source" | "split" | "wysiwyg" | "preview";
+export type WysiwygMode = "wysiwyg" | "ir" | "sv" | EditorMode;
 export type WysiwygTheme = "classic" | "dark";
 export type SuperMarkdownEditorLayout = "workbench" | "editorOnly" | "splitEdit" | "previewOnly";
 

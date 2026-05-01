@@ -23,7 +23,7 @@ suite("formatMarkdown", () => {
     const input = "Text`code()`and https://example.com/a,b\n\n```js\nconst x={a:1};\n```";
     const result = formatMarkdown(input, settings).text;
     assert.match(result, /Text `code\(\)` and https:\/\/example\.com\/a,b/);
-    assert.match(result, new RegExp("const x = \\{\\n {4}a: 1\\n\\};"));
+    assert.match(result, /const x=\{a:1\};/);
   });
 
   test("formats CJK tables and quoted tables", () => {

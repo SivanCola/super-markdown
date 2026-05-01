@@ -1,9 +1,7 @@
+import { stripInlineMarkdown } from "./inline";
+
 export function baseSlug(text: string): string {
-  const withoutMarkup = text
-    .replace(/<[^>]+>/g, "")
-    .replace(/!\[([^\]]*)\]\([^)]+\)/g, "$1")
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
-    .replace(/[`*_~]/g, "")
+  const withoutMarkup = stripInlineMarkdown(text)
     .trim()
     .toLowerCase();
 

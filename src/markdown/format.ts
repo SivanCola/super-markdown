@@ -1,5 +1,5 @@
-import beautify = require("js-beautify");
 import { FormatSettings, OrganizeEdit, OrganizeResult } from "../types";
+import { formatMarkdownTableRows, isMarkdownTableDelimiter, isMarkdownTableRow } from "./table";
 
 export interface MarkdownFormatOptions {
   date?: Date;
@@ -27,8 +27,6 @@ interface ProtectResult {
   blocks: ProtectedBlock[];
 }
 
-type Alignment = "left" | "center" | "right";
-
 export function formatMarkdown(text: string, settings: FormatSettings, options: MarkdownFormatOptions = {}): OrganizeResult {
   if (!settings.enable || DISABLE_FILE.test(text)) {
     return { text, edits: [], warnings: [] };
@@ -48,10 +46,6 @@ export function formatMarkdown(text: string, settings: FormatSettings, options: 
 
   if (settings.code.enabled && settings.code.indentedCodeToFenceLanguage.trim()) {
     current = convertIndentedCodeBlocks(current, settings.code.indentedCodeToFenceLanguage.trim());
-  }
-
-  if (settings.code.enabled) {
-    current = formatFencedCodeBlocks(current, settings.code.beautifyOptions);
   }
 
   const fenced = protectFencedCodeBlocks(current);
@@ -132,12 +126,12 @@ export function formatMarkdownTables(
     if (!inFence && isTableStart(lines, index)) {
       const prefix = getQuotePrefix(lines[index]);
       const tableLines: string[] = [];
-      while (index < lines.length && getQuotePrefix(lines[index]) === prefix && isPipeRow(stripQuotePrefix(lines[index]))) {
+      while (index < lines.length && getQuotePrefix(lines[index]) === prefix && isMarkdownTableRow(stripQuotePrefix(lines[index]))) {
         tableLines.push(stripQuotePrefix(lines[index]));
         index += 1;
       }
 
-      const formatted = formatTable(tableLines, settings.table.cjkCharWidth).map((tableLine) => `${prefix}${tableLine}`);
+      const formatted = formatMarkdownTableRows(tableLines, settings.table.cjkCharWidth).map((tableLine) => `${prefix}${tableLine}`);
       changed = changed || formatted.join("\n") !== lines.slice(index - tableLines.length, index).join("\n");
       nextLines.push(...formatted);
       continue;
@@ -294,59 +288,6 @@ function convertIndentedCodeBlocks(text: string, language: string): string {
   return joinLines(next, text);
 }
 
-function formatFencedCodeBlocks(text: string, options: Record<string, unknown>): string {
-  const lines = splitLines(text);
-  const next: string[] = [];
-  let index = 0;
-
-  while (index < lines.length) {
-    const opening = lines[index].match(FENCE_START);
-    if (!opening) {
-      next.push(lines[index]);
-      index += 1;
-      continue;
-    }
-
-    const fence = opening[2];
-    const marker = fence[0];
-    const language = opening[3].toLowerCase();
-    const blockLines = [lines[index]];
-    index += 1;
-    const code: string[] = [];
-
-    while (index < lines.length && !lines[index].trim().startsWith(marker.repeat(fence.length))) {
-      code.push(lines[index]);
-      index += 1;
-    }
-
-    if (index < lines.length) {
-      const formatted = beautifyCode(language, code.join("\n"), options);
-      blockLines.push(...formatted.split("\n"));
-      blockLines.push(lines[index]);
-      index += 1;
-      next.push(...blockLines);
-    } else {
-      next.push(...blockLines, ...code);
-    }
-  }
-
-  return joinLines(next, text);
-}
-
-function beautifyCode(language: string, code: string, options: Record<string, unknown>): string {
-  const beautifyOptions = options as js_beautify.JSBeautifyOptions;
-  if (language === "js" || language === "javascript") {
-    return beautify.js(code, beautifyOptions).replace(/\n$/, "");
-  }
-  if (language === "html") {
-    return beautify.html(code, beautifyOptions as js_beautify.HTMLBeautifyOptions).replace(/\n$/, "");
-  }
-  if (language === "css") {
-    return beautify.css(code, beautifyOptions as js_beautify.CSSBeautifyOptions).replace(/\n$/, "");
-  }
-  return code;
-}
-
 function protectFencedCodeBlocks(text: string): ProtectResult {
   const lines = splitLines(text);
   const blocks: ProtectedBlock[] = [];
@@ -471,82 +412,7 @@ function padOrderedListNumbers(lines: string[]): string[] {
 function isTableStart(lines: string[], index: number): boolean {
   const current = stripQuotePrefix(lines[index] ?? "");
   const next = stripQuotePrefix(lines[index + 1] ?? "");
-  return Boolean(current && next && isPipeRow(current) && isSeparatorRow(next));
-}
-
-function isPipeRow(line: string): boolean {
-  return line.includes("|") && splitTableRow(line).length > 1;
-}
-
-function isSeparatorRow(line: string): boolean {
-  const cells = splitTableRow(line);
-  return cells.length > 1 && cells.every((cell) => /^:?-{3,}:?$/.test(cell.trim()));
-}
-
-function formatTable(rows: string[], cjkCharWidth: number): string[] {
-  const indent = rows[0].match(/^\s*/)?.[0] ?? "";
-  const parsedRows = rows.map(splitTableRow);
-  const columnCount = Math.max(...parsedRows.map((row) => row.length));
-  const normalizedRows = parsedRows.map((row) => [...row, ...Array<string>(columnCount - row.length).fill("")]);
-  const alignments = normalizedRows[1].map(parseAlignment);
-  const widths = Array.from({ length: columnCount }, (_, column) =>
-    Math.max(...normalizedRows.map((row) => displayLength(row[column], cjkCharWidth)))
-  );
-
-  return normalizedRows.map((row, rowIndex) => {
-    if (rowIndex === 1) {
-      return formatSeparatorRow(widths, alignments, indent);
-    }
-    return `${indent}| ${row.map((cell, column) => padCell(cell, widths[column], alignments[column], cjkCharWidth)).join(" | ")} |`;
-  });
-}
-
-function splitTableRow(row: string): string[] {
-  const trimmed = row.trim();
-  const withoutEdges = trimmed.replace(/^\|/, "").replace(/\|$/, "");
-  return withoutEdges.split("|").map((cell) => cell.trim());
-}
-
-function parseAlignment(separator: string): Alignment {
-  const trimmed = separator.trim();
-  if (trimmed.startsWith(":") && trimmed.endsWith(":")) {
-    return "center";
-  }
-  if (trimmed.endsWith(":")) {
-    return "right";
-  }
-  return "left";
-}
-
-function formatSeparatorRow(widths: number[], alignments: Alignment[], indent: string): string {
-  const cells = widths.map((width, index) => {
-    const dashes = "-".repeat(Math.max(3, width));
-    if (alignments[index] === "center") {
-      return `:${dashes}:`;
-    }
-    if (alignments[index] === "right") {
-      return `${dashes}:`;
-    }
-    return dashes;
-  });
-  return `${indent}| ${cells.join(" | ")} |`;
-}
-
-function padCell(cell: string, width: number, alignment: Alignment, cjkCharWidth: number): string {
-  const padding = Math.max(0, width - displayLength(cell, cjkCharWidth));
-  if (alignment === "right") {
-    return `${" ".repeat(padding)}${cell}`;
-  }
-  if (alignment === "center") {
-    const left = Math.floor(padding / 2);
-    const right = padding - left;
-    return `${" ".repeat(left)}${cell}${" ".repeat(right)}`;
-  }
-  return `${cell}${" ".repeat(padding)}`;
-}
-
-function displayLength(value: string, cjkCharWidth: number): number {
-  return Array.from(value).reduce((length, char) => length + (isCjk(char) ? cjkCharWidth : 1), 0);
+  return Boolean(current && next && isMarkdownTableRow(current) && isMarkdownTableDelimiter(next));
 }
 
 function mapNonFenceLines(text: string, mapper: (line: string) => string): string {

@@ -35,4 +35,10 @@ suite("outline", () => {
     assert.deepEqual([...parseTocLevels("2..4")], [2, 3, 4]);
     assert.deepEqual([...parseTocLevels("3")], [3]);
   });
+
+  test("uses shared inline parsing for heading text and slugs", () => {
+    const headings = extractHeadings("# ![Logo](<icon file.png> \"Title\") [**API**](https://example.com/foo(bar) 'Docs')");
+    assert.equal(headings[0].text, "Logo API");
+    assert.equal(headings[0].slug, "logo-api");
+  });
 });

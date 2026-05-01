@@ -1,5 +1,7 @@
 import { DocumentIssue } from "../types";
+import { extractInlineLinks } from "./inline";
 import { extractHeadings } from "./outline";
+import { isSkippableLocalTarget, parseMarkdownResourceTarget } from "./resource";
 import { baseSlug } from "./slug";
 import { isTocStale } from "./toc";
 
@@ -101,46 +103,27 @@ async function findBrokenLocalTargets(
 ): Promise<DocumentIssue[]> {
   const issues: DocumentIssue[] = [];
   const lines = text.split(/\r?\n/);
-  const linkPattern = /(!?)\[([^\]]*)\]\(([^)\s]+)(?:\s+["'][^"']+["'])?\)/g;
 
   for (let lineIndex = 0; lineIndex < lines.length; lineIndex += 1) {
-    const line = lines[lineIndex];
-    let match: RegExpExecArray | null;
-    while ((match = linkPattern.exec(line)) !== null) {
-      const isImage = match[1] === "!";
-      const target = normalizeTarget(match[3]);
-      if (!target || shouldSkipTarget(target)) {
+    for (const link of extractInlineLinks(lines[lineIndex])) {
+      const isImage = link.image;
+      const resource = parseMarkdownResourceTarget(link.destination);
+      if (!resource.normalized || isSkippableLocalTarget(resource)) {
         continue;
       }
 
-      const exists = await fileExists(stripHashAndQuery(target));
+      const exists = await fileExists(resource.withoutHashAndQuery);
       if (!exists) {
         issues.push({
           severity: "error",
           code: isImage ? "broken-image" : "broken-link",
-          message: `${isImage ? "Image" : "Link"} target not found: ${target}`,
+          message: `${isImage ? "Image" : "Link"} target not found: ${resource.normalized}`,
           line: lineIndex,
-          target
+          target: resource.normalized
         });
       }
     }
   }
 
   return issues;
-}
-
-function normalizeTarget(target: string): string {
-  return target.trim().replace(/^</, "").replace(/>$/, "");
-}
-
-function shouldSkipTarget(target: string): boolean {
-  return (
-    target.startsWith("#") ||
-    target.startsWith("data:") ||
-    /^[a-z][a-z\d+.-]*:/i.test(target)
-  );
-}
-
-function stripHashAndQuery(target: string): string {
-  return target.split("#")[0].split("?")[0];
 }

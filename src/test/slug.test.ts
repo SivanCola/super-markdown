@@ -6,6 +6,7 @@ suite("slug", () => {
     assert.equal(baseSlug("Hello World!"), "hello-world");
     assert.equal(baseSlug("中文 标题"), "中文-标题");
     assert.equal(baseSlug("Use `code` and **bold**"), "use-code-and-bold");
+    assert.equal(baseSlug("![Logo](<icon file.png> \"Title\") [**API**](https://example.com/foo(bar) 'Docs')"), "logo-api");
   });
 
   test("deduplicates repeated headings", () => {

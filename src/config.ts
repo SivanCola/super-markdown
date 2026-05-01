@@ -93,7 +93,7 @@ export function getExportSettings(config = vscode.workspace.getConfiguration("su
     includeDefaultStyles: config.get<boolean>("export.includeDefaultStyles", true),
     styles: normalizeStringArray(config.get<string[] | string>("export.styles", [])),
     highlight: config.get<boolean>("export.highlight", true),
-    highlightStyle: config.get<string>("export.highlightStyle", "tomorrow.css"),
+    highlightStyle: config.get<string>("export.highlightStyle", "super-markdown"),
     emoji: config.get<boolean>("export.emoji", true),
     breaks: config.get<boolean>("export.breaks", false),
     chromiumExecutablePath: config.get<string>("export.chromium.executablePath", ""),

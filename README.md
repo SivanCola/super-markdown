@@ -7,7 +7,6 @@
 [![version](https://img.shields.io/visual-studio-marketplace/v/SivanLiu.super-markdown?label=version&color=2389d7)](https://marketplace.visualstudio.com/items?itemName=SivanLiu.super-markdown)
 [![open vsx](https://img.shields.io/open-vsx/v/SivanLiu/super-markdown?label=open%20vsx&color=8a63d2)](https://open-vsx.org/extension/SivanLiu/super-markdown)
 ![platform](https://img.shields.io/badge/platform-VS%20Code%20%7C%20Cursor-8a8a8a)
-![built with](https://img.shields.io/badge/built%20with-TypeScript-3178c6)
 [![downloads](https://img.shields.io/visual-studio-marketplace/d/SivanLiu.super-markdown?label=downloads&color=39b91f)](https://marketplace.visualstudio.com/items?itemName=SivanLiu.super-markdown)
 [![license](https://img.shields.io/badge/license-Apache--2.0-orange)](LICENSE)
 
@@ -21,35 +20,34 @@ English | [简体中文](#简体中文)
 
 Super Markdown is a VS Code extension for people who write, read, maintain, and publish Markdown: API docs, product notes, specs, guides, knowledge-base pages, and project documentation.
 
-Markdown files now open in the Super Markdown Editor by default: a self-hosted Markdown workbench with outline navigation, source editing, block-based visual editing, and live preview. You can still use `Reopen With...` or `Super Markdown: Open Native Editor` whenever you need VS Code's native text editor.
+Markdown files now open in the Super Markdown Editor by default: a Markdown workbench with outline navigation, source editing, block-based visual editing, and live preview. You can still use `Reopen With...` or `Super Markdown: Open Native Editor` whenever you need VS Code's native text editor.
 
-Super Markdown keeps its own Markdown parser, renderer, source-line mapping, formatter, preview, and export pipeline. WYSIWYG mode uses Milkdown / ProseMirror as the visual editing engine for selection, history, tables, lists, and document-style editing, then syncs the result back into the same Markdown document pipeline.
+Super Markdown keeps source editing, preview, WYSIWYG editing, formatting, and export aligned around the same Markdown document, so what you write is easier to review and share.
 
 ## Screenshots
 
 ![Split edit mode with source, preview, and floating outline](images/screenshots/split-edit-mode.png)
 
-![Document health checks and organize Markdown diff preview](images/screenshots/document-health.png)
+![WYSIWYG mode with toolbar and document-style Markdown editing](images/screenshots/wysiwyg-mode.png)
 
 ## What's New
 
-- The default Markdown experience is now the self-hosted Super Markdown Editor, with source, split preview, preview-only, and WYSIWYG modes sharing one document pipeline.
-- Super Markdown now owns the core Markdown parser and renderer for headings, links, lists, tables, footnotes, safe inline HTML, code blocks, KaTeX math, Mermaid diagrams, source-line mapping, formatting, document health, and export.
-- WYSIWYG mode has been rebuilt on Milkdown / ProseMirror with richer toolbar actions, editable tables/lists/math/code blocks, local image insertion, undo/redo, outline navigation, and Mermaid diagram previews that stay aligned with split preview rendering.
-- Mermaid rendering is bundled locally and now runs through a shared serialized render path, so multiple diagrams render consistently in split preview, WYSIWYG, HTML export, PDF export, and image export.
-- Export has a dedicated renderer and Chromium/CDP bridge for HTML, PDF, PNG, JPEG, and all-format output, with shared styles and bundled KaTeX/Mermaid assets.
-- The built-in syntax guide moved under `docs/super-markdown/`, old grammar/snippet assets were removed, packaged assets are verified, and CI/release workflows now validate the built extension contents.
-- Developer tooling now includes a richer dev host generator, Playwright webview toolbar coverage, VSIX content verification, and focused tests for parser, renderer, formatting, resources, export, WYSIWYG assets, and table tools.
+- The default Markdown experience is now Super Markdown Editor, with source, split preview, preview-only, and WYSIWYG modes in one workspace.
+- WYSIWYG mode now supports a richer toolbar, editable tables, lists, math, code blocks, local image insertion, undo/redo, outline navigation, and Mermaid diagram previews.
+- Mermaid diagrams render consistently in split preview, WYSIWYG mode, HTML export, PDF export, and image export.
+- Export supports HTML, PDF, PNG, JPEG, and all-format output with shared reading styles, KaTeX math, and Mermaid diagrams.
+- The built-in Super Markdown syntax guide is easier to open from the command palette.
+- Document health checks and safe cleanup stay available before sharing or publishing Markdown files.
 
 ## Highlights
 
 - Open `.md`, `.markdown`, `.mdown`, and `.mkdn` files in the Super Markdown Editor by default.
-- Use a self-hosted workbench with outline navigation, source editing, visual block editing, and live preview.
+- Use a Markdown workbench with outline navigation, source editing, visual block editing, and live preview.
 - Switch between source, split edit, preview, and WYSIWYG modes.
-- Use Milkdown / ProseMirror-powered WYSIWYG editing while keeping Super Markdown's own Markdown parser, preview, formatter, and export output.
+- Use WYSIWYG editing while keeping preview, formatting, and export output aligned with the Markdown source.
 - Format Markdown through VS Code `Format Document` with Super Markdown as the default formatter.
 - Export Markdown to HTML, PDF, PNG, JPEG, or all formats.
-- Use Super Markdown's own parser, renderer, source-map output, and code highlighter for common Markdown workflows.
+- Keep headings, lists, tables, code, math, diagrams, preview, and export visually consistent.
 - Open a built-in Super Markdown syntax guide and convert Markdown tables to JSON or JSON arrays to Markdown tables.
 - Navigate long documents with a floating H1-H6 outline, heading search, active tracking, and adjustable height.
 - Click preview content to reveal the matching source line; move the source cursor to scroll the preview.
@@ -79,7 +77,7 @@ Split Edit Mode shortcut:
 | `Super Markdown Editor` | Default Markdown workbench | Opens outline navigation, self-hosted editing, and live preview together. |
 | `Split Edit Mode` | Writing and reviewing | Switches the Super Markdown Editor to source plus live preview. |
 | `Preview Mode` | Reading | Switches the Super Markdown Editor to a focused rendered preview. |
-| `WYSIWYG Mode` | Document-style writing | Switches the Super Markdown Editor to Milkdown / ProseMirror-powered block-based visual editing while syncing back to Markdown. |
+| `WYSIWYG Mode` | Document-style writing | Switches the Super Markdown Editor to block-based visual editing while syncing back to Markdown. |
 
 ## Document Health
 
@@ -110,9 +108,9 @@ It can help with:
 
 Run `Super Markdown: Export PDF`, `Export HTML`, `Export PNG`, `Export JPEG`, `Export All`, or `Export (Settings)`.
 
-Export supports headings, tables, task checkboxes, footnotes, code highlighting, Mermaid, and KaTeX. PDF and image export use your configured Chrome/Edge/Chromium path first, then a system Chrome/Edge/Chromium installation through a lightweight CDP bridge.
+Export supports headings, tables, task checkboxes, footnotes, code highlighting, Mermaid, and KaTeX. PDF and image export use your configured Chrome/Edge/Chromium path first, then a system Chrome/Edge/Chromium installation.
 
-Export does not use the WYSIWYG editor DOM as its source. It renders from the current Markdown text through Super Markdown's own renderer, so source, preview, and export stay aligned.
+Export renders from the current Markdown text, so source, preview, WYSIWYG mode, and exported files stay aligned.
 
 ## Common Commands
 
@@ -158,7 +156,7 @@ Open VS Code Settings and search for `superMarkdown`.
 - Preview link checks are limited to local links and images that can be resolved from the current document.
 - Cleanup is intentionally conservative and opens a diff before changing your document.
 - PDF, PNG, and JPEG export need a usable Chrome, Edge, or Chromium executable.
-- WYSIWYG mode is powered by Milkdown / ProseMirror, so its Markdown serialization may differ in harmless formatting details from source-mode snippets, while preserving Markdown semantics.
+- WYSIWYG mode may adjust harmless Markdown formatting details while preserving document meaning.
 
 ## Privacy
 
@@ -180,29 +178,28 @@ Super Markdown is licensed under the Apache License, Version 2.0. See [LICENSE](
 
 Super Markdown 是一个面向 VS Code 的 Markdown 写作、阅读、整理和发布扩展，适合接口文档、产品说明、需求文档、知识库页面、项目文档和使用指南。
 
-Markdown 文件现在会默认打开 `Super Markdown Editor`：它使用自研 Markdown 工作台，提供大纲导航、源码编辑、块级所见即所得编辑和实时预览。需要原生编辑器时，可以使用 `Reopen With...` 或 `Super Markdown：打开原生编辑器`。
+Markdown 文件现在会默认打开 `Super Markdown Editor`：它提供大纲导航、源码编辑、块级所见即所得编辑和实时预览。需要原生编辑器时，可以使用 `Reopen With...` 或 `Super Markdown：打开原生编辑器`。
 
-Super Markdown 保留自研 Markdown 解析器、渲染器、源码行映射、格式化、预览和导出链路。所见即所得模式使用 Milkdown / ProseMirror 作为可视化编辑内核，负责选区、历史记录、表格、列表和文档式编辑，再把结果同步回同一份 Markdown 文档管线。
+Super Markdown 会让源码编辑、预览、所见即所得、格式化和导出围绕同一份 Markdown 文档保持一致，方便编写、检查和分享。
 
 ## 最新版亮点
 
-- Markdown 默认体验已经切换到自研 Super Markdown Editor，源码、分屏预览、纯预览和所见即所得模式共用同一条文档管线。
-- Super Markdown 现在自研核心 Markdown 解析和渲染能力，覆盖标题、链接、列表、表格、脚注、安全行内 HTML、代码块、KaTeX 数学公式、Mermaid 图表、源码行映射、格式化、文档健康检查和导出。
-- 所见即所得模式基于 Milkdown / ProseMirror 重建，支持更完整的工具栏、可编辑表格/列表/数学公式/代码块、本地图片插入、撤销重做、大纲导航，并能像分屏预览一样渲染 Mermaid 图表。
-- Mermaid 使用本地打包资源，并通过共享的串行渲染链路处理，多张图在分屏预览、所见即所得、HTML 导出、PDF 导出和图片导出中都能稳定渲染。
-- 导出链路改为独立渲染器和 Chromium/CDP 桥接，支持 HTML、PDF、PNG、JPEG 和全部格式导出，并复用统一样式与本地 KaTeX/Mermaid 资源。
-- 内置语法速查迁移到 `docs/super-markdown/`，旧语法高亮/片段资产已移除，打包内容会被脚本校验，CI 和发布流程也会验证扩展产物。
-- 开发工具补充了更完整的 dev host 生成器、Playwright Webview 工具栏覆盖、VSIX 内容校验，以及解析器、渲染器、格式化、资源、导出、所见即所得资产和表格工具的专项测试。
+- Markdown 默认体验已经切换到 Super Markdown Editor，源码、分屏预览、纯预览和所见即所得模式集中在同一个工作台。
+- 所见即所得模式支持更完整的工具栏、可编辑表格/列表/数学公式/代码块、本地图片插入、撤销重做、大纲导航，并能像分屏预览一样渲染 Mermaid 图表。
+- Mermaid 图表在分屏预览、所见即所得、HTML 导出、PDF 导出和图片导出中都能保持一致。
+- 导出支持 HTML、PDF、PNG、JPEG 和全部格式，并复用统一阅读样式、KaTeX 数学公式和 Mermaid 图表。
+- 内置 Super Markdown 语法速查可以从命令面板快速打开。
+- 文档健康检查和安全整理功能仍可在分享或发布 Markdown 前使用。
 
 ## 功能亮点
 
 - `.md`、`.markdown`、`.mdown`、`.mkdn` 默认使用 Super Markdown Editor 打开。
 - 工作台同时提供大纲导航、源码编辑、块级可视化编辑和实时预览。
 - 支持源码、分屏、预览和所见即所得模式。
-- 所见即所得编辑由 Milkdown / ProseMirror 提供，同时继续使用 Super Markdown 自研 Markdown 解析、预览、格式化和导出结果。
+- 所见即所得编辑会与 Markdown 源码、预览、格式化和导出结果保持一致。
 - VS Code `Format Document` 默认使用 Super Markdown 格式化器。
 - 支持导出 HTML、PDF、PNG、JPEG 或全部格式。
-- 使用 Super Markdown 自研解析器、渲染器、源码行映射和代码高亮。
+- 标题、列表、表格、代码、数学公式、图表、预览和导出保持一致的显示效果。
 - 内置 Super Markdown 语法速查，并提供 Markdown 表格与 JSON 互转工具。
 - 用 H1-H6 悬浮大纲管理长文档，支持标题搜索、当前标题高亮和高度调整。
 - 点击预览内容可定位到源码行，移动源码光标也会同步滚动预览。
@@ -232,7 +229,7 @@ Super Markdown 保留自研 Markdown 解析器、渲染器、源码行映射、�
 | `Super Markdown Editor` | 默认 Markdown 工作台 | 同时打开大纲导航、自研编辑器和实时预览。 |
 | `分屏编辑模式` | 编写和审阅 | 将 Super Markdown Editor 切换为源码加实时预览。 |
 | `预览模式` | 专注阅读 | 将 Super Markdown Editor 切换为专注渲染预览。 |
-| `所见即所得模式` | 文档式写作 | 将 Super Markdown Editor 切换为基于 Milkdown / ProseMirror 的块级可视化编辑，并同步回 Markdown。 |
+| `所见即所得模式` | 文档式写作 | 将 Super Markdown Editor 切换为块级可视化编辑，并同步回 Markdown。 |
 
 ## 文档健康检查
 
@@ -263,9 +260,9 @@ Super Markdown 保留自研 Markdown 解析器、渲染器、源码行映射、�
 
 可以运行 `Super Markdown：导出 PDF`、`导出 HTML`、`导出 PNG`、`导出 JPEG`、`导出全部格式` 或 `按设置导出`。
 
-导出支持标题、表格、任务复选框、脚注、代码高亮、Mermaid 和 KaTeX。PDF 和图片导出优先使用你配置的 Chrome/Edge/Chromium 路径，其次查找系统 Chrome/Edge/Chromium，并通过轻量 CDP 通道完成打印和截图。
+导出支持标题、表格、任务复选框、脚注、代码高亮、Mermaid 和 KaTeX。PDF 和图片导出优先使用你配置的 Chrome/Edge/Chromium 路径，其次查找系统 Chrome/Edge/Chromium。
 
-导出不会直接使用所见即所得编辑器 DOM，而是从当前 Markdown 文本经过 Super Markdown 自研渲染器生成，因此源码、预览和导出结果保持一致。
+导出会从当前 Markdown 文本生成，因此源码、预览、所见即所得和导出结果保持一致。
 
 ## 常用命令
 
@@ -311,7 +308,7 @@ Super Markdown 保留自研 Markdown 解析器、渲染器、源码行映射、�
 - 预览链接检查仅覆盖能从当前文档解析到的本地链接和图片。
 - 整理功能保持保守，会先打开 diff，再修改你的文档。
 - PDF、PNG 和 JPEG 导出需要可用的 Chrome、Edge 或 Chromium。
-- 所见即所得模式基于 Milkdown / ProseMirror，其 Markdown 序列化在无害格式细节上可能与源码模式插入片段不同，但会保持 Markdown 语义。
+- 所见即所得模式可能调整一些不影响语义的 Markdown 格式细节。
 
 ## 隐私
 

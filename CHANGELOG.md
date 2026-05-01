@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.1
+
+- Refined the README for extension users by removing development-focused notes from the main Marketplace page.
+- Replaced README screenshots with fresh captures from a temporary VS Code Extension Development Host window.
+- Kept the 0.1 editor release documentation focused on installation, editing modes, export, privacy, settings, and current limits.
+
 ## 0.1.0
 
 - Promoted the Super Markdown Editor overhaul from `dev` to `main`.

@@ -8,6 +8,12 @@ export const PREVIEW_THEMES: readonly PreviewTheme[] = [
   "sage",
   "paper",
   "ocean",
+  "solarized",
+  "rose",
+  "lavender",
+  "graphite",
+  "forest",
+  "terminal",
   "ink",
   "high-contrast"
 ];

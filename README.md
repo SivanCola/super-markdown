@@ -32,6 +32,7 @@ Super Markdown keeps source editing, preview, WYSIWYG editing, formatting, and e
 
 ## What's New
 
+- Reading themes are broader now, with a toolbar switcher and 14 choices ranging from neutral light/dark to Solarized, Rose, Lavender, Graphite, Forest, Terminal, and High Contrast.
 - The default Markdown experience is now Super Markdown Editor, with source, split preview, preview-only, and WYSIWYG modes in one workspace.
 - WYSIWYG mode now supports a richer toolbar, editable tables, lists, math, code blocks, local image insertion, undo/redo, outline navigation, and Mermaid diagram previews.
 - Mermaid diagrams render consistently in split preview, WYSIWYG mode, HTML export, PDF export, and image export.
@@ -54,7 +55,7 @@ Super Markdown keeps source editing, preview, WYSIWYG editing, formatting, and e
 - Render code blocks with built-in syntax highlighting.
 - Render Mermaid diagrams and KaTeX math from bundled local assets.
 - Switch the extension UI between English, Simplified Chinese, and VS Code auto mode.
-- Choose from multiple reading themes.
+- Choose from 14 reading themes, including Solarized, Rose, Lavender, Graphite, Forest, Terminal, Ink, Paper, Ocean, and High Contrast.
 - Review safe cleanup changes in a diff before applying them.
 
 ## Quick Start
@@ -135,7 +136,7 @@ Open VS Code Settings and search for `superMarkdown`.
 
 | Setting | Description |
 | --- | --- |
-| `superMarkdown.preview.theme` | Preview theme: `system`, `light`, `dark`, `sage`, `paper`, `ocean`, `ink`, or `high-contrast`. Legacy values are migrated automatically. |
+| `superMarkdown.preview.theme` | Preview theme: `system`, `light`, `dark`, `sage`, `paper`, `ocean`, `solarized`, `rose`, `lavender`, `graphite`, `forest`, `terminal`, `ink`, or `high-contrast`. Legacy values are migrated automatically. |
 | `superMarkdown.preview.fontSize` | Base preview font size in pixels. |
 | `superMarkdown.preview.maxWidth` | Maximum content width in pixels. |
 | `superMarkdown.toc.levels` | Heading levels included in the outline and generated table of contents, for example `1..6` or `2..4`. |
@@ -184,6 +185,7 @@ Super Markdown 会让源码编辑、预览、所见即所得、格式化和导�
 
 ## 最新版亮点
 
+- 阅读主题已经扩充到 14 种，并新增工具栏入口，可在浅色/深色、中性色、日光、玫瑰、薰衣草、石墨、深林、终端和高对比等风格之间切换。
 - Markdown 默认体验已经切换到 Super Markdown Editor，源码、分屏预览、纯预览和所见即所得模式集中在同一个工作台。
 - 所见即所得模式支持更完整的工具栏、可编辑表格/列表/数学公式/代码块、本地图片插入、撤销重做、大纲导航，并能像分屏预览一样渲染 Mermaid 图表。
 - Mermaid 图表在分屏预览、所见即所得、HTML 导出、PDF 导出和图片导出中都能保持一致。
@@ -206,7 +208,7 @@ Super Markdown 会让源码编辑、预览、所见即所得、格式化和导�
 - 代码块支持内置语法高亮。
 - Mermaid 图表和 KaTeX 数学公式使用本地打包资源渲染。
 - 扩展界面支持英文、简体中文和跟随 VS Code 自动切换。
-- 提供多种阅读主题。
+- 提供 14 种阅读主题，包括日光、玫瑰、薰衣草、石墨、深林、终端、墨黑、纸页、海蓝和高对比等。
 - 整理 Markdown 前先展示 diff，确认后再应用修改。
 
 ## 快速开始
@@ -287,7 +289,7 @@ Super Markdown 会让源码编辑、预览、所见即所得、格式化和导�
 
 | 设置 | 说明 |
 | --- | --- |
-| `superMarkdown.preview.theme` | 预览主题：`system`、`light`、`dark`、`sage`、`paper`、`ocean`、`ink` 或 `high-contrast`。旧主题值会自动迁移。 |
+| `superMarkdown.preview.theme` | 预览主题：`system`、`light`、`dark`、`sage`、`paper`、`ocean`、`solarized`、`rose`、`lavender`、`graphite`、`forest`、`terminal`、`ink` 或 `high-contrast`。旧主题值会自动迁移。 |
 | `superMarkdown.preview.fontSize` | 预览基础字号，单位为像素。 |
 | `superMarkdown.preview.maxWidth` | 预览正文最大宽度，单位为像素。 |
 | `superMarkdown.toc.levels` | 大纲和生成目录包含的标题级别，例如 `1..6` 或 `2..4`。 |

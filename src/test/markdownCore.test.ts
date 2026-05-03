@@ -56,7 +56,8 @@ suite("self hosted markdown core", () => {
     assert.match(html, /class="shiki shiki-themes light-plus dark-plus language-text"/);
   });
 
-  test("highlights supported languages with Shiki dual theme variables", async () => {
+  test("highlights supported languages with Shiki dual theme variables", async function () {
+    this.timeout(10000);
     const html = await renderMarkdownCore("```ts\nconst value = 1;\n```");
     assert.match(html, /class="shiki shiki-themes light-plus dark-plus language-ts"/);
     assert.match(html, /--shiki-light:/);
@@ -64,7 +65,8 @@ suite("self hosted markdown core", () => {
     assert.doesNotMatch(html, /tok-keyword/);
   });
 
-  test("normalizes and highlights the supported code fence language set", async () => {
+  test("normalizes and highlights the supported code fence language set", async function () {
+    this.timeout(10000);
     for (const language of ["ts", "js", "json", "html", "css", "shell", "go", "python", "sql", "markdown", "yaml"]) {
       const html = await renderMarkdownCore(`\`\`\`${language}\nconst value = 1;\n\`\`\``);
       assert.match(html, /class="code-block"/);

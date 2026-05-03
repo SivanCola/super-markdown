@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.2
+
+- Added a Webview toolbar entry for switching Markdown reading themes from the editor.
+- Expanded reading themes with Solarized, Rose, Lavender, Graphite, Forest, and Terminal options.
+- Updated README theme documentation and added manifest/theme consistency coverage.
+
 ## 0.1.1
 
 - Refined the README for extension users by removing development-focused notes from the main Marketplace page.

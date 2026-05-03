@@ -307,6 +307,7 @@ export class SuperMarkdownWysiwygEditorProvider implements vscode.CustomTextEdit
           export: isZhCn ? "导出" : "Export",
           all: isZhCn ? "全部" : "All",
           more: isZhCn ? "更多" : "More",
+          switchBackgroundTheme: isZhCn ? "切换阅读主题" : "Switch Reading Theme",
           help: isZhCn ? "反馈问题" : "Report issue",
           organizeMarkdown: isZhCn ? "整理 Markdown" : "Organize Markdown"
         }
@@ -499,6 +500,11 @@ ${renderBootstrapScript()}
 
     if (payload.action === "organizeMarkdown") {
       await vscode.commands.executeCommand(HOST_COMMANDS.organizeMarkdown);
+      return;
+    }
+
+    if (payload.action === "switchBackgroundTheme") {
+      await vscode.commands.executeCommand("superMarkdown.switchBackgroundTheme");
       return;
     }
 
@@ -729,6 +735,7 @@ function renderInitialToolbar(isZhCn: boolean, documentUri: vscode.Uri): string 
     mermaid: label("流程图", "Mermaid"),
     toc: label("目录", "Table of contents"),
     organizeMarkdown: label("整理 Markdown", "Organize Markdown"),
+    switchBackgroundTheme: label("切换阅读主题", "Switch Reading Theme"),
     help: label("反馈问题", "Report issue"),
     more: label("更多", "More")
   };

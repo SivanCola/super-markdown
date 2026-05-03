@@ -52,6 +52,7 @@ const EXPECTATIONS: Record<string, ActionExpectation> = {
   mermaid: { splitFragments: ["```mermaid", "A --> B"], wysiwygFragments: ["```mermaid", "A --> B"] },
   toc: { message: { type: "toolbarCommand", action: "toc" } },
   organizeMarkdown: { message: { type: "runHostCommand", command: "organizeMarkdown" } },
+  switchBackgroundTheme: { message: { type: "toolbarCommand", action: "switchBackgroundTheme" } },
   more: { menu: "more" },
   "export-html": { message: { type: "export", format: "html" } },
   "export-pdf": { message: { type: "export", format: "pdf" } },
@@ -70,6 +71,7 @@ test("toolbar uses Codicon icons with a small custom fallback set", async ({ pag
   await expect(page.locator(".toolbar-icon .codicon")).toHaveCount(topLevelActionCount - 4);
   await expect(page.locator(".toolbar-custom-icon")).toHaveCount(4);
   await expect(page.locator('[data-action="inline-code"] .codicon-code')).toBeVisible();
+  await expect(page.locator('[data-action="switchBackgroundTheme"] .codicon-color-mode')).toBeVisible();
   await expect(page.locator('[data-menu-toggle="more"] .codicon-more')).toBeVisible();
 });
 

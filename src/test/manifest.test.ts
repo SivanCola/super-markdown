@@ -149,4 +149,41 @@ suite("extension manifest", () => {
     assert.equal(extensionSource.includes("superMarkdown.previewEditor"), false);
     assert.equal(extensionSource.includes("superMarkdown.wysiwygEditor"), false);
   });
+
+  test("keeps preview reading theme declarations aligned", () => {
+    const expectedThemes = [
+      "system",
+      "light",
+      "dark",
+      "sage",
+      "paper",
+      "ocean",
+      "solarized",
+      "rose",
+      "lavender",
+      "graphite",
+      "forest",
+      "terminal",
+      "ink",
+      "high-contrast"
+    ];
+    const previewThemeConfig = manifest.contributes.configuration.properties["superMarkdown.preview.theme"];
+    const themeSource = fs.readFileSync(path.join(root, "src", "themes.ts"), "utf8");
+    const i18nSource = fs.readFileSync(path.join(root, "src", "i18n.ts"), "utf8");
+    const previewStyle = fs.readFileSync(path.join(root, "media", "preview.css"), "utf8");
+    const packageNls = JSON.parse(fs.readFileSync(path.join(root, "package.nls.json"), "utf8"));
+    const packageZhNls = JSON.parse(fs.readFileSync(path.join(root, "package.nls.zh-cn.json"), "utf8"));
+
+    assert.deepEqual(previewThemeConfig.enum, expectedThemes);
+    assert.equal(previewThemeConfig.enumDescriptions.length, expectedThemes.length);
+
+    for (const theme of expectedThemes) {
+      const nlsKey = theme === "high-contrast" ? "highContrast" : theme;
+      assert.equal(themeSource.includes(`"${theme}"`), true);
+      assert.equal(i18nSource.includes(`theme.${nlsKey}.label`), true);
+      assert.equal(packageNls[`superMarkdown.configuration.preview.theme.${nlsKey}`] !== undefined, true);
+      assert.equal(packageZhNls[`superMarkdown.configuration.preview.theme.${nlsKey}`] !== undefined, true);
+      assert.equal(theme === "system" || previewStyle.includes(`body.sm-theme-${theme}`), true);
+    }
+  });
 });

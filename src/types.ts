@@ -133,6 +133,12 @@ export type PreviewTheme =
   | "dark"
   | "sage"
   | "paper"
+  | "solarized"
+  | "rose"
+  | "lavender"
+  | "graphite"
+  | "forest"
+  | "terminal"
   | "ink"
   | "ocean"
   | "high-contrast";

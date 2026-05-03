@@ -362,6 +362,7 @@ function toolbarTitle(action: string): string {
     toc: label("toc", "Table of contents"),
     more: label("more", "More"),
     organizeMarkdown: label("organizeMarkdown", "Organize Markdown"),
+    switchBackgroundTheme: label("switchBackgroundTheme", "Switch Reading Theme"),
     help: label("help", "Help"),
     "export-html": `${label("export", "Export")} HTML`,
     "export-pdf": `${label("export", "Export")} PDF`,
@@ -1703,6 +1704,10 @@ async function handleToolbarAction(action: string): Promise<void> {
     return;
   }
   if (action === "toc") {
+    post("toolbarCommand", { action });
+    return;
+  }
+  if (action === "switchBackgroundTheme") {
     post("toolbarCommand", { action });
     return;
   }

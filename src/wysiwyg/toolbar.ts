@@ -8,14 +8,22 @@ export const TOOLBAR_GROUPS: ToolbarGroup[] = [
   { name: "structure", actions: ["heading", "hr", "quote", "list", "ordered-list", "task", "task-checked"] },
   { name: "insert", actions: ["link", "image", "inline-code", "code", "table"] },
   { name: "advanced", actions: ["math", "mermaid", "toc", "organizeMarkdown", "more"] },
-  { name: "help", actions: ["help"] }
+  { name: "help", actions: ["switchBackgroundTheme", "help"] }
 ];
 
 export const HEADING_MENU_ACTIONS = ["heading-1", "heading-2", "heading-3", "heading-4", "heading-5", "heading-6"];
 
 export const MORE_MENU_ACTIONS = ["export-html", "export-pdf", "export-all"];
 
-export const HOST_TOOLBAR_ACTIONS = new Set(["toc", "organizeMarkdown", "help", "export-html", "export-pdf", "export-all"]);
+export const HOST_TOOLBAR_ACTIONS = new Set([
+  "toc",
+  "organizeMarkdown",
+  "switchBackgroundTheme",
+  "help",
+  "export-html",
+  "export-pdf",
+  "export-all"
+]);
 
 export const SUPER_MARKDOWN_ISSUES_URL = "https://github.com/SivanCola/super-markdown/issues";
 
@@ -43,6 +51,7 @@ const TOOLBAR_CODICON_ACTIONS: Record<string, string> = {
   table: "table",
   toc: "list-tree",
   organizeMarkdown: "tools",
+  switchBackgroundTheme: "color-mode",
   help: "question",
   more: "more",
   "export-html": "export",

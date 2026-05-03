@@ -27,6 +27,18 @@ type TranslationKey =
   | "theme.sage.detail"
   | "theme.paper.label"
   | "theme.paper.detail"
+  | "theme.solarized.label"
+  | "theme.solarized.detail"
+  | "theme.rose.label"
+  | "theme.rose.detail"
+  | "theme.lavender.label"
+  | "theme.lavender.detail"
+  | "theme.graphite.label"
+  | "theme.graphite.detail"
+  | "theme.forest.label"
+  | "theme.forest.detail"
+  | "theme.terminal.label"
+  | "theme.terminal.detail"
   | "theme.ink.label"
   | "theme.ink.detail"
   | "theme.ocean.label"
@@ -135,6 +147,18 @@ const EN: Record<TranslationKey, string> = {
   "theme.sage.detail": "Use a calm green reading theme.",
   "theme.paper.label": "$(book) Paper",
   "theme.paper.detail": "Use a warm paper reading theme.",
+  "theme.solarized.label": "$(symbol-color) Solarized",
+  "theme.solarized.detail": "Use a low-contrast amber and teal reading theme.",
+  "theme.rose.label": "$(heart) Rose",
+  "theme.rose.detail": "Use a soft blush editorial reading theme.",
+  "theme.lavender.label": "$(symbol-color) Lavender",
+  "theme.lavender.detail": "Use a cool lavender reading theme.",
+  "theme.graphite.label": "$(circle-large-outline) Graphite",
+  "theme.graphite.detail": "Use a quiet gray reading theme.",
+  "theme.forest.label": "$(symbol-color) Forest",
+  "theme.forest.detail": "Use a deep green night-reading theme.",
+  "theme.terminal.label": "$(terminal) Terminal",
+  "theme.terminal.detail": "Use a retro green-on-black reading theme.",
   "theme.ink.label": "$(circle-filled) Ink",
   "theme.ink.detail": "Use a soft black night-reading theme.",
   "theme.ocean.label": "$(symbol-color) Ocean",
@@ -244,6 +268,18 @@ const ZH_CN: Record<TranslationKey, string> = {
   "theme.sage.detail": "使用低饱和绿色阅读主题。",
   "theme.paper.label": "$(book) 纸页",
   "theme.paper.detail": "使用接近纸张的暖色阅读主题。",
+  "theme.solarized.label": "$(symbol-color) 日光",
+  "theme.solarized.detail": "使用低对比的琥珀和青色阅读主题。",
+  "theme.rose.label": "$(heart) 玫瑰",
+  "theme.rose.detail": "使用柔和粉调的编辑式阅读主题。",
+  "theme.lavender.label": "$(symbol-color) 薰衣草",
+  "theme.lavender.detail": "使用清冷淡紫阅读主题。",
+  "theme.graphite.label": "$(circle-large-outline) 石墨",
+  "theme.graphite.detail": "使用安静的灰调阅读主题。",
+  "theme.forest.label": "$(symbol-color) 深林",
+  "theme.forest.detail": "使用深绿色夜读主题。",
+  "theme.terminal.label": "$(terminal) 终端",
+  "theme.terminal.detail": "使用复古黑底绿字阅读主题。",
   "theme.ink.label": "$(circle-filled) 墨黑",
   "theme.ink.detail": "使用柔和黑色夜读主题。",
   "theme.ocean.label": "$(symbol-color) 海蓝",
@@ -372,6 +408,12 @@ export function getThemeDisplayName(theme: PreviewTheme): string {
     dark: { en: "Dark", "zh-CN": "深色" },
     sage: { en: "Sage", "zh-CN": "柔绿" },
     paper: { en: "Paper", "zh-CN": "纸页" },
+    solarized: { en: "Solarized", "zh-CN": "日光" },
+    rose: { en: "Rose", "zh-CN": "玫瑰" },
+    lavender: { en: "Lavender", "zh-CN": "薰衣草" },
+    graphite: { en: "Graphite", "zh-CN": "石墨" },
+    forest: { en: "Forest", "zh-CN": "深林" },
+    terminal: { en: "Terminal", "zh-CN": "终端" },
     ink: { en: "Ink", "zh-CN": "墨黑" },
     ocean: { en: "Ocean", "zh-CN": "海蓝" },
     "high-contrast": { en: "High Contrast", "zh-CN": "高对比" }
@@ -391,6 +433,18 @@ export function getThemeQuickPickLabel(theme: PreviewTheme): string {
       return t("theme.sage.label");
     case "paper":
       return t("theme.paper.label");
+    case "solarized":
+      return t("theme.solarized.label");
+    case "rose":
+      return t("theme.rose.label");
+    case "lavender":
+      return t("theme.lavender.label");
+    case "graphite":
+      return t("theme.graphite.label");
+    case "forest":
+      return t("theme.forest.label");
+    case "terminal":
+      return t("theme.terminal.label");
     case "ink":
       return t("theme.ink.label");
     case "ocean":
@@ -412,6 +466,18 @@ export function getThemeQuickPickDetail(theme: PreviewTheme): string {
       return t("theme.sage.detail");
     case "paper":
       return t("theme.paper.detail");
+    case "solarized":
+      return t("theme.solarized.detail");
+    case "rose":
+      return t("theme.rose.detail");
+    case "lavender":
+      return t("theme.lavender.detail");
+    case "graphite":
+      return t("theme.graphite.detail");
+    case "forest":
+      return t("theme.forest.detail");
+    case "terminal":
+      return t("theme.terminal.detail");
     case "ink":
       return t("theme.ink.detail");
     case "ocean":

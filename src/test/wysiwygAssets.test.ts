@@ -115,7 +115,7 @@ suite("visual editor assets", () => {
     ]) {
       assert.equal(runtimeSource.includes(command), true);
     }
-    for (const action of ["bold", "italic", "underline", "highlight", "ordered-list", "task-checked", "table", "math", "mermaid", "toc", "organizeMarkdown", "help", "export-pdf", "export-all"]) {
+    for (const action of ["bold", "italic", "underline", "highlight", "ordered-list", "task-checked", "table", "math", "mermaid", "toc", "organizeMarkdown", "switchBackgroundTheme", "help", "export-pdf", "export-all"]) {
       assert.equal(runtimeSource.includes(action), true);
     }
     assert.equal(runtimeSource.includes('post("toolbarCommand"'), true);
@@ -124,6 +124,7 @@ suite("visual editor assets", () => {
     assert.equal(toolbarSource.includes('SUPER_MARKDOWN_ISSUES_URL = "https://github.com/SivanCola/super-markdown/issues"'), true);
     assert.equal(toolbarSource.includes('bold: "bold"'), true);
     assert.equal(toolbarSource.includes('"inline-code": "code"'), true);
+    assert.equal(toolbarSource.includes('switchBackgroundTheme: "color-mode"'), true);
     assert.equal(toolbarSource.includes("TOOLBAR_CUSTOM_ICONS"), true);
     assert.equal(toolbarSource.includes("highlight: customSvg"), true);
     assert.equal(toolbarSource.includes("math: customSvg"), true);
@@ -133,6 +134,7 @@ suite("visual editor assets", () => {
     assert.equal(runtimeSource.includes("toolbarActionIcons"), false);
     assert.equal(providerSource.includes("enableCommandUris: [SUPER_MARKDOWN_TOOLBAR_COMMAND]"), true);
     assert.equal(providerSource.includes('case "toolbarCommand"'), true);
+    assert.equal(providerSource.includes('vscode.commands.executeCommand("superMarkdown.switchBackgroundTheme")'), true);
     assert.equal(extensionSource.includes("superMarkdownEditorProvider.handleToolbarCommand"), true);
     assert.equal(style.includes(".visual-editor .ProseMirror"), true);
     assert.equal(style.includes(".toolbar-menu"), true);

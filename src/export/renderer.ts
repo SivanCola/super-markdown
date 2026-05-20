@@ -32,7 +32,7 @@ export async function renderExportHtml(options: RenderExportHtmlOptions): Promis
   });
   const styles = buildStyleTags(options);
   const mermaidScript = options.settings.mermaid.enabled
-    ? `<script src="${pathToWebResource(options.extensionPath, "media/vendor/mermaid/mermaid.min.js")}"></script><script>mermaid.initialize({startOnLoad:true});</script>`
+    ? `<script src="${pathToWebResource(options.extensionPath, "media/vendor/mermaid/mermaid.min.js")}"></script><script>mermaid.initialize({startOnLoad:true,securityLevel:"strict"});</script>`
     : "";
 
   return `<!DOCTYPE html>

@@ -91,6 +91,7 @@ suite("export utils", () => {
     assert.match(html, /<pre class="mermaid">graph TD; A--&gt;B;<\/pre>/);
     assert.match(html, /class="code-color-toggle"/);
     assert.match(html, /renderBlockTones/);
+    assert.match(html, /mermaid\.initialize\(\{startOnLoad:true,securityLevel:"strict"\}\)/);
     assert.doesNotMatch(html, /language-mermaid/);
   });
 

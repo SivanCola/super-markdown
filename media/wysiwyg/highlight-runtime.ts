@@ -34,10 +34,18 @@ export async function highlightCodeBlockHtml(code: string, language: string | un
       },
       defaultColor: false
     });
-    return extractCodeHtml(html);
+    return extractCodeHtml(html, code);
   } catch {
-    return escapeHtml(code);
+    return renderPlainCodeLinesHtml(code);
   }
+}
+
+function renderPlainCodeLinesHtml(code: string): string {
+  const normalized = code.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+  return normalized
+    .split("\n")
+    .map((line) => `<span class="line">${escapeHtml(line)}</span>`)
+    .join("\n");
 }
 
 function getHighlighter(): Promise<HighlighterCore> {
@@ -65,7 +73,7 @@ function getHighlighter(): Promise<HighlighterCore> {
   return highlighterPromise;
 }
 
-function extractCodeHtml(html: string): string {
+function extractCodeHtml(html: string, fallbackCode: string): string {
   const match = html.match(/<code>([\s\S]*)<\/code>\s*<\/pre>$/);
-  return match ? match[1] : escapeHtml(html);
+  return match ? match[1] : renderPlainCodeLinesHtml(fallbackCode);
 }

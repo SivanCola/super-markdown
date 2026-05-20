@@ -32,9 +32,30 @@ suite("self hosted markdown core", () => {
       highlight: false
     });
     assert.match(html, /class="code-block" data-source-line="0" data-source-end-line="3"/);
+    assert.match(html, /<span class="line">const value = 1;<\/span>\n<span class="line">console\.log\(value\);<\/span>/);
     assert.doesNotMatch(html, /<ul data-source-line=/);
     assert.match(html, /<li data-source-line="5">a<\/li>/);
     assert.match(html, /<li data-source-line="6">b<\/li>/);
+  });
+
+  test("renders nested lists and continuation lines within the same list block", async () => {
+    const html = await renderMarkdownCore([
+      "- parent",
+      "  - child",
+      "    continuation",
+      "- next"
+    ].join("\n"));
+
+    assert.match(html, /<ul><li data-source-line="0">parent<ul><li data-source-line="1">child continuation<\/li><\/ul><\/li><li data-source-line="3">next<\/li><\/ul>/);
+    assert.doesNotMatch(html, /<p data-source-line="2">continuation<\/p>/);
+  });
+
+  test("preserves multiline code layout when syntax highlighting is unavailable", async () => {
+    const html = await renderMarkdownCore("```json\n{\n  \"code\": 0,\n  \"msg\": \"success\"\n}\n```", {
+      highlight: false
+    });
+    assert.match(html, /<span class="line">\{<\/span>\n<span class="line"> {2}&quot;code&quot;: 0,<\/span>/);
+    assert.match(html, /<span class="line"> {2}&quot;msg&quot;: &quot;success&quot;<\/span>\n<span class="line">\}<\/span>/);
   });
 
   test("renders mermaid and katex blocks as dedicated blocks", async () => {

@@ -63,4 +63,26 @@ suite("shared markdown block parser", () => {
     ]);
     assert.equal(document.nodes[0].raw, "````js\n```\n# still code\n````");
   });
+
+  test("preserves nested list structure and continuation lines", () => {
+    const document = parseMarkdownBlocks([
+      "- parent",
+      "  - child",
+      "    continuation",
+      "- next"
+    ].join("\n"));
+
+    assert.equal(document.nodes.length, 1);
+    const list = document.nodes[0];
+    assert.equal(list.type, "list");
+    if (list.type !== "list") {
+      return;
+    }
+
+    assert.equal(list.items.length, 2);
+    assert.equal(list.items[0].text, "parent");
+    assert.equal(list.items[0].children?.length, 1);
+    assert.equal(list.items[0].children?.[0].items[0].text, "child continuation");
+    assert.equal(list.items[1].text, "next");
+  });
 });

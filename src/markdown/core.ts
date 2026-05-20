@@ -1,5 +1,5 @@
 import { escapeAttribute, escapeHtml, safeInlineUrl } from "../utils/html";
-import { parseMarkdownBlocks, type MarkdownBlock, type MarkdownDocument } from "./block";
+import { parseMarkdownBlocks, type ListBlock, type MarkdownBlock, type MarkdownDocument } from "./block";
 import { renderCodeActions, type BlockToneLabels, type CodeCopyLabels } from "./codeCopy";
 import {
   detectBlockquoteAdmonition,
@@ -11,7 +11,7 @@ import {
   renderSafeInlineHtmlToken,
   resolveFootnoteReference
 } from "./features";
-import { highlightCodeBlockHtml, normalizeCodeLanguage } from "./highlight";
+import { highlightCodeBlockHtml, normalizeCodeLanguage, renderPlainCodeLinesHtml } from "./highlight";
 import { parseInlineMarkdown, type InlineToken } from "./inline";
 
 export type { MarkdownBlock, MarkdownDocument } from "./block";
@@ -112,20 +112,12 @@ async function renderNode(node: MarkdownBlock, footnotes: ReadonlyMap<string, st
       }
       return `<blockquote${source}>${await renderMarkdownCore(node.text, options)}</blockquote>`;
     }
-    case "list": {
-      const tag = node.ordered ? "ol" : "ul";
-      const items = node.items.map((item) => {
-        const task = item.checked === undefined
-          ? ""
-          : `<input type="checkbox" disabled${item.checked ? " checked" : ""}> `;
-        return `<li data-source-line="${item.line}">${task}${renderInlineMarkdown(item.text, footnotes, options)}</li>`;
-      }).join("");
-      return `<${tag}>${items}</${tag}>`;
-    }
+    case "list":
+      return renderListBlock(node, footnotes, options);
     case "code": {
       const language = normalizeCodeLanguage(node.language);
       const languageLabel = codeLanguageLabel(node.language, language);
-      const highlighted = options.highlight === false ? escapeHtml(node.code) : await highlightCodeBlockHtml(node.code, language);
+      const highlighted = options.highlight === false ? renderPlainCodeLinesHtml(node.code) : await highlightCodeBlockHtml(node.code, language);
       const actions = renderCodeActions({
         copyLabels: options.codeCopyButton,
         toneLabels: options.blockToneButton
@@ -157,6 +149,24 @@ async function renderNode(node: MarkdownBlock, footnotes: ReadonlyMap<string, st
 function codeLanguageLabel(rawLanguage: string | undefined, normalizedLanguage: string): string {
   const raw = (rawLanguage || "").trim().split(/\s+/)[0];
   return raw || normalizedLanguage || "text";
+}
+
+function renderListBlock(
+  node: ListBlock,
+  footnotes: ReadonlyMap<string, string>,
+  options: RenderMarkdownCoreOptions
+): string {
+  const tag = node.ordered ? "ol" : "ul";
+  const items = node.items.map((item) => {
+    const task = item.checked === undefined
+      ? ""
+      : `<input type="checkbox" disabled${item.checked ? " checked" : ""}> `;
+    const children = (item.children ?? [])
+      .map((child) => renderListBlock(child, footnotes, options))
+      .join("");
+    return `<li data-source-line="${item.line}">${task}${renderInlineMarkdown(item.text, footnotes, options)}${children}</li>`;
+  }).join("");
+  return `<${tag}>${items}</${tag}>`;
 }
 
 function renderSourcePosition(startLine: number, raw: string): string {

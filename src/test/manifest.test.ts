@@ -90,15 +90,57 @@ suite("extension manifest", () => {
     }
   });
 
-  test("keeps the editor title context menu focused on opening the native editor", () => {
-    const titleContextCommands = manifest.contributes.menus["editor/title/context"]
-      .map((item: { command?: string }) => item.command)
-      .filter(Boolean);
+  test("keeps the editor title context menu aligned with Markdown mode actions", () => {
+    const titleContextItems = manifest.contributes.menus["editor/title/context"] as Array<{
+      command?: string;
+      group?: string;
+      when?: string;
+    }>;
+    const titleContextCommands = titleContextItems.map((item) => item.command).filter(Boolean);
 
     assert.deepEqual(titleContextCommands, [
       "superMarkdown.en.openNativeTextEditor",
-      "superMarkdown.zhCN.openNativeTextEditor"
+      "superMarkdown.zhCN.openNativeTextEditor",
+      "superMarkdown.en.openPreview",
+      "superMarkdown.zhCN.openPreview",
+      "superMarkdown.en.openSplitEditMode",
+      "superMarkdown.zhCN.openSplitEditMode",
+      "superMarkdown.en.openWysiwygEditor",
+      "superMarkdown.zhCN.openWysiwygEditor",
+      "superMarkdown.export.choose"
     ]);
+    assert.deepEqual(
+      titleContextItems.map((item) => item.group),
+      [
+        "navigation@10",
+        "navigation@10",
+        "navigation@20",
+        "navigation@20",
+        "navigation@21",
+        "navigation@21",
+        "navigation@22",
+        "navigation@22",
+        "navigation@23"
+      ]
+    );
+    assert.deepEqual(
+      titleContextItems.map((item) => item.when),
+      [
+        "(resourceExtname == .md || resourceExtname == .markdown || resourceExtname == .mdown || resourceExtname == .mkdn) && !superMarkdown.runtimeLanguageZhCN",
+        "(resourceExtname == .md || resourceExtname == .markdown || resourceExtname == .mdown || resourceExtname == .mkdn) && superMarkdown.runtimeLanguageZhCN",
+        "(resourceExtname == .md || resourceExtname == .markdown || resourceExtname == .mdown || resourceExtname == .mkdn) && !superMarkdown.runtimeLanguageZhCN",
+        "(resourceExtname == .md || resourceExtname == .markdown || resourceExtname == .mdown || resourceExtname == .mkdn) && superMarkdown.runtimeLanguageZhCN",
+        "(resourceExtname == .md || resourceExtname == .markdown || resourceExtname == .mdown || resourceExtname == .mkdn) && !superMarkdown.runtimeLanguageZhCN",
+        "(resourceExtname == .md || resourceExtname == .markdown || resourceExtname == .mdown || resourceExtname == .mkdn) && superMarkdown.runtimeLanguageZhCN",
+        "(resourceExtname == .md || resourceExtname == .markdown || resourceExtname == .mdown || resourceExtname == .mkdn) && !superMarkdown.runtimeLanguageZhCN",
+        "(resourceExtname == .md || resourceExtname == .markdown || resourceExtname == .mdown || resourceExtname == .mkdn) && superMarkdown.runtimeLanguageZhCN",
+        "resourceExtname == .md || resourceExtname == .markdown || resourceExtname == .mdown || resourceExtname == .mkdn"
+      ]
+    );
+    assert.equal(
+      titleContextItems.every((item) => item.command === "superMarkdown.export.choose" || item.when?.includes("superMarkdown.runtimeLanguageZhCN")),
+      true
+    );
   });
 
   test("does not add a Super Markdown button to the native editor title bar", () => {

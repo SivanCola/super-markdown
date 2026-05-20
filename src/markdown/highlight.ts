@@ -1,5 +1,4 @@
 import type { HighlighterCore } from "shiki/core";
-import type { LanguageInput, ThemeInput } from "@shikijs/types";
 import { escapeHtml } from "../utils/html";
 import { normalizeCodeLanguage, SHIKI_DARK_THEME, SHIKI_LIGHT_THEME } from "./highlightLanguage";
 
@@ -12,8 +11,8 @@ type DefaultModule<T> = { default: T };
 interface ShikiModules {
   createHighlighterCore: CreateHighlighterCore;
   createJavaScriptRegexEngine: CreateJavaScriptRegexEngine;
-  langs: LanguageInput[];
-  themes: ThemeInput[];
+  langs: unknown[];
+  themes: unknown[];
 }
 
 let highlighterPromise: Promise<HighlighterCore> | undefined;
@@ -32,10 +31,18 @@ export async function highlightCodeBlockHtml(code: string, language: string | un
       },
       defaultColor: false
     });
-    return extractCodeHtml(html);
+    return extractCodeHtml(html, code);
   } catch {
-    return escapeHtml(code);
+    return renderPlainCodeLinesHtml(code);
   }
+}
+
+export function renderPlainCodeLinesHtml(code: string): string {
+  const normalized = code.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+  return normalized
+    .split("\n")
+    .map((line) => `<span class="line">${escapeHtml(line)}</span>`)
+    .join("\n");
 }
 
 function getHighlighter(): Promise<HighlighterCore> {
@@ -56,21 +63,21 @@ function loadShikiModules(): Promise<ShikiModules> {
     shikiModulesPromise = Promise.all([
       importEsm<Pick<typeof import("shiki/core"), "createHighlighterCore">>("shiki/core"),
       importEsm<Pick<typeof import("shiki/engine/javascript"), "createJavaScriptRegexEngine">>("shiki/engine/javascript"),
-      importEsm<DefaultModule<LanguageInput>>("@shikijs/langs/css"),
-      importEsm<DefaultModule<LanguageInput>>("@shikijs/langs/go"),
-      importEsm<DefaultModule<LanguageInput>>("@shikijs/langs/html"),
-      importEsm<DefaultModule<LanguageInput>>("@shikijs/langs/javascript"),
-      importEsm<DefaultModule<LanguageInput>>("@shikijs/langs/json"),
-      importEsm<DefaultModule<LanguageInput>>("@shikijs/langs/jsx"),
-      importEsm<DefaultModule<LanguageInput>>("@shikijs/langs/md"),
-      importEsm<DefaultModule<LanguageInput>>("@shikijs/langs/python"),
-      importEsm<DefaultModule<LanguageInput>>("@shikijs/langs/sh"),
-      importEsm<DefaultModule<LanguageInput>>("@shikijs/langs/sql"),
-      importEsm<DefaultModule<LanguageInput>>("@shikijs/langs/tsx"),
-      importEsm<DefaultModule<LanguageInput>>("@shikijs/langs/typescript"),
-      importEsm<DefaultModule<LanguageInput>>("@shikijs/langs/yaml"),
-      importEsm<DefaultModule<ThemeInput>>("@shikijs/themes/dark-plus"),
-      importEsm<DefaultModule<ThemeInput>>("@shikijs/themes/light-plus")
+      importEsm<DefaultModule<unknown>>("@shikijs/langs/css"),
+      importEsm<DefaultModule<unknown>>("@shikijs/langs/go"),
+      importEsm<DefaultModule<unknown>>("@shikijs/langs/html"),
+      importEsm<DefaultModule<unknown>>("@shikijs/langs/javascript"),
+      importEsm<DefaultModule<unknown>>("@shikijs/langs/json"),
+      importEsm<DefaultModule<unknown>>("@shikijs/langs/jsx"),
+      importEsm<DefaultModule<unknown>>("@shikijs/langs/md"),
+      importEsm<DefaultModule<unknown>>("@shikijs/langs/python"),
+      importEsm<DefaultModule<unknown>>("@shikijs/langs/sh"),
+      importEsm<DefaultModule<unknown>>("@shikijs/langs/sql"),
+      importEsm<DefaultModule<unknown>>("@shikijs/langs/tsx"),
+      importEsm<DefaultModule<unknown>>("@shikijs/langs/typescript"),
+      importEsm<DefaultModule<unknown>>("@shikijs/langs/yaml"),
+      importEsm<DefaultModule<unknown>>("@shikijs/themes/dark-plus"),
+      importEsm<DefaultModule<unknown>>("@shikijs/themes/light-plus")
     ]).then(([
       core,
       engine,
@@ -113,7 +120,7 @@ function loadShikiModules(): Promise<ShikiModules> {
   return shikiModulesPromise;
 }
 
-function extractCodeHtml(html: string): string {
+function extractCodeHtml(html: string, fallbackCode: string): string {
   const match = html.match(/<code>([\s\S]*)<\/code>\s*<\/pre>$/);
-  return match ? match[1] : escapeHtml(html);
+  return match ? match[1] : renderPlainCodeLinesHtml(fallbackCode);
 }

@@ -34,11 +34,14 @@ export interface ParagraphBlock extends BaseBlock {
 export interface ListBlock extends BaseBlock {
   type: "list";
   ordered: boolean;
-  items: Array<{
-    text: string;
-    checked?: boolean;
-    line: number;
-  }>;
+  items: ListItem[];
+}
+
+export interface ListItem {
+  text: string;
+  checked?: boolean;
+  line: number;
+  children?: ListBlock[];
 }
 
 export interface BlockquoteBlock extends BaseBlock {
@@ -188,24 +191,11 @@ export function parseMarkdownBlocks(text: string): MarkdownDocument {
       continue;
     }
 
-    const listMatch = line.match(/^(\s*)([-+*]|\d+[.)])\s+(?:\[([ xX])]\s+)?(.*)$/);
+    const listMatch = matchListItem(line);
     if (listMatch) {
-      const start = index;
-      const ordered = /\d/.test(listMatch[2]);
-      const items: ListBlock["items"] = [];
-      while (index < lines.length) {
-        const item = lines[index].match(/^(\s*)([-+*]|\d+[.)])\s+(?:\[([ xX])]\s+)?(.*)$/);
-        if (!item || /\d/.test(item[2]) !== ordered) {
-          break;
-        }
-        items.push({
-          text: item[4],
-          checked: item[3] ? item[3].toLowerCase() === "x" : undefined,
-          line: index
-        });
-        index += 1;
-      }
-      nodes.push({ type: "list", line: start, raw: lines.slice(start, index).join("\n"), ordered, items });
+      const parsed = parseListAt(lines, index, listMatch.indent);
+      nodes.push(parsed.block);
+      index = parsed.nextLine;
       continue;
     }
 
@@ -246,13 +236,104 @@ function isBlockStart(lines: string[], index: number): boolean {
     /^ {0,3}([-*_])(?:\s*\1){2,}\s*$/.test(line) ||
     /^\[\^([^\]]+)]:\s*/.test(line) ||
     parseMarkdownTableAt(lines, index) !== null ||
-    /^(\s*)([-+*]|\d+[.)])\s+/.test(line) ||
+    matchListItem(line) !== null ||
     /^>\s?/.test(line);
 }
 
 function isClosingFence(line: string, openingMarker: string): boolean {
   const match = line.match(/^ {0,3}(```+|~~~+)\s*$/);
   return Boolean(match && match[1][0] === openingMarker[0] && match[1].length >= openingMarker.length);
+}
+
+interface MatchedListItem {
+  indent: number;
+  ordered: boolean;
+  checked?: boolean;
+  text: string;
+}
+
+function parseListAt(lines: string[], start: number, indent: number): { block: ListBlock; nextLine: number } {
+  const first = matchListItem(lines[start]);
+  const ordered = first?.ordered ?? false;
+  const items: ListItem[] = [];
+  let index = start;
+
+  while (index < lines.length) {
+    const item = matchListItem(lines[index]);
+    if (!item || item.indent !== indent || item.ordered !== ordered) {
+      break;
+    }
+
+    const current: ListItem = {
+      text: item.text,
+      checked: item.checked,
+      line: index
+    };
+    index += 1;
+
+    while (index < lines.length) {
+      const nested = matchListItem(lines[index]);
+      if (nested) {
+        if (nested.indent > indent) {
+          const child = parseListAt(lines, index, nested.indent);
+          current.children = [...(current.children ?? []), child.block];
+          index = child.nextLine;
+          continue;
+        }
+        break;
+      }
+
+      if (!lines[index].trim()) {
+        break;
+      }
+
+      if (lineIndent(lines[index]) > indent) {
+        current.text = appendListContinuation(current.text, lines[index].trim());
+        index += 1;
+        continue;
+      }
+
+      break;
+    }
+
+    items.push(current);
+  }
+
+  return {
+    block: {
+      type: "list",
+      line: start,
+      raw: lines.slice(start, index).join("\n"),
+      ordered,
+      items
+    },
+    nextLine: index
+  };
+}
+
+function matchListItem(line: string): MatchedListItem | null {
+  const match = line.match(/^(\s*)([-+*]|\d+[.)])\s+(?:\[([ xX])]\s+)?(.*)$/);
+  if (!match) {
+    return null;
+  }
+  return {
+    indent: whitespaceWidth(match[1]),
+    ordered: /\d/.test(match[2]),
+    checked: match[3] ? match[3].toLowerCase() === "x" : undefined,
+    text: match[4]
+  };
+}
+
+function lineIndent(line: string): number {
+  return whitespaceWidth(line.match(/^(\s*)/)?.[1] ?? "");
+}
+
+function whitespaceWidth(value: string): number {
+  return value.replace(/\t/g, "    ").length;
+}
+
+function appendListContinuation(text: string, continuation: string): string {
+  return text ? `${text} ${continuation}` : continuation;
 }
 
 export function isMarkdownBlockTableRow(line: string): boolean {

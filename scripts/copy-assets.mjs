@@ -14,10 +14,6 @@ const assets = [
     to: "media/vendor/katex/katex.min.css"
   },
   {
-    from: "node_modules/katex/dist/katex.min.js",
-    to: "media/vendor/katex/katex.min.js"
-  },
-  {
     from: "node_modules/katex/dist/fonts",
     to: "media/vendor/katex/fonts"
   },

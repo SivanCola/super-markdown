@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.3
+
+- Kept JSON and other multiline code blocks fully expanded across preview, split preview, and WYSIWYG mode.
+- Added Markdown tab context menu entries for Preview Mode, Split Edit Mode, WYSIWYG Mode, and Export.
+- Fixed nested list parsing so child lists and indented continuation lines remain attached to their parent item.
+- Separated TypeScript test output from the bundled extension output to avoid stale compiled tests and bundle clobbering.
+- Upgraded Mermaid, tightened exported Mermaid rendering security, and removed unused KaTeX JavaScript asset copying.
+
 ## 0.1.2
 
 - Added a Webview toolbar entry for switching Markdown reading themes from the editor.

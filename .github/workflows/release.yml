@@ -45,20 +45,33 @@ jobs:
 
       - name: Publish to VS Code Marketplace
         if: env.VSCE_PAT != ''
-        run: npx @vscode/vsce publish --packagePath dist/super-markdown.vsix -p "$VSCE_PAT"
+        run: npx @vscode/vsce publish --packagePath dist/super-markdown.vsix --skip-duplicate -p "$VSCE_PAT"
 
       - name: Verify Open VSX token
         if: env.OVSX_PAT != ''
-        run: npx ovsx verify-pat SivanLiu -p "$OVSX_PAT"
+        run: |
+          for attempt in 1 2 3; do
+            npx ovsx verify-pat SivanLiu -p "$OVSX_PAT" && exit 0
+            if [ "$attempt" = "3" ]; then
+              exit 1
+            fi
+            sleep $((attempt * 10))
+          done
 
       - name: Publish to Open VSX
         if: env.OVSX_PAT != ''
         run: |
-          npx ovsx publish dist/super-markdown.vsix \
-            --skip-duplicate \
-            --baseContentUrl "https://github.com/${GITHUB_REPOSITORY}/blob/${GITHUB_REF_NAME}/" \
-            --baseImagesUrl "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${GITHUB_REF_NAME}/" \
-            -p "$OVSX_PAT"
+          for attempt in 1 2 3; do
+            npx ovsx publish dist/super-markdown.vsix \
+              --skip-duplicate \
+              --baseContentUrl "https://github.com/${GITHUB_REPOSITORY}/blob/${GITHUB_REF_NAME}/" \
+              --baseImagesUrl "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${GITHUB_REF_NAME}/" \
+              -p "$OVSX_PAT" && exit 0
+            if [ "$attempt" = "3" ]; then
+              exit 1
+            fi
+            sleep $((attempt * 10))
+          done
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2

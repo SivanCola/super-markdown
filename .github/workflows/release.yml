@@ -4,16 +4,23 @@ on:
   push:
     tags:
       - "v*"
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to publish, for example v1.0.0.
+        required: true
+        type: string
 
 jobs:
   release:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      actions: read
     env:
       VSCE_PAT: ${{ secrets.VSCE_PAT }}
       OVSX_PAT: ${{ secrets.OVSX_PAT }}
+      RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
     steps:
       - uses: actions/checkout@v4
 
@@ -22,26 +29,43 @@ jobs:
           node-version: 22
           cache: npm
 
+      - name: Use npm registry
+        run: npm config set registry https://registry.npmjs.org/
+
       - name: Install
-        run: npm ci
-
-      - name: Audit dependencies
-        run: npm audit
-
-      - name: Test
-        run: npm test
-
-      - name: Install Playwright Chromium
-        run: npx playwright install --with-deps chromium
-
-      - name: Test Webview toolbar
-        run: npm run test:webview-toolbar
+        timeout-minutes: 10
+        run: npm ci --prefer-offline --no-audit
 
       - name: Package VSIX
         run: npm run package:vsix
 
       - name: Verify VSIX contents
         run: npm run verify:vsix-contents
+
+      - name: Wait for CI on this commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for attempt in $(seq 1 60); do
+            status="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow CI --commit "$GITHUB_SHA" --event push --limit 1 --json status --jq '.[0].status // ""')"
+            conclusion="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow CI --commit "$GITHUB_SHA" --event push --limit 1 --json conclusion --jq '.[0].conclusion // ""')"
+            url="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow CI --commit "$GITHUB_SHA" --event push --limit 1 --json url --jq '.[0].url // ""')"
+
+            if [ "$status" = "completed" ] && [ "$conclusion" = "success" ]; then
+              echo "CI passed: $url"
+              exit 0
+            fi
+            if [ "$status" = "completed" ]; then
+              echo "CI did not pass: ${conclusion:-unknown} $url"
+              exit 1
+            fi
+
+            echo "Waiting for CI on $GITHUB_SHA, attempt $attempt/60..."
+            sleep 30
+          done
+
+          echo "Timed out waiting for CI on $GITHUB_SHA."
+          exit 1
 
       - name: Publish to VS Code Marketplace
         if: env.VSCE_PAT != ''
@@ -53,8 +77,8 @@ jobs:
           for attempt in 1 2 3 4 5; do
             npx ovsx publish dist/super-markdown.vsix \
               --skip-duplicate \
-              --baseContentUrl "https://github.com/${GITHUB_REPOSITORY}/blob/${GITHUB_REF_NAME}/" \
-              --baseImagesUrl "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${GITHUB_REF_NAME}/" \
+              --baseContentUrl "https://github.com/${GITHUB_REPOSITORY}/blob/${RELEASE_TAG}/" \
+              --baseImagesUrl "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${RELEASE_TAG}/" \
               -p "$OVSX_PAT" && exit 0
             if [ "$attempt" = "5" ]; then
               exit 1
@@ -65,4 +89,5 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ env.RELEASE_TAG }}
           files: dist/super-markdown.vsix

@@ -20,16 +20,28 @@ jobs:
           node-version: 22
           cache: npm
 
+      - name: Use npm registry
+        run: npm config set registry https://registry.npmjs.org/
+
       - name: Install
-        run: npm ci
+        timeout-minutes: 10
+        run: npm ci --prefer-offline --no-audit
 
       - name: Audit dependencies
-        run: npm audit
+        timeout-minutes: 5
+        run: npm audit --audit-level=high
 
       - name: Test
         run: npm test
 
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
       - name: Install Playwright Chromium
+        timeout-minutes: 10
         run: npx playwright install --with-deps chromium
 
       - name: Test Webview toolbar

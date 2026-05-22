@@ -1,5 +1,5 @@
 import { expect, type Page, test } from "@playwright/test";
-import { HEADING_MENU_ACTIONS, MORE_MENU_ACTIONS, TOOLBAR_GROUPS } from "../../src/wysiwyg/toolbar";
+import { EXPORT_MENU_ACTIONS, getToolbarGroups, HEADING_MENU_ACTIONS, PREVIEW_TOOLBAR_GROUPS, TOOLBAR_GROUPS } from "../../src/wysiwyg/toolbar";
 import { createWebviewHarnessHtml, editorRuntimePath, type HarnessMode } from "./harness";
 
 type HostMessage = Record<string, unknown>;
@@ -11,15 +11,17 @@ interface ActionExpectation {
   splitFragments?: string[];
   wysiwygFragments?: string[];
   message?: HostMessage;
-  menu?: "heading" | "more";
+  menu?: "heading" | "export";
   imageChooser?: true;
 }
 
 const ALL_TOOLBAR_ACTIONS = Array.from(new Set([
   ...TOOLBAR_GROUPS.flatMap((group) => group.actions),
   ...HEADING_MENU_ACTIONS,
-  ...MORE_MENU_ACTIONS
+  ...EXPORT_MENU_ACTIONS
 ]));
+const PREVIEW_TOP_LEVEL_ACTIONS = PREVIEW_TOOLBAR_GROUPS.flatMap((group) => group.actions);
+const PREVIEW_ALL_ACTIONS = Array.from(new Set([...PREVIEW_TOP_LEVEL_ACTIONS, ...EXPORT_MENU_ACTIONS]));
 
 const EXPECTATIONS: Record<string, ActionExpectation> = {
   bold: { splitFragments: ["**alpha**"], wysiwygFragments: ["**alpha**"] },
@@ -45,7 +47,7 @@ const EXPECTATIONS: Record<string, ActionExpectation> = {
   "inline-code": { splitFragments: ["`alpha`"], wysiwygFragments: ["`alpha`"] },
   code: { splitFragments: ["```alpha\ncode\n```"], wysiwygFragments: ["```", "alpha"] },
   table: {
-    splitFragments: ["| Column | Value |", "| Item | Value |"],
+    splitFragments: ["| Column 1 | Column 2 | Column 3 |", "|  |  |  |"],
     wysiwygFragments: ["|"]
   },
   math: { splitFragments: ["$$\nx = y\n$$"], wysiwygFragments: ["$$", "x = y"] },
@@ -54,7 +56,7 @@ const EXPECTATIONS: Record<string, ActionExpectation> = {
   organizeMarkdown: { message: { type: "runHostCommand", command: "organizeMarkdown" } },
   switchBackgroundTheme: { message: { type: "toolbarCommand", action: "switchBackgroundTheme" } },
   switchDisplayLanguage: { message: { type: "toolbarCommand", action: "switchDisplayLanguage" } },
-  more: { menu: "more" },
+  export: { menu: "export" },
   "export-html": { message: { type: "export", format: "html" } },
   "export-pdf": { message: { type: "export", format: "pdf" } },
   "export-all": { message: { type: "export", format: "all" } },
@@ -63,6 +65,13 @@ const EXPECTATIONS: Record<string, ActionExpectation> = {
 
 test("toolbar test matrix covers every rendered action", () => {
   expect(Object.keys(EXPECTATIONS).sort()).toEqual([...ALL_TOOLBAR_ACTIONS].sort());
+});
+
+test("preview toolbar model is read-only", () => {
+  expect(getToolbarGroups("preview")).toEqual(PREVIEW_TOOLBAR_GROUPS);
+  expect(getToolbarGroups("source", "previewOnly")).toEqual(PREVIEW_TOOLBAR_GROUPS);
+  expect(PREVIEW_TOP_LEVEL_ACTIONS).toEqual(["switchBackgroundTheme", "switchDisplayLanguage", "export", "help"]);
+  expect(PREVIEW_ALL_ACTIONS).not.toEqual(expect.arrayContaining(["bold", "table", "image", "toc", "organizeMarkdown"]));
 });
 
 test("toolbar uses Codicon icons with a small custom fallback set", async ({ page }) => {
@@ -74,17 +83,69 @@ test("toolbar uses Codicon icons with a small custom fallback set", async ({ pag
   await expect(page.locator('[data-action="inline-code"] .codicon-code')).toBeVisible();
   await expect(page.locator('[data-action="switchBackgroundTheme"] .codicon-color-mode')).toBeVisible();
   await expect(page.locator('[data-action="switchDisplayLanguage"] .codicon-globe')).toBeVisible();
-  await expect(page.locator('[data-menu-toggle="more"] .codicon-more')).toBeVisible();
+  await expect(page.locator('[data-menu-toggle="export"] .codicon-export')).toBeVisible();
+  await expect(page.locator('[data-menu-toggle="export"] .toolbar-caret')).toHaveCount(0);
+  await expect(page.locator('[data-menu-toggle="heading"] .toolbar-caret')).toHaveCount(1);
 });
 
-test("toolbar places display language switch between reading theme and help", async ({ page }) => {
+test("toolbar places export between display language and help", async ({ page }) => {
   await openHarness(page, "split");
 
-  const helpActions = await page.locator(".toolbar-group-help [data-action]").evaluateAll((buttons) =>
-    buttons.map((button) => (button as HTMLElement).dataset.action)
+  const helpActions = await page.locator(".toolbar-group-help .toolbar-button").evaluateAll((buttons) =>
+    buttons.map((button) => (button as HTMLElement).dataset.action || (button as HTMLElement).dataset.menuToggle)
   );
 
-  expect(helpActions).toEqual(["switchBackgroundTheme", "switchDisplayLanguage", "help"]);
+  expect(helpActions).toEqual(["switchBackgroundTheme", "switchDisplayLanguage", "export", "help"]);
+});
+
+test("preview toolbar only exposes read-only actions", async ({ page }) => {
+  await openHarness(page, "preview");
+
+  await expect(page.locator(".editor-toolbar-slot")).toBeVisible();
+  const topLevelActions = await page.locator(".editor-toolbar-slot > .toolbar-group > [data-action]").evaluateAll((buttons) =>
+    buttons.map((button) => (button as HTMLElement).dataset.action)
+  );
+  const menuToggles = await page.locator(".editor-toolbar-slot > .toolbar-group [data-menu-toggle]").evaluateAll((buttons) =>
+    buttons.map((button) => (button as HTMLElement).dataset.menuToggle)
+  );
+
+  expect(topLevelActions).toEqual(["switchBackgroundTheme", "switchDisplayLanguage", "help"]);
+  expect(menuToggles).toEqual(["export"]);
+  for (const action of ["bold", "table", "image", "toc", "organizeMarkdown"]) {
+    await expect(page.locator(`[data-action="${action}"]`)).toHaveCount(0);
+  }
+});
+
+test("preview toolbar actions stay read-only", async ({ page }) => {
+  await openHarness(page, "preview");
+  await clearMessages(page);
+
+  await clickToolbarAction(page, "switchBackgroundTheme");
+  await expectPostedMessage(page, { type: "toolbarCommand", action: "switchBackgroundTheme" });
+
+  await clearMessages(page);
+  await clickToolbarAction(page, "export-pdf");
+  await expectPostedMessage(page, { type: "export", format: "pdf" });
+
+  await clearMessages(page);
+  await clickToolbarAction(page, "help");
+  await expectPostedMessage(page, { type: "openLink", href: "https://github.com/SivanCola/super-markdown/issues" });
+
+  await clearMessages(page);
+  await page.evaluate(() => {
+    const toolbar = document.getElementById("editor-toolbar-slot");
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "toolbar-button";
+    button.dataset.action = "bold";
+    button.textContent = "Bold";
+    toolbar?.append(button);
+    button.click();
+  });
+
+  const messages = await readMessages(page);
+  expect(messages).toEqual([]);
+  await expect(page.locator("#source-editor")).toHaveValue("alpha");
 });
 
 test("toolbar menu keeps internal theme colors over dark VS Code dropdown colors", async ({ page }) => {
@@ -98,7 +159,7 @@ test("toolbar menu keeps internal theme colors over dark VS Code dropdown colors
     ].join("; ")
   });
 
-  await openToolbarMenu(page, "more");
+  await openToolbarMenu(page, "export");
 
   const colors = await page.evaluate(() => {
     function resolveCssColor(value: string, property: "backgroundColor" | "color"): string {
@@ -115,10 +176,10 @@ test("toolbar menu keeps internal theme colors over dark VS Code dropdown colors
     }
 
     const bodyStyle = getComputedStyle(document.body);
-    const menu = document.querySelector('[data-menu="more"]') as HTMLElement;
+    const menu = document.querySelector('[data-menu="export"]') as HTMLElement;
     const menuButton = menu.querySelector(".toolbar-menu-button") as HTMLElement;
     const menuIcon = menuButton.querySelector(".toolbar-menu-icon") as HTMLElement;
-    const toggle = document.querySelector('[data-menu-toggle="more"]') as HTMLElement;
+    const toggle = document.querySelector('[data-menu-toggle="export"]') as HTMLElement;
 
     return {
       darkDropdownBackground: resolveCssColor("var(--vscode-dropdown-background)", "backgroundColor"),
@@ -139,10 +200,10 @@ test("toolbar menu keeps internal theme colors over dark VS Code dropdown colors
   expect(colors.toggleBackground).toBe(colors.toggleBackgroundToken);
   expect(colors.menuBackground).not.toBe(colors.darkDropdownBackground);
 
-  await page.locator('[data-menu="more"] .toolbar-menu-button').first().hover();
+  await page.locator('[data-menu="export"] .toolbar-menu-button').first().hover();
   const hoverColors = await page.evaluate(() => {
     const bodyStyle = getComputedStyle(document.body);
-    const menuButton = document.querySelector('[data-menu="more"] .toolbar-menu-button') as HTMLElement;
+    const menuButton = document.querySelector('[data-menu="export"] .toolbar-menu-button') as HTMLElement;
     const probe = document.createElement("div");
     probe.style.backgroundColor = bodyStyle.getPropertyValue("--sm-menu-hover-bg").trim();
     document.body.append(probe);
@@ -154,6 +215,59 @@ test("toolbar menu keeps internal theme colors over dark VS Code dropdown colors
     };
   });
   expect(hoverColors.menuHover).toBe(hoverColors.menuHoverToken);
+});
+
+test("table picker highlights the hovered size with theme-aware colors", async ({ page }) => {
+  await openHarness(page, "split", {
+    bodyClass: "sm-theme-paper vscode-dark",
+    bodyStyle: [
+      "--vscode-dropdown-background: #050505",
+      "--vscode-dropdown-foreground: #fafafa",
+      "--vscode-icon-foreground: #fafafa",
+      "--vscode-focusBorder: #4daafc",
+      "--vscode-list-hoverBackground: #111111"
+    ].join("; ")
+  });
+
+  await openToolbarMenu(page, "table");
+  await page.locator('[data-table-rows="5"][data-table-columns="5"]').hover();
+  await expect(page.locator(".toolbar-table-picker-size")).toHaveText("5 x 5");
+  await expect(page.locator(".toolbar-table-picker-cell.is-selected")).toHaveCount(25);
+
+  const colors = await page.evaluate(() => {
+    function resolveCssColor(value: string, property: "backgroundColor" | "color"): string {
+      const probe = document.createElement("div");
+      if (property === "backgroundColor") {
+        probe.style.backgroundColor = value.trim();
+      } else {
+        probe.style.color = value.trim();
+      }
+      document.body.append(probe);
+      const color = getComputedStyle(probe)[property];
+      probe.remove();
+      return color;
+    }
+
+    const bodyStyle = getComputedStyle(document.body);
+    const panel = document.querySelector('[data-menu="table"]') as HTMLElement;
+    const selectedCell = document.querySelector(".toolbar-table-picker-cell.is-selected") as HTMLElement;
+    const label = document.querySelector(".toolbar-table-picker-size") as HTMLElement;
+
+    return {
+      darkDropdownBackground: resolveCssColor("var(--vscode-dropdown-background)", "backgroundColor"),
+      panelBackground: getComputedStyle(panel).backgroundColor,
+      panelBackgroundToken: resolveCssColor(bodyStyle.getPropertyValue("--sm-menu-bg"), "backgroundColor"),
+      selectedBackground: getComputedStyle(selectedCell).backgroundColor,
+      selectedBackgroundToken: resolveCssColor(bodyStyle.getPropertyValue("--sm-table-picker-cell-selected-bg"), "backgroundColor"),
+      labelColor: getComputedStyle(label).color,
+      labelColorToken: resolveCssColor(bodyStyle.getPropertyValue("--sm-table-picker-label"), "color")
+    };
+  });
+
+  expect(colors.panelBackground).toBe(colors.panelBackgroundToken);
+  expect(colors.panelBackground).not.toBe(colors.darkDropdownBackground);
+  expect(colors.selectedBackground).toBe(colors.selectedBackgroundToken);
+  expect(colors.labelColor).toBe(colors.labelColorToken);
 });
 
 test("reading themes choose outline and code colors independently from the VS Code shell", async ({ page }) => {
@@ -263,6 +377,95 @@ test("webview controls share delayed hover tooltips", async ({ page }) => {
   await expect(page.locator("#hover-tooltip")).toBeHidden();
 });
 
+test("keeps source caret stable when a stale host update arrives during typing", async ({ page }) => {
+  const original = "alpha\nbravo\ncharlie";
+  await openHarness(page, "split", { text: original });
+  await clearMessages(page);
+
+  await placeSourceCursor(page, original.indexOf("bravo") + 2);
+  await page.keyboard.type("X");
+
+  const typed = "alpha\nbrXavo\ncharlie";
+  const caretAfterType = await getSourceCaret(page);
+
+  await dispatchHostMarkdown(page, original, 0);
+
+  await expect(page.locator("#source-editor")).toHaveValue(typed);
+  const caretAfterStaleUpdate = await getSourceCaret(page);
+  expect(caretAfterStaleUpdate).toBe(caretAfterType);
+});
+
+test("keeps source caret stable when host echoes the current edit revision", async ({ page }) => {
+  const original = "alpha\nbravo\ncharlie";
+  await openHarness(page, "split", { text: original });
+  await clearMessages(page);
+
+  await placeSourceCursor(page, original.indexOf("bravo") + 2);
+  await page.keyboard.type("X");
+
+  const typed = "alpha\nbrXavo\ncharlie";
+  const editRevision = await waitForLatestEditRevision(page, typed);
+  const caretAfterType = await getSourceCaret(page);
+
+  await dispatchHostMarkdown(page, typed, editRevision);
+
+  await expect(page.locator("#source-editor")).toHaveValue(typed);
+  expect(await getSourceCaret(page)).toBe(caretAfterType);
+});
+
+test("accepts external markdown after the local edit revision is acknowledged", async ({ page }) => {
+  const original = "alpha\nbravo\ncharlie";
+  await openHarness(page, "split", { text: original });
+  await clearMessages(page);
+
+  await placeSourceCursor(page, original.indexOf("bravo") + 2);
+  await page.keyboard.type("X");
+
+  const typed = "alpha\nbrXavo\ncharlie";
+  const editRevision = await waitForLatestEditRevision(page, typed);
+  await dispatchHostMarkdown(page, typed, editRevision);
+
+  const external = "external\nworkspace\nchange";
+  await dispatchHostMarkdown(page, external);
+
+  await expect(page.locator("#source-editor")).toHaveValue(external);
+});
+
+test("keeps WYSIWYG content when a stale host update arrives during typing", async ({ page }) => {
+  const original = "alpha bravo charlie";
+  await openHarness(page, "wysiwyg", { text: original });
+  await clearMessages(page);
+
+  await placeProseMirrorCursor(page, "bravo", 2);
+  await page.keyboard.type("X");
+
+  const typed = "alpha brXavo charlie";
+  await expect(page.locator(".ProseMirror")).toContainText(typed);
+  await expectEditMessage(page, [typed]);
+
+  await dispatchHostMarkdown(page, original, 0);
+
+  await expect(page.locator(".ProseMirror")).toContainText(typed);
+  await expectEditMessage(page, [typed]);
+});
+
+test("keeps WYSIWYG caret stable when host echoes the current edit revision", async ({ page }) => {
+  const original = "alpha bravo charlie";
+  await openHarness(page, "wysiwyg", { text: original });
+  await clearMessages(page);
+
+  await placeProseMirrorCursor(page, "bravo", 2);
+  await page.keyboard.type("X");
+
+  const typed = "alpha brXavo charlie";
+  const edit = await waitForLatestEdit(page, typed);
+  await dispatchHostMarkdown(page, edit.text, edit.editRevision);
+  await page.keyboard.type("Y");
+
+  await expect(page.locator(".ProseMirror")).toContainText("alpha brXYavo charlie");
+  await expectLatestEditText(page, ["alpha brXYavo charlie"]);
+});
+
 test("split resizer adjusts editor and preview widths", async ({ page }) => {
   await openHarness(page, "split", { bodyClass: "harness-compact-side-panel" });
 
@@ -369,6 +572,20 @@ for (const mode of ["split", "wysiwyg"] as const) {
     }
   });
 }
+
+test("inserts the selected table size from the picker", async ({ page }) => {
+  await openHarness(page, "split");
+  await clearMessages(page);
+  await page.locator("#source-editor").focus();
+  await chooseTableSize(page, 5, 5);
+
+  await expectSourceValue(page, [
+    "| Column 1 | Column 2 | Column 3 | Column 4 | Column 5 |",
+    "| --- | --- | --- | --- | --- |"
+  ]);
+  const value = await page.locator("#source-editor").inputValue();
+  expect(value.split("\n").filter((line) => line === "|  |  |  |  |  |")).toHaveLength(4);
+});
 
 test.describe("wysiwyg rich editing scenarios", () => {
   test("creates an editable 3 by 3 table", async ({ page }) => {
@@ -783,15 +1000,27 @@ async function prepareSelection(page: Page, mode: HarnessMode): Promise<void> {
 }
 
 async function clickToolbarAction(page: Page, action: string): Promise<void> {
+  if (action === "table") {
+    await chooseTableSize(page, 3, 3);
+    return;
+  }
   if (HEADING_MENU_ACTIONS.includes(action)) {
     await openToolbarMenu(page, "heading");
-  } else if (MORE_MENU_ACTIONS.includes(action)) {
-    await openToolbarMenu(page, "more");
+  } else if (EXPORT_MENU_ACTIONS.includes(action)) {
+    await openToolbarMenu(page, "export");
   }
   await page.locator(`[data-action="${action}"]`).click();
 }
 
-async function openToolbarMenu(page: Page, menu: "heading" | "more"): Promise<void> {
+async function chooseTableSize(page: Page, rows: number, columns: number): Promise<void> {
+  await openToolbarMenu(page, "table");
+  const cell = page.locator(`[data-table-rows="${rows}"][data-table-columns="${columns}"]`);
+  await cell.hover();
+  await expect(page.locator(".toolbar-table-picker-size")).toHaveText(`${rows} x ${columns}`);
+  await cell.click();
+}
+
+async function openToolbarMenu(page: Page, menu: "heading" | "export" | "table"): Promise<void> {
   await page.locator(`[data-menu-toggle="${menu}"]`).click();
   await expect(page.locator(`[data-menu="${menu}"]`)).toBeVisible();
   await expect(page.locator(`[data-menu-toggle="${menu}"]`)).toHaveAttribute("aria-expanded", "true");
@@ -874,6 +1103,91 @@ async function placeSourceCursor(page: Page, position: number): Promise<void> {
     source.setSelectionRange(cursor, cursor);
     source.dispatchEvent(new Event("select", { bubbles: true }));
   }, position);
+}
+
+async function getSourceCaret(page: Page): Promise<number> {
+  return page.evaluate(() => {
+    const source = document.getElementById("source-editor") as HTMLTextAreaElement;
+    return source.selectionStart;
+  });
+}
+
+async function placeProseMirrorCursor(page: Page, searchText: string, offset: number): Promise<void> {
+  await page.locator(".ProseMirror").focus();
+  await page.evaluate(({ search, cursorOffset }) => {
+    const editor = document.querySelector(".ProseMirror") as HTMLElement | null;
+    if (!editor) {
+      throw new Error("Missing ProseMirror editor.");
+    }
+    const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT);
+    let node = walker.nextNode();
+    while (node) {
+      const text = node.textContent || "";
+      const index = text.indexOf(search);
+      if (index >= 0) {
+        const selection = window.getSelection();
+        const range = document.createRange();
+        range.setStart(node, index + cursorOffset);
+        range.collapse(true);
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+        editor.focus();
+        return;
+      }
+      node = walker.nextNode();
+    }
+    throw new Error(`Could not find ProseMirror text: ${search}`);
+  }, { search: searchText, cursorOffset: offset });
+}
+
+async function waitForLatestEditRevision(page: Page, text: string): Promise<number> {
+  const edit = await waitForLatestEdit(page, text);
+  return edit.editRevision;
+}
+
+async function waitForLatestEdit(page: Page, text: string): Promise<{ text: string; editRevision: number }> {
+  const edit = await page.waitForFunction((expectedText) => {
+    const messages = ((window as unknown as { __messages?: Array<{ type?: string; text?: string; editRevision?: unknown }> }).__messages) || [];
+    for (let index = messages.length - 1; index >= 0; index -= 1) {
+      const message = messages[index];
+      if (
+        message.type === "edit"
+        && typeof message.text === "string"
+        && message.text.includes(expectedText as string)
+        && typeof message.editRevision === "number"
+      ) {
+        return { text: message.text, editRevision: message.editRevision };
+      }
+    }
+    return false;
+  }, text);
+  return edit.jsonValue() as Promise<{ text: string; editRevision: number }>;
+}
+
+async function dispatchHostMarkdown(page: Page, markdown: string, editRevision?: number): Promise<void> {
+  await page.evaluate(({ nextMarkdown, revision }) => {
+    const escapeHtml = (value: string) => value
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+    const data: Record<string, unknown> = {
+      type: "setMarkdown",
+      text: nextMarkdown,
+      preview: {
+        markdown: nextMarkdown,
+        html: nextMarkdown
+          .split(/\r?\n/)
+          .map((line, index) => `<p data-source-line="${index}">${escapeHtml(line)}</p>`)
+          .join(""),
+        headings: []
+      }
+    };
+    if (typeof revision === "number") {
+      data.editRevision = revision;
+    }
+    window.dispatchEvent(new MessageEvent("message", { data }));
+  }, { nextMarkdown: markdown, revision: editRevision });
 }
 
 async function dispatchImagePaste(page: Page, selector: string, name: string): Promise<void> {

@@ -1,12 +1,15 @@
 import * as assert from "node:assert/strict";
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { getImageFilesFromTransfer } from "../wysiwyg/clipboard";
 import { prepareUploadedImage, resolveImageDirectory, sanitizeFilename } from "../wysiwyg/assets";
 import { resolveWysiwygDefaultMode } from "../wysiwyg/mode";
 import {
+  EXPORT_MENU_ACTIONS,
+  getToolbarGroups,
   HEADING_MENU_ACTIONS,
   HOST_TOOLBAR_ACTIONS,
-  MORE_MENU_ACTIONS,
+  PREVIEW_TOOLBAR_GROUPS,
   renderToolbarIcon,
   SUPER_MARKDOWN_ISSUES_URL,
   TOOLBAR_GROUPS
@@ -16,6 +19,23 @@ suite("visual editor assets", () => {
   test("resolves relative image directory near document", () => {
     assert.equal(resolveImageDirectory(path.join(path.sep, "tmp", "doc.md"), { imageDirectory: "assets" }), path.join(path.sep, "tmp", "assets"));
     assert.equal(resolveImageDirectory(path.join(path.sep, "tmp", "doc.md"), { imageDirectory: "   " }), path.join(path.sep, "tmp", "assets"));
+  });
+
+  test("resolves workspace resource directory for nested documents", () => {
+    const workspaceRoot = path.join(path.sep, "tmp", "project");
+    const documentPath = path.join(workspaceRoot, "docs", "guide.md");
+
+    assert.equal(resolveImageDirectory(documentPath, { imageDirectory: "assets" }, workspaceRoot), path.join(workspaceRoot, "assets"));
+
+    const image = prepareUploadedImage(
+      documentPath,
+      { imageDirectory: "assets" },
+      { id: "1", name: "diagram.png", dataUrl: "data:image/png;base64,YQ==" },
+      new Set(),
+      workspaceRoot
+    );
+    assert.equal(image.absolutePath, path.join(workspaceRoot, "assets", "diagram.png"));
+    assert.equal(image.markdownPath, "../assets/diagram.png");
   });
 
   test("sanitizes filenames and infers extension", () => {
@@ -32,6 +52,30 @@ suite("visual editor assets", () => {
     assert.equal(image.name, "a-2.png");
     assert.equal(image.markdownPath, "assets/a-2.png");
     assert.equal(image.buffer.toString("utf8"), "a");
+  });
+
+  test("uses clipboard files before mirrored transfer items for pasted images", () => {
+    const fromFiles = createTestFile("image.png", "image/png", 1);
+    const mirroredItem = createTestFile("image.png", "image/png", 2);
+
+    const files = getImageFilesFromTransfer({
+      files: [fromFiles],
+      items: [{ kind: "file", type: "image/png", getAsFile: () => mirroredItem }]
+    });
+
+    assert.equal(files.length, 1);
+    assert.equal(files[0], fromFiles);
+  });
+
+  test("falls back to transfer items when the clipboard file list has no images", () => {
+    const image = createTestFile("image.png", "image/png", 1);
+
+    const files = getImageFilesFromTransfer({
+      files: [createTestFile("note.txt", "text/plain", 1)],
+      items: [{ kind: "file", type: "image/png", getAsFile: () => image }]
+    });
+
+    assert.deepEqual(files, [image]);
   });
 
   test("maps legacy visual mode settings to the self-hosted editor modes", () => {
@@ -75,7 +119,9 @@ suite("visual editor assets", () => {
 
     assert.match(manifest.scripts["bundle:webview"], /media\/wysiwyg\/editor-runtime\.ts/);
     assert.match(manifest.scripts["bundle:webview"], /--outfile=media\/wysiwyg\/editor\.js/);
+    assert.match(manifest.scripts["bundle:webview"], /--sourcemap=external/);
     assert.equal(Boolean(manifest.dependencies["remark-math"]), true);
+    assert.equal(manifest.files.includes("media/icons/**"), false);
     assert.equal(manifest.files.includes("media/vendor/katex/katex.min.js"), false);
     assert.equal(fileExists("media/vendor/katex/katex.min.js"), false);
     assert.equal(readProjectFile("scripts/copy-assets.mjs").includes("katex.min.js"), false);
@@ -83,10 +129,22 @@ suite("visual editor assets", () => {
 
   test("toolbar model covers all actions with deterministic icons and host routing", () => {
     const topLevelActions = TOOLBAR_GROUPS.flatMap((group) => group.actions);
-    const allActions = [...topLevelActions, ...HEADING_MENU_ACTIONS, ...MORE_MENU_ACTIONS];
+    const allActions = [...topLevelActions, ...HEADING_MENU_ACTIONS, ...EXPORT_MENU_ACTIONS];
+    const previewTopLevelActions = PREVIEW_TOOLBAR_GROUPS.flatMap((group) => group.actions);
+    const previewActions = [...previewTopLevelActions, ...EXPORT_MENU_ACTIONS];
 
     assert.equal(new Set(topLevelActions).size, topLevelActions.length);
     assert.equal(new Set(allActions).size, allActions.length);
+    assert.equal(new Set(previewTopLevelActions).size, previewTopLevelActions.length);
+    assert.deepEqual(getToolbarGroups("preview"), PREVIEW_TOOLBAR_GROUPS);
+    assert.deepEqual(getToolbarGroups("source", "previewOnly"), PREVIEW_TOOLBAR_GROUPS);
+    assert.deepEqual(getToolbarGroups("split"), TOOLBAR_GROUPS);
+    assert.deepEqual(previewTopLevelActions, ["switchBackgroundTheme", "switchDisplayLanguage", "export", "help"]);
+    assert.equal(previewActions.includes("bold"), false);
+    assert.equal(previewActions.includes("table"), false);
+    assert.equal(previewActions.includes("image"), false);
+    assert.equal(previewActions.includes("toc"), false);
+    assert.equal(previewActions.includes("organizeMarkdown"), false);
     assert.deepEqual([...HOST_TOOLBAR_ACTIONS].sort(), [
       "export-all",
       "export-html",
@@ -107,6 +165,7 @@ suite("visual editor assets", () => {
     assert.match(renderToolbarIcon("inline-code"), /codicon-code/);
     assert.match(renderToolbarIcon("switchBackgroundTheme"), /codicon-color-mode/);
     assert.match(renderToolbarIcon("switchDisplayLanguage"), /codicon-globe/);
+    assert.match(renderToolbarIcon("export"), /codicon-export/);
     assert.match(renderToolbarIcon("underline"), /toolbar-custom-icon/);
     assert.match(renderToolbarIcon("math"), /toolbar-custom-icon/);
     assert.match(renderToolbarIcon("mermaid"), /toolbar-custom-icon/);
@@ -128,4 +187,8 @@ function readProjectFile(relativePath: string): string {
 
 function readProjectJson<T>(relativePath: string): T {
   return JSON.parse(readProjectFile(relativePath)) as T;
+}
+
+function createTestFile(name: string, type: string, lastModified: number): File {
+  return new File([new Uint8Array([1, 2, 3])], name, { type, lastModified });
 }

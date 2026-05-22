@@ -10,7 +10,7 @@ const { JSDOM } = await import("jsdom").catch(() => {
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const editorJs = await readFile(resolve(root, "media/wysiwyg/editor.js"), "utf8");
 
-const testFile = process.argv[2] || resolve(root, ".dev/super-markdown-test.md");
+const testFile = process.argv[2] || resolve(root, "tests", "overview.md");
 const docText = await readFile(testFile, "utf8");
 console.log("[input]", testFile, `(${docText.length} chars)`);
 

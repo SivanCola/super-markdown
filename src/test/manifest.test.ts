@@ -52,10 +52,57 @@ suite("extension manifest", () => {
         type: "webview"
       }
     ]);
-    assert.equal(extensionSource.includes("markdownLibraryTreeView.title = t(\"sidebar.markdownLibrary.title\")"), true);
+    assert.equal(extensionSource.includes("markdownLibraryTreeView.title = markdownLibraryTreeProvider.getTitle()"), true);
+    assert.equal(extensionSource.includes("markdownLibraryTreeView.onDidChangeSelection"), true);
+    assert.equal(extensionSource.includes("workspaceSummaryViewProvider.setSelectedMarkdownTreeNode"), true);
     assert.equal(summaryProviderSource.includes("this.view.title = t(\"sidebar.workspaceSummary.title\")"), true);
+    assert.equal(summaryProviderSource.includes("setSelectedMarkdownTreeNode"), true);
+    assert.equal(summaryProviderSource.includes("aggregateMarkdownWorkspaceSummary"), true);
+    assert.equal(summaryProviderSource.includes('selection: this.getSelectedScopeState()'), true);
+    assert.equal(summaryProviderSource.includes('kind: "file"'), true);
+    assert.equal(summaryProviderSource.includes('kind: "folder"'), true);
+    assert.equal(summaryProviderSource.includes("workspace-summary-file-actions"), true);
+    assert.equal(summaryProviderSource.includes("workspace-summary-issues"), true);
+    assert.equal(summaryProviderSource.includes('vscode.postMessage({ type: "revealSelectedIssue"'), true);
     assert.equal(i18nSource.includes("sidebar.markdownLibrary.title"), true);
     assert.equal(i18nSource.includes("sidebar.workspaceSummary.title"), true);
+    assert.equal(i18nSource.includes("sidebar.workspaceSummary.selectedDocument"), true);
+    assert.equal(i18nSource.includes("sidebar.workspaceSummary.selectedFolder"), true);
+  });
+
+  test("does not keep the removed standalone image storage view", () => {
+    const packageNls = JSON.parse(fs.readFileSync(path.join(root, "package.nls.json"), "utf8"));
+    const packageZhNls = JSON.parse(fs.readFileSync(path.join(root, "package.nls.zh-cn.json"), "utf8"));
+    const viewIds = manifest.contributes.views.superMarkdown.map((view: { id: string }) => view.id);
+
+    assert.equal(manifest.activationEvents.includes("onView:superMarkdown.imageStorage"), false);
+    assert.equal(viewIds.includes("superMarkdown.imageStorage"), false);
+    assert.equal(packageNls["superMarkdown.views.imageStorage"], undefined);
+    assert.equal(packageZhNls["superMarkdown.views.imageStorage"], undefined);
+    assert.equal(fs.existsSync(path.join(root, "src", "sidebar", "ImageStorageViewProvider.ts")), false);
+  });
+
+  test("keeps workspace summary actions lightweight and saves only changed image directory values", () => {
+    const summaryProviderSource = fs.readFileSync(path.join(root, "src", "sidebar", "WorkspaceSummaryViewProvider.ts"), "utf8");
+
+    assert.equal(summaryProviderSource.includes("workspace-summary-sidebar-link-button"), true);
+    assert.equal(summaryProviderSource.includes("workspace-summary-actions-title"), false);
+    assert.equal(summaryProviderSource.includes("workspace-summary-assets-title"), false);
+    assert.equal(summaryProviderSource.includes('aria-labelledby="workspace-summary-directory-label"'), true);
+    assert.equal(summaryProviderSource.includes("directoryHelp: t(\"sidebar.workspaceSummary.directoryHelp\")"), true);
+    assert.equal(summaryProviderSource.includes("chooseDirectory: t(\"sidebar.workspaceSummary.chooseDirectory\")"), true);
+    assert.equal(summaryProviderSource.includes("workspace-summary-directory-info"), true);
+    assert.equal(summaryProviderSource.includes("workspace-summary-choose"), true);
+    assert.equal(summaryProviderSource.includes("showOpenDialog"), true);
+    assert.match(summaryProviderSource, /<button id="workspace-summary-save"[\s\S]* disabled hidden><\/button>/);
+    assert.equal(summaryProviderSource.includes("function updateSaveState()"), true);
+    assert.equal(summaryProviderSource.includes("const hasChanged = value !== savedImageDirectory"), true);
+    assert.equal(summaryProviderSource.includes("saveButton.hidden = !hasChanged"), true);
+    assert.equal(summaryProviderSource.includes('const hoverTooltipSelector = "[data-hover-tooltip]"'), true);
+    assert.equal(summaryProviderSource.includes("directoryInfoButton.dataset.hoverTooltip = labels.directoryHelp"), true);
+    assert.equal(summaryProviderSource.includes('hoverTooltipElement.setAttribute("role", "tooltip")'), true);
+    assert.equal(summaryProviderSource.includes('vscode.postMessage({ type: "chooseImageDirectory" })'), true);
+    assert.equal(summaryProviderSource.includes('directoryInput.addEventListener("input", updateSaveState)'), true);
   });
 
   test("wires Markdown library view menus to dedicated wrapper commands", () => {
@@ -65,6 +112,7 @@ suite("extension manifest", () => {
 
     for (const command of [
       "superMarkdown.markdownLibrary.refresh",
+      "superMarkdown.markdownLibrary.toggleProblemFilter",
       "superMarkdown.markdownLibrary.openEditor",
       "superMarkdown.markdownLibrary.openPreview",
       "superMarkdown.markdownLibrary.openSplitEditMode",
@@ -78,7 +126,7 @@ suite("extension manifest", () => {
 
     assert.deepEqual(
       viewTitleCommands.map((item) => item.when),
-      ["view == superMarkdown.markdownLibrary", "view == superMarkdown.workspaceSummary"]
+      ["view == superMarkdown.markdownLibrary", "view == superMarkdown.markdownLibrary", "view == superMarkdown.workspaceSummary"]
     );
     assert.equal(
       viewItemCommands.every((item) => item.when === "view == superMarkdown.markdownLibrary && viewItem == superMarkdown.markdownFile"),
@@ -173,6 +221,25 @@ suite("extension manifest", () => {
     assert.equal(extensionSource.includes("superMarkdown.switchDisplayLanguage"), true);
   });
 
+  test("exposes every supported editor default mode in settings", () => {
+    const defaultModeConfig = manifest.contributes.configuration.properties["superMarkdown.editor.defaultMode"];
+
+    assert.deepEqual(defaultModeConfig.enum, ["source", "split", "preview", "wysiwyg", "ir"]);
+  });
+
+  test("routes webview host commands with the owning Markdown document uri", () => {
+    const webviewSource = fs.readFileSync(
+      path.join(root, "src", "wysiwyg", "SuperMarkdownWysiwygEditorProvider.ts"),
+      "utf8"
+    );
+
+    assert.match(webviewSource, /executeCommand\(EXPORT_COMMANDS\[message\.format\], document\.uri\)/);
+    assert.match(webviewSource, /executeCommand\(HOST_COMMANDS\[message\.command\], document\.uri\)/);
+    assert.match(webviewSource, /executeCommand\(selected\.command, document\.uri\)/);
+    assert.match(webviewSource, /executeCommand\(EXPORT_COMMANDS\[exportType\], document\.uri\)/);
+    assert.match(webviewSource, /executeCommand\(HOST_COMMANDS\.organizeMarkdown, document\.uri\)/);
+  });
+
   test("keeps the editor title context menu aligned with Markdown mode actions", () => {
     const titleContextItems = manifest.contributes.menus["editor/title/context"] as Array<{
       command?: string;
@@ -260,6 +327,70 @@ suite("extension manifest", () => {
         "navigation@23"
       ]
     );
+  });
+
+  test("keeps the webview context menu focused on switchable Markdown modes", () => {
+    const webviewContextItems = manifest.contributes.menus["webview/context"] as Array<{
+      command?: string;
+      group?: string;
+      when?: string;
+    }>;
+    const expectedWhenPrefix = "webviewId == 'superMarkdown.editor' && webviewSection == 'editor'";
+
+    assert.equal(webviewContextItems.length, 8);
+    assert.deepEqual(
+      webviewContextItems.map((item) => item.command),
+      [
+        "superMarkdown.en.openEditor",
+        "superMarkdown.zhCN.openEditor",
+        "superMarkdown.en.openPreview",
+        "superMarkdown.zhCN.openPreview",
+        "superMarkdown.en.openSplitEditMode",
+        "superMarkdown.zhCN.openSplitEditMode",
+        "superMarkdown.en.openWysiwygEditor",
+        "superMarkdown.zhCN.openWysiwygEditor"
+      ]
+    );
+    assert.deepEqual(
+      webviewContextItems.map((item) => item.group),
+      [
+        "navigation@10",
+        "navigation@10",
+        "navigation@20",
+        "navigation@20",
+        "navigation@30",
+        "navigation@30",
+        "navigation@40",
+        "navigation@40"
+      ]
+    );
+    assert.deepEqual(
+      webviewContextItems.map((item) => item.when),
+      [
+        `${expectedWhenPrefix} && superMarkdownMode != 'source' && !superMarkdown.runtimeLanguageZhCN`,
+        `${expectedWhenPrefix} && superMarkdownMode != 'source' && superMarkdown.runtimeLanguageZhCN`,
+        `${expectedWhenPrefix} && superMarkdownMode != 'preview' && !superMarkdown.runtimeLanguageZhCN`,
+        `${expectedWhenPrefix} && superMarkdownMode != 'preview' && superMarkdown.runtimeLanguageZhCN`,
+        `${expectedWhenPrefix} && superMarkdownMode != 'split' && !superMarkdown.runtimeLanguageZhCN`,
+        `${expectedWhenPrefix} && superMarkdownMode != 'split' && superMarkdown.runtimeLanguageZhCN`,
+        `${expectedWhenPrefix} && superMarkdownMode != 'wysiwyg' && !superMarkdown.runtimeLanguageZhCN`,
+        `${expectedWhenPrefix} && superMarkdownMode != 'wysiwyg' && superMarkdown.runtimeLanguageZhCN`
+      ]
+    );
+  });
+
+  test("marks the custom editor webview context with the active mode", () => {
+    const webviewSource = fs.readFileSync(
+      path.join(root, "src", "wysiwyg", "SuperMarkdownWysiwygEditorProvider.ts"),
+      "utf8"
+    );
+    const runtimeSource = fs.readFileSync(path.join(root, "media", "wysiwyg", "editor-runtime.ts"), "utf8");
+
+    assert.equal(webviewSource.includes('data-vscode-context="${initialWebviewContext}"'), true);
+    assert.equal(webviewSource.includes('superMarkdownMode: initialMode'), true);
+    assert.equal(runtimeSource.includes("function updateWebviewContext()"), true);
+    assert.equal(runtimeSource.includes("superMarkdownMode: currentMode"), true);
+    assert.match(runtimeSource, /applyMode\(\): void \{[\s\S]*updateWebviewContext\(\);/);
   });
 
   test("routes Markdown modes through the main custom editor", () => {

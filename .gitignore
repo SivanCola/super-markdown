@@ -4,8 +4,10 @@ node_modules/
 /dist/
 .vscode-test/
 .dev/
+/tests/
 .DS_Store
 media/vendor/vditor/
+media/wysiwyg/*.js.map
 *.vsix
 *.log
 .jumpjump/

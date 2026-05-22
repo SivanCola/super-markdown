@@ -1,5 +1,6 @@
 import * as assert from "node:assert/strict";
 import * as path from "node:path";
+import * as chromium from "../export/chromium";
 import { renderExportHtml } from "../export/renderer";
 import { parseFrontMatter, resolveExportTypes, resolveOutputPath, rewriteImageSource } from "../export/utils";
 import { ExportSettings } from "../types";
@@ -106,5 +107,38 @@ suite("export utils", () => {
     });
 
     assert.match(html, /src="file:\/\/\/tmp\/extension%20root\/media\/vendor\/mermaid\/mermaid\.min\.js"/);
+  });
+
+  test("maps configured PDF format to Chromium paper dimensions", () => {
+    const buildPdfPrintOptions = (chromium as {
+      buildPdfPrintOptions?: (settings: ExportSettings) => Record<string, unknown>;
+    }).buildPdfPrintOptions;
+
+    assert.equal(typeof buildPdfPrintOptions, "function");
+
+    const options = buildPdfPrintOptions!({
+      ...exportSettings,
+      pdf: {
+        ...exportSettings.pdf,
+        format: "Letter"
+      }
+    });
+
+    assert.equal(options.paperWidth, 8.5);
+    assert.equal(options.paperHeight, 11);
+  });
+
+  test("launches Chrome DevTools on an explicit local port", () => {
+    const buildChromeLaunchArgs = (chromium as {
+      buildChromeLaunchArgs?: (profilePath: string, port: number) => string[];
+    }).buildChromeLaunchArgs;
+
+    assert.equal(typeof buildChromeLaunchArgs, "function");
+
+    const args = buildChromeLaunchArgs!("/tmp/super-markdown-profile", 49321);
+
+    assert.equal(args.includes("--remote-debugging-port=0"), false);
+    assert.equal(args.includes("--remote-debugging-port=49321"), true);
+    assert.equal(args.includes("--headless=new"), true);
   });
 });

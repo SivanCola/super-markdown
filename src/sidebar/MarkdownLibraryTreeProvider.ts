@@ -12,6 +12,7 @@ export const SUPER_MARKDOWN_MARKDOWN_LIBRARY_VIEW_ID = "superMarkdown.markdownLi
 export class MarkdownLibraryTreeProvider implements vscode.TreeDataProvider<MarkdownWorkspaceTreeNode>, vscode.Disposable {
   private readonly changeEmitter = new vscode.EventEmitter<MarkdownWorkspaceTreeNode | undefined | null | void>();
   private readonly disposables: vscode.Disposable[] = [];
+  private showProblemDocumentsOnly = false;
 
   readonly onDidChangeTreeData = this.changeEmitter.event;
 
@@ -23,12 +24,27 @@ export class MarkdownLibraryTreeProvider implements vscode.TreeDataProvider<Mark
     this.changeEmitter.fire();
   }
 
+  toggleProblemFilter(): boolean {
+    this.showProblemDocumentsOnly = !this.showProblemDocumentsOnly;
+    this.changeEmitter.fire();
+    return this.showProblemDocumentsOnly;
+  }
+
+  getTitle(): string {
+    return this.showProblemDocumentsOnly
+      ? `${t("sidebar.markdownLibrary.title")} · ${t("sidebar.markdownLibrary.problemFilter")}`
+      : t("sidebar.markdownLibrary.title");
+  }
+
   getTreeItem(element: MarkdownWorkspaceTreeNode): vscode.TreeItem {
     if (element.type === "file") {
       return this.getFileTreeItem(element.file);
     }
 
-    const item = new vscode.TreeItem(element.name, vscode.TreeItemCollapsibleState.Expanded);
+    const item = new vscode.TreeItem(
+      element.name,
+      element.type === "workspace" ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.Collapsed
+    );
     item.id = element.id;
     item.contextValue = element.type === "workspace" ? "superMarkdown.workspaceFolder" : "superMarkdown.directory";
     item.iconPath = new vscode.ThemeIcon(element.type === "workspace" ? "root-folder" : "folder");
@@ -41,7 +57,7 @@ export class MarkdownLibraryTreeProvider implements vscode.TreeDataProvider<Mark
     }
 
     const workspaceFolderCount = vscode.workspace.workspaceFolders?.length ?? 0;
-    return buildMarkdownWorkspaceTree(this.index.getFiles(), { multiRoot: workspaceFolderCount > 1 });
+    return buildMarkdownWorkspaceTree(this.getVisibleFiles(), { multiRoot: workspaceFolderCount > 1 });
   }
 
   getEmptyMessage(): string {
@@ -51,6 +67,9 @@ export class MarkdownLibraryTreeProvider implements vscode.TreeDataProvider<Mark
     if (this.index.getFiles().length === 0) {
       return t("sidebar.markdownLibrary.noFiles");
     }
+    if (this.showProblemDocumentsOnly && this.getVisibleFiles().length === 0) {
+      return t("sidebar.markdownLibrary.noProblemFiles");
+    }
     return "";
   }
 
@@ -59,14 +78,19 @@ export class MarkdownLibraryTreeProvider implements vscode.TreeDataProvider<Mark
     this.changeEmitter.dispose();
   }
 
+  private getVisibleFiles(): MarkdownWorkspaceFile[] {
+    const files = this.index.getFiles();
+    return this.showProblemDocumentsOnly ? files.filter((file) => file.stats.issueCount > 0) : files;
+  }
+
   private getFileTreeItem(file: MarkdownWorkspaceFile): vscode.TreeItem {
-    const item = new vscode.TreeItem(file.title || file.filename, vscode.TreeItemCollapsibleState.None);
+    const item = new vscode.TreeItem(file.filename, vscode.TreeItemCollapsibleState.None);
     item.id = file.uriString;
     item.resourceUri = vscode.Uri.parse(file.uriString);
     item.contextValue = "superMarkdown.markdownFile";
     item.description = this.formatFileDescription(file);
     item.tooltip = this.formatFileTooltip(file);
-    item.iconPath = new vscode.ThemeIcon(this.getFileIcon(file));
+    item.iconPath = new vscode.ThemeIcon(this.getFileIcon());
     item.command = {
       command: "superMarkdown.openEditor",
       title: t("sidebar.markdownLibrary.open"),
@@ -75,31 +99,12 @@ export class MarkdownLibraryTreeProvider implements vscode.TreeDataProvider<Mark
     return item;
   }
 
-  private getFileIcon(file: MarkdownWorkspaceFile): string {
-    if (file.stats.errorCount > 0) {
-      return "error";
-    }
-    if (file.stats.warningCount > 0) {
-      return "warning";
-    }
+  private getFileIcon(): string {
     return "markdown";
   }
 
-  private formatFileDescription(file: MarkdownWorkspaceFile): string {
-    const parts: string[] = [];
-    if (file.stats.issueCount > 0) {
-      parts.push(t("sidebar.markdownLibrary.issues", file.stats.issueCount));
-    }
-    if (file.stats.uncheckedTaskCount > 0) {
-      parts.push(t("sidebar.markdownLibrary.tasks", file.stats.uncheckedTaskCount));
-    }
-    if (file.stats.imageCount > 0) {
-      parts.push(t("sidebar.markdownLibrary.images", file.stats.imageCount));
-    }
-    if (file.stats.linkCount > 0) {
-      parts.push(t("sidebar.markdownLibrary.links", file.stats.linkCount));
-    }
-    return parts.length > 0 ? parts.join(" · ") : t("sidebar.markdownLibrary.ok");
+  private formatFileDescription(file: MarkdownWorkspaceFile): string | undefined {
+    return file.stats.issueCount > 0 ? String(file.stats.issueCount) : undefined;
   }
 
   private formatFileTooltip(file: MarkdownWorkspaceFile): vscode.MarkdownString {

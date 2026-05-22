@@ -17,26 +17,31 @@ export interface StoredImageData {
 
 const DATA_URL_PATTERN = /^data:([\w.+-]+\/[\w.+-]+);base64,(.+)$/;
 
-export function resolveImageDirectory(documentPath: string, settings: Pick<WysiwygSettings, "imageDirectory">): string {
+export function resolveImageDirectory(
+  documentPath: string,
+  settings: Pick<WysiwygSettings, "imageDirectory">,
+  baseDirectory?: string
+): string {
   const configured = settings.imageDirectory.trim() || "assets";
   if (path.isAbsolute(configured)) {
     return configured;
   }
-  return path.resolve(path.dirname(documentPath), configured);
+  return path.resolve(baseDirectory ?? path.dirname(documentPath), configured);
 }
 
 export function prepareUploadedImage(
   documentPath: string,
   settings: Pick<WysiwygSettings, "imageDirectory">,
   image: UploadedImageData,
-  existingNames: ReadonlySet<string> = new Set()
+  existingNames: ReadonlySet<string> = new Set(),
+  baseDirectory?: string
 ): StoredImageData {
   const match = image.dataUrl.match(DATA_URL_PATTERN);
   if (!match) {
     throw new Error("Unsupported image data.");
   }
 
-  const directory = resolveImageDirectory(documentPath, settings);
+  const directory = resolveImageDirectory(documentPath, settings, baseDirectory);
   const filename = uniqueFilename(sanitizeFilename(image.name, match[1]), existingNames);
   const absolutePath = path.join(directory, filename);
   const relativePath = path.relative(path.dirname(documentPath), absolutePath).replace(/\\/g, "/");

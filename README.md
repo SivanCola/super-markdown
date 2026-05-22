@@ -30,22 +30,23 @@ Super Markdown keeps source editing, preview, WYSIWYG editing, formatting, and e
 
 ![WYSIWYG mode with toolbar and document-style Markdown editing](images/screenshots/wysiwyg-mode.png)
 
-## What's New
+## What's New in 1.0.0
 
-- Reading themes are broader now, with a toolbar switcher and 14 choices ranging from neutral light/dark to Solarized, Rose, Lavender, Graphite, Forest, Terminal, and High Contrast.
-- The default Markdown experience is now Super Markdown Editor, with source, split preview, preview-only, and WYSIWYG modes in one workspace.
-- WYSIWYG mode now supports a richer toolbar, editable tables, lists, math, code blocks, local image insertion, undo/redo, outline navigation, and Mermaid diagram previews.
-- Mermaid diagrams render consistently in split preview, WYSIWYG mode, HTML export, PDF export, and image export.
-- Export supports HTML, PDF, PNG, JPEG, and all-format output with shared reading styles, KaTeX math, and Mermaid diagrams.
-- The built-in Super Markdown syntax guide is easier to open from the command palette.
-- Document health checks and safe cleanup stay available before sharing or publishing Markdown files.
+- The Markdown document library now has a calmer sidebar with a workspace tree, compact health counts, workspace summary, and focused document actions.
+- Preview mode now shares the same read-only toolbar surface as split and WYSIWYG modes, so export, reading theme, language switching, and help stay in the same place.
+- Export now has a dedicated toolbar button instead of being hidden behind a generic overflow menu.
+- Resource directory settings are clearer: inserted or pasted images are saved to the document project's resource directory, defaulting to `assets`, with a chooser for custom paths.
+- PDF and all-format export use a more reliable Chrome DevTools startup path on current Chrome, Edge, and Chromium builds.
+- The built-in syntax guide and fixture documents now cover richer Markdown structures, nested resources, image workflows, and export scenarios.
 
 ## Highlights
 
 - Open `.md`, `.markdown`, `.mdown`, and `.mkdn` files in the Super Markdown Editor by default.
 - Use a Markdown workbench with outline navigation, source editing, visual block editing, and live preview.
 - Switch between source, split edit, preview, and WYSIWYG modes.
+- Browse workspace Markdown files from the document library sidebar and open documents directly in editor, preview, split, WYSIWYG, or native mode.
 - Use WYSIWYG editing while keeping preview, formatting, and export output aligned with the Markdown source.
+- Use the same export, reading theme, display language, and help toolbar controls in source, split, preview, and WYSIWYG modes.
 - Format Markdown through VS Code `Format Document` with Super Markdown as the default formatter.
 - Export Markdown to HTML, PDF, PNG, JPEG, or all formats.
 - Keep headings, lists, tables, code, math, diagrams, preview, and export visually consistent.
@@ -56,6 +57,7 @@ Super Markdown keeps source editing, preview, WYSIWYG editing, formatting, and e
 - Render Mermaid diagrams and KaTeX math from bundled local assets.
 - Switch the extension UI between English, Simplified Chinese, and VS Code auto mode.
 - Choose from 14 reading themes, including Solarized, Rose, Lavender, Graphite, Forest, Terminal, Ink, Paper, Ocean, and High Contrast.
+- Choose a workspace resource directory for images inserted or pasted into Markdown documents.
 - Review safe cleanup changes in a diff before applying them.
 
 ## Quick Start
@@ -93,6 +95,12 @@ It checks for:
 - Broken local links or images.
 - Unchecked task count.
 
+## Document Library
+
+Open the Super Markdown activity bar view to browse the current workspace as a Markdown document library. It groups Markdown files by folder, keeps file rows compact, and shows health counts without turning the tree into a diagnostics panel.
+
+The side panel also includes a workspace summary, quick actions for refreshing the index and opening the syntax guide, and an Assets section where you can choose the resource directory used for pasted or inserted images.
+
 ## Safe Cleanup
 
 Run `Super Markdown: Organize Markdown` when you want the extension to prepare cleanup edits and a document health report. Super Markdown opens a diff first, so you can review every change before applying it.
@@ -112,6 +120,8 @@ Run `Super Markdown: Export PDF`, `Export HTML`, `Export PNG`, `Export JPEG`, `E
 Export supports headings, tables, task checkboxes, footnotes, code highlighting, Mermaid, and KaTeX. PDF and image export use your configured Chrome/Edge/Chromium path first, then a system Chrome/Edge/Chromium installation.
 
 Export renders from the current Markdown text, so source, preview, WYSIWYG mode, and exported files stay aligned.
+
+The editor toolbar exposes a dedicated export button in source, split, preview, and WYSIWYG modes. In preview mode the toolbar stays read-only except for actions that make sense while reading, such as export, reading theme, language switching, and help.
 
 ## Common Commands
 
@@ -183,22 +193,23 @@ Markdown 文件现在会默认打开 `Super Markdown Editor`：它提供大纲�
 
 Super Markdown 会让源码编辑、预览、所见即所得、格式化和导出围绕同一份 Markdown 文档保持一致，方便编写、检查和分享。
 
-## 最新版亮点
+## 1.0.0 最新版亮点
 
-- 阅读主题已经扩充到 14 种，并新增工具栏入口，可在浅色/深色、中性色、日光、玫瑰、薰衣草、石墨、深林、终端和高对比等风格之间切换。
-- Markdown 默认体验已经切换到 Super Markdown Editor，源码、分屏预览、纯预览和所见即所得模式集中在同一个工作台。
-- 所见即所得模式支持更完整的工具栏、可编辑表格/列表/数学公式/代码块、本地图片插入、撤销重做、大纲导航，并能像分屏预览一样渲染 Mermaid 图表。
-- Mermaid 图表在分屏预览、所见即所得、HTML 导出、PDF 导出和图片导出中都能保持一致。
-- 导出支持 HTML、PDF、PNG、JPEG 和全部格式，并复用统一阅读样式、KaTeX 数学公式和 Mermaid 图表。
-- 内置 Super Markdown 语法速查可以从命令面板快速打开。
-- 文档健康检查和安全整理功能仍可在分享或发布 Markdown 前使用。
+- Markdown 文档库侧边栏更清爽：保留工作区目录树、紧凑健康计数、工作区摘要和高频文档操作，弱化问题展示的视觉压力。
+- 预览模式现在也使用与分屏、所见即所得一致的只读工具栏，导出、阅读主题、界面语言和帮助入口保持在同一位置。
+- 导出从通用的更多菜单中独立出来，变成明确的工具栏导出按钮。
+- 资源目录设置更清晰：插入或粘贴图片时会保存到当前文档项目的资源目录，默认是 `assets`，也可以通过选择器手动指定路径。
+- PDF 和全部格式导出改用更可靠的 Chrome DevTools 启动方式，适配当前 Chrome、Edge 和 Chromium。
+- 内置语法速查和测试文档覆盖了更复杂的 Markdown 结构、嵌套资源、图片工作流和导出场景。
 
 ## 功能亮点
 
 - `.md`、`.markdown`、`.mdown`、`.mkdn` 默认使用 Super Markdown Editor 打开。
 - 工作台同时提供大纲导航、源码编辑、块级可视化编辑和实时预览。
 - 支持源码、分屏、预览和所见即所得模式。
+- 可从文档库侧边栏浏览工作区 Markdown 文件，并直接用编辑器、预览、分屏、所见即所得或原生模式打开。
 - 所见即所得编辑会与 Markdown 源码、预览、格式化和导出结果保持一致。
+- 源码、分屏、预览和所见即所得模式使用一致的导出、阅读主题、界面语言和帮助入口。
 - VS Code `Format Document` 默认使用 Super Markdown 格式化器。
 - 支持导出 HTML、PDF、PNG、JPEG 或全部格式。
 - 标题、列表、表格、代码、数学公式、图表、预览和导出保持一致的显示效果。
@@ -209,6 +220,7 @@ Super Markdown 会让源码编辑、预览、所见即所得、格式化和导�
 - Mermaid 图表和 KaTeX 数学公式使用本地打包资源渲染。
 - 扩展界面支持英文、简体中文和跟随 VS Code 自动切换。
 - 提供 14 种阅读主题，包括日光、玫瑰、薰衣草、石墨、深林、终端、墨黑、纸页、海蓝和高对比等。
+- 可为插入或粘贴到 Markdown 文档中的图片选择工作区资源目录。
 - 整理 Markdown 前先展示 diff，确认后再应用修改。
 
 ## 快速开始
@@ -224,7 +236,7 @@ Super Markdown 会让源码编辑、预览、所见即所得、格式化和导�
 - macOS：`Cmd+Alt+M`
 - Windows/Linux：`Ctrl+Alt+M`
 
-## 三种模式
+## 编辑模式
 
 | 模式 | 适合场景 | 作用 |
 | --- | --- | --- |
@@ -246,6 +258,12 @@ Super Markdown 会让源码编辑、预览、所见即所得、格式化和导�
 - 本地链接或图片失效。
 - 未完成任务数量。
 
+## 文档库
+
+打开 Super Markdown 活动栏视图后，可以把当前工作区作为 Markdown 文档库浏览。它按文件夹组织 Markdown 文件，文件行保持紧凑，并用轻量计数展示文档健康状态，避免把目录树变成诊断面板。
+
+侧边栏还包含工作区摘要、刷新索引和打开语法速查等快捷操作，以及 Assets 区域。Assets 里的资源目录用于保存插入或粘贴到 Markdown 文档中的图片，默认是 `assets`，也可以手动选择项目内的其他路径。
+
 ## 安全整理
 
 运行 `Super Markdown：整理 Markdown` 后，扩展会先生成整理结果和文档健康报告，并打开 diff。你可以检查每一处变化，再决定是否应用。
@@ -265,6 +283,8 @@ Super Markdown 会让源码编辑、预览、所见即所得、格式化和导�
 导出支持标题、表格、任务复选框、脚注、代码高亮、Mermaid 和 KaTeX。PDF 和图片导出优先使用你配置的 Chrome/Edge/Chromium 路径，其次查找系统 Chrome/Edge/Chromium。
 
 导出会从当前 Markdown 文本生成，因此源码、预览、所见即所得和导出结果保持一致。
+
+源码、分屏、预览和所见即所得模式的工具栏都会提供独立的导出按钮。预览模式中的工具栏保持只读，只保留阅读时合理的操作，例如导出、阅读主题、界面语言和帮助。
 
 ## 常用命令
 

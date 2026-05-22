@@ -32,6 +32,7 @@ import {
   SUPER_MARKDOWN_WORKSPACE_SUMMARY_VIEW_ID,
   WorkspaceSummaryViewProvider
 } from "./sidebar/WorkspaceSummaryViewProvider";
+import { fullDocumentRange } from "./utils/vscode";
 import {
   SUPER_MARKDOWN_EDITOR_VIEW_TYPE,
   SUPER_MARKDOWN_TOOLBAR_COMMAND,
@@ -52,7 +53,7 @@ export function activate(context: vscode.ExtensionContext): void {
     showCollapseAll: true
   });
   const updateMarkdownLibraryView = () => {
-    markdownLibraryTreeView.title = t("sidebar.markdownLibrary.title");
+    markdownLibraryTreeView.title = markdownLibraryTreeProvider.getTitle();
     markdownLibraryTreeView.message = markdownLibraryTreeProvider.getEmptyMessage();
   };
   void migratePreviewThemeConfiguration();
@@ -69,6 +70,9 @@ export function activate(context: vscode.ExtensionContext): void {
     workspaceSummaryViewProvider,
     markdownLibraryTreeView,
     markdownWorkspaceIndex.onDidChange(updateMarkdownLibraryView),
+    markdownLibraryTreeView.onDidChangeSelection((event) => {
+      workspaceSummaryViewProvider.setSelectedMarkdownTreeNode(event.selection[0]);
+    }),
     ...registerLocalizedCommandAliases(),
     vscode.languages.registerDocumentFormattingEditProvider("markdown", {
       provideDocumentFormattingEdits(document) {
@@ -179,6 +183,10 @@ export function activate(context: vscode.ExtensionContext): void {
     }),
     vscode.commands.registerCommand("superMarkdown.markdownLibrary.refresh", async () => {
       await markdownWorkspaceIndex.refresh();
+    }),
+    vscode.commands.registerCommand("superMarkdown.markdownLibrary.toggleProblemFilter", () => {
+      markdownLibraryTreeProvider.toggleProblemFilter();
+      updateMarkdownLibraryView();
     }),
     vscode.commands.registerCommand("superMarkdown.markdownLibrary.openEditor", async (node?: unknown) => {
       const uri = resolveMarkdownLibraryUri(node);
@@ -646,10 +654,4 @@ async function requireMarkdownDocument(resource?: vscode.Uri): Promise<vscode.Te
     void vscode.window.showWarningMessage(t("message.noMarkdownRun"));
   }
   return document;
-}
-
-function fullDocumentRange(document: vscode.TextDocument): vscode.Range {
-  const lastLine = Math.max(0, document.lineCount - 1);
-  const lastCharacter = document.lineAt(lastLine).text.length;
-  return new vscode.Range(0, 0, lastLine, lastCharacter);
 }

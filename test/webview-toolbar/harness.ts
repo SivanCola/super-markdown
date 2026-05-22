@@ -1,7 +1,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 
-export type HarnessMode = "split" | "wysiwyg";
+export type HarnessMode = "split" | "wysiwyg" | "preview";
 
 export const editorRuntimePath = path.join(process.cwd(), "media", "wysiwyg", "editor.js");
 const codiconStylePath = path.join(process.cwd(), "node_modules", "@vscode", "codicons", "dist", "codicon.css");
@@ -21,7 +21,7 @@ interface HarnessOptions {
 
 export function createWebviewHarnessHtml(options: HarnessOptions): string {
   const text = options.text ?? "alpha";
-  const layout = options.mode === "split" ? "splitEdit" : "workbench";
+  const layout = options.mode === "split" ? "splitEdit" : options.mode === "preview" ? "previewOnly" : "workbench";
   const payload = scriptSafeJson({
     text,
     mode: options.mode,

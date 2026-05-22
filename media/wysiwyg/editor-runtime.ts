@@ -38,8 +38,17 @@ import {
   resolveFootnoteReference,
   type SafeInlineHtmlTag
 } from "../../src/markdown/features";
+import { createMarkdownTable } from "../../src/markdown/tableTools";
 import { highlightCodeBlockHtml, normalizeCodeLanguage } from "./highlight-runtime";
-import { HEADING_MENU_ACTIONS, MORE_MENU_ACTIONS, renderToolbarIcon, SUPER_MARKDOWN_ISSUES_URL, TOOLBAR_GROUPS } from "../../src/wysiwyg/toolbar";
+import { getImageFilesFromTransfer, isImageFile } from "../../src/wysiwyg/clipboard";
+import {
+  EXPORT_MENU_ACTIONS,
+  getToolbarGroups,
+  HEADING_MENU_ACTIONS,
+  PREVIEW_TOOLBAR_ACTIONS,
+  renderToolbarIcon,
+  SUPER_MARKDOWN_ISSUES_URL
+} from "../../src/wysiwyg/toolbar";
 import type { ImageResource } from "../../src/wysiwyg/protocol";
 
 declare const acquireVsCodeApi: () => {
@@ -134,6 +143,10 @@ const initialRuntimeState = readRuntimeState();
 const DEFAULT_SPLIT_RATIO = 0.5;
 const SPLIT_KEYBOARD_STEP = 0.03;
 const SPLIT_MIN_PANE_WIDTH = 240;
+const TABLE_PICKER_MAX_ROWS = 8;
+const TABLE_PICKER_MAX_COLUMNS = 8;
+const TABLE_PICKER_DEFAULT_ROWS = 3;
+const TABLE_PICKER_DEFAULT_COLUMNS = 3;
 
 let currentMarkdown = payload.text || "";
 let currentMode = normalizeMode(payload.mode || "source");
@@ -153,6 +166,12 @@ let scrollSyncSuppressTarget = "";
 let editorScrollFrame = 0;
 let scrollSyncReleaseTimer = 0;
 let activeSourceSelection = { start: 0, end: 0 };
+let localEditRevision = 0;
+let acknowledgedEditRevision = 0;
+let tablePickerSelection = {
+  rows: TABLE_PICKER_DEFAULT_ROWS,
+  columns: TABLE_PICKER_DEFAULT_COLUMNS
+};
 let sidePanelOpen = false;
 let currentOutlineHeadings: PreviewState["headings"] = [];
 let activeOutlineId = "";
@@ -219,13 +238,18 @@ function debounce<T extends (...args: never[]) => void>(fn: T, delay: number): T
   } as T;
 }
 
-const syncToHost = debounce(function () {
+const postEditToHost = debounce(function () {
   if (applyingHostUpdate) {
     return;
   }
   previewState = null;
-  post("edit", { text: currentMarkdown });
+  post("edit", { text: currentMarkdown, editRevision: localEditRevision });
 }, 180);
+
+function syncToHost(): void {
+  localEditRevision += 1;
+  postEditToHost();
+}
 
 function normalizeMode(mode: string): string {
   if (mode === "wysiwyg" || mode === "ir") {
@@ -242,6 +266,13 @@ function normalizeMode(mode: string): string {
 
 function normalizeLayout(layout: string): string {
   return ["workbench", "editorOnly", "splitEdit", "previewOnly"].includes(layout) ? layout : "workbench";
+}
+
+function updateWebviewContext(): void {
+  document.body.dataset.vscodeContext = JSON.stringify({
+    webviewSection: "editor",
+    superMarkdownMode: currentMode
+  });
 }
 
 function readRuntimeState(): Record<string, unknown> {
@@ -349,7 +380,7 @@ function closestElement(target: EventTarget | null, selector: string): HTMLEleme
 }
 
 function renderToolbar(): void {
-  toolbarElement.innerHTML = TOOLBAR_GROUPS
+  toolbarElement.innerHTML = getToolbarGroups(currentMode, currentLayout)
     .map((group) => `<div class="toolbar-group toolbar-group-${group.name}">${group.actions.map(renderToolbarItem).join("")}</div>`)
     .join("");
 }
@@ -358,8 +389,11 @@ function renderToolbarItem(action: string): string {
   if (action === "heading") {
     return toolbarMenu(action, toolbarTitle(action), toolbarIcon(action), HEADING_MENU_ACTIONS, "toolbar-heading-menu");
   }
-  if (action === "more") {
-    return toolbarMenu(action, toolbarTitle(action), toolbarIcon(action), MORE_MENU_ACTIONS, "toolbar-more-menu");
+  if (action === "export") {
+    return toolbarMenu(action, toolbarTitle(action), toolbarIcon(action), EXPORT_MENU_ACTIONS, "toolbar-export-menu", false);
+  }
+  if (action === "table") {
+    return toolbarTablePicker(action, toolbarTitle(action), toolbarIcon(action));
   }
   return toolbarButton(action, toolbarTitle(action), toolbarIcon(action));
 }
@@ -368,14 +402,39 @@ function toolbarButton(action: string, title: string, icon: string): string {
   return `<button type="button" class="toolbar-button" data-action="${action}" data-hover-tooltip="${escapeAttribute(title)}" aria-label="${escapeAttribute(title)}"><span class="toolbar-icon" aria-hidden="true">${icon}</span></button>`;
 }
 
-function toolbarMenu(action: string, title: string, icon: string, menuActions: string[], className: string): string {
+function toolbarMenu(action: string, title: string, icon: string, menuActions: string[], className: string, showCaret = true): string {
+  const caret = showCaret ? `<span class="toolbar-caret codicon codicon-arrow-small-down" aria-hidden="true"></span>` : "";
   return `<div class="toolbar-menu-wrapper ${className}">
     <button type="button" class="toolbar-button toolbar-menu-toggle" data-menu-toggle="${action}" data-hover-tooltip="${escapeAttribute(title)}" aria-label="${escapeAttribute(title)}" aria-expanded="false">
       <span class="toolbar-icon" aria-hidden="true">${icon}</span>
-      <span class="toolbar-caret codicon codicon-arrow-small-down" aria-hidden="true"></span>
+      ${caret}
     </button>
     <div class="toolbar-menu" data-menu="${action}" hidden>
       ${menuActions.map(toolbarMenuButton).join("")}
+    </div>
+  </div>`;
+}
+
+function toolbarTablePicker(action: string, title: string, icon: string): string {
+  const escapedTitle = escapeAttribute(title);
+  const cells = Array.from({ length: TABLE_PICKER_MAX_ROWS }, (_, rowIndex) =>
+    Array.from({ length: TABLE_PICKER_MAX_COLUMNS }, (_, columnIndex) => {
+      const rows = rowIndex + 1;
+      const columns = columnIndex + 1;
+      const label = `${rows} x ${columns}`;
+      return `<button type="button" class="toolbar-table-picker-cell" data-table-picker-cell data-table-rows="${rows}" data-table-columns="${columns}" aria-label="${label}" aria-pressed="false"></button>`;
+    }).join("")
+  ).join("");
+
+  return `<div class="toolbar-menu-wrapper toolbar-table-menu">
+    <button type="button" class="toolbar-button toolbar-menu-toggle" data-action="${action}" data-menu-toggle="${action}" data-hover-tooltip="${escapedTitle}" aria-label="${escapedTitle}" aria-expanded="false">
+      <span class="toolbar-icon" aria-hidden="true">${icon}</span>
+    </button>
+    <div class="toolbar-menu toolbar-table-picker-panel" data-menu="${action}" hidden>
+      <div class="toolbar-table-picker-grid" role="grid" aria-label="${escapedTitle}">
+        ${cells}
+      </div>
+      <div class="toolbar-table-picker-size" aria-live="polite">${TABLE_PICKER_DEFAULT_ROWS} x ${TABLE_PICKER_DEFAULT_COLUMNS}</div>
     </div>
   </div>`;
 }
@@ -418,7 +477,7 @@ function toolbarTitle(action: string): string {
     math: label("math", "Math"),
     mermaid: label("mermaid", "Mermaid"),
     toc: label("toc", "Table of contents"),
-    more: label("more", "More"),
+    export: label("export", "Export"),
     organizeMarkdown: label("organizeMarkdown", "Organize Markdown"),
     switchBackgroundTheme: label("switchBackgroundTheme", "Switch Reading Theme"),
     switchDisplayLanguage: label("switchDisplayLanguage", "Switch display language"),
@@ -449,8 +508,14 @@ function bindEvents(): void {
     sourceEditor.addEventListener(eventName, rememberSourceSelection);
   }
   toolbarElement.addEventListener("mousedown", (event) => {
-    if (closestElement(event.target, ".toolbar-button, .toolbar-menu-button")) {
+    if (closestElement(event.target, ".toolbar-button, .toolbar-menu-button, [data-table-picker-cell]")) {
       event.preventDefault();
+    }
+  });
+  toolbarElement.addEventListener("mouseover", (event) => {
+    const tableCell = closestElement(event.target, "[data-table-picker-cell]");
+    if (tableCell) {
+      updateTablePickerSelection(readTablePickerCellSize(tableCell));
     }
   });
   toolbarElement.addEventListener("click", (event) => {
@@ -460,12 +525,22 @@ function bindEvents(): void {
       toggleToolbarMenu(menuToggle.dataset.menuToggle || "");
       return;
     }
+    const tableCell = closestElement(event.target, "[data-table-picker-cell]");
+    if (tableCell) {
+      event.preventDefault();
+      closeToolbarMenus();
+      void insertPickedTable(readTablePickerCellSize(tableCell));
+      return;
+    }
     const buttonElement = closestElement(event.target, "[data-action]");
     if (buttonElement) {
       event.preventDefault();
       closeToolbarMenus();
       void handleToolbarAction(buttonElement.dataset.action || "");
     }
+  });
+  toolbarElement.addEventListener("keydown", (event) => {
+    void handleToolbarKeydown(event);
   });
   previewElement.addEventListener("click", handleCodeBlockActionClick);
   visualEditor.addEventListener("click", handleCodeBlockActionClick);
@@ -727,6 +802,13 @@ function isSplitResizeAvailable(): boolean {
 function handleHostMessage(event: MessageEvent): void {
   const message = event.data || {};
   if (message.type === "setMarkdown" && typeof message.text === "string") {
+    const editRevision = readEditRevision(message.editRevision);
+    if (editRevision !== undefined) {
+      acknowledgedEditRevision = Math.max(acknowledgedEditRevision, editRevision);
+    }
+    if (isStaleHostMarkdown(message.text, editRevision)) {
+      return;
+    }
     applyingHostUpdate = true;
     setMarkdown(message.text, message.preview, message.imageResources);
     applyingHostUpdate = false;
@@ -741,6 +823,20 @@ function handleHostMessage(event: MessageEvent): void {
   } else if (message.type === "uploadImagesResult") {
     handleUploadImagesResult(message);
   }
+}
+
+function readEditRevision(value: unknown): number | undefined {
+  return typeof value === "number" && Number.isInteger(value) && value >= 0 ? value : undefined;
+}
+
+function isStaleHostMarkdown(markdown: string, editRevision: number | undefined): boolean {
+  if (markdown === currentMarkdown) {
+    return false;
+  }
+  if (editRevision !== undefined) {
+    return editRevision < localEditRevision;
+  }
+  return localEditRevision > acknowledgedEditRevision;
 }
 
 function handleUploadImagesResult(message: { requestId?: unknown; images?: unknown; error?: unknown }): void {
@@ -818,36 +914,6 @@ async function uploadImageFiles(files: File[]): Promise<UploadedMarkdownImage[]>
 
 function createUploadRequestId(): string {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-}
-
-function isImageFile(file: File): boolean {
-  return file.type.startsWith("image/");
-}
-
-function getImageFilesFromTransfer(dataTransfer: DataTransfer | null | undefined): File[] {
-  if (!dataTransfer) {
-    return [];
-  }
-  const files: File[] = [];
-  const seen = new Set<string>();
-  const addFile = (file: File | null) => {
-    if (!file || !isImageFile(file)) {
-      return;
-    }
-    const key = `${file.name}:${file.size}:${file.lastModified}`;
-    if (!seen.has(key)) {
-      seen.add(key);
-      files.push(file);
-    }
-  };
-
-  Array.from(dataTransfer.files || []).forEach(addFile);
-  Array.from(dataTransfer.items || []).forEach((item) => {
-    if (item.kind === "file" && item.type.startsWith("image/")) {
-      addFile(item.getAsFile());
-    }
-  });
-  return files;
 }
 
 async function handleSourceImagePaste(event: ClipboardEvent): Promise<void> {
@@ -937,6 +1003,7 @@ async function uploadAndInsertVisualImages(files: File[]): Promise<void> {
 }
 
 function setMarkdown(markdown: string, preview: unknown, nextImageResources?: unknown): void {
+  const markdownChanged = currentMarkdown !== markdown;
   currentMarkdown = markdown;
   previewState = normalizePreviewState(preview);
   imageResources = normalizeImageResources(nextImageResources);
@@ -945,7 +1012,9 @@ function setMarkdown(markdown: string, preview: unknown, nextImageResources?: un
   }
   renderPreview();
   renderSidePanels(markdown);
-  syncMilkdownFromMarkdown(markdown);
+  if (markdownChanged) {
+    syncMilkdownFromMarkdown(markdown);
+  }
   resolveVisualImagesSoon();
 }
 
@@ -2116,6 +2185,8 @@ function setMode(mode: string, notify: boolean): void {
 function applyMode(): void {
   document.body.classList.remove("mode-source", "mode-wysiwyg", "mode-preview", "mode-split");
   document.body.classList.add(`mode-${currentMode}`);
+  renderToolbar();
+  updateWebviewContext();
   applySplitRatio(false);
   if (currentMode === "wysiwyg") {
     void ensureMilkdown().catch(() => undefined);
@@ -2210,6 +2281,9 @@ function syncMilkdownFromMarkdown(markdown: string): void {
 }
 
 async function handleToolbarAction(action: string): Promise<void> {
+  if ((currentMode === "preview" || currentLayout === "previewOnly") && !PREVIEW_TOOLBAR_ACTIONS.has(action)) {
+    return;
+  }
   if (action === "organizeMarkdown") {
     post("runHostCommand", { command: "organizeMarkdown" });
     return;
@@ -2266,7 +2340,10 @@ function applyMilkdownToolbarAction(action: string): void {
     list: () => milkdownEditor?.action(callCommand(wrapInBulletListCommand.key)),
     "ordered-list": () => milkdownEditor?.action(callCommand(wrapInOrderedListCommand.key)),
     code: () => milkdownEditor?.action(callCommand(createCodeBlockCommand.key)),
-    table: () => milkdownEditor?.action(callCommand(insertTableCommand.key, { row: 3, col: 3 }))
+    table: () => milkdownEditor?.action(callCommand(insertTableCommand.key, {
+      row: TABLE_PICKER_DEFAULT_ROWS,
+      col: TABLE_PICKER_DEFAULT_COLUMNS
+    }))
   };
   if (commands[action]) {
     commands[action]();
@@ -2392,7 +2469,7 @@ function applySourceToolbarAction(action: string): void {
     task: "- [ ] Task",
     "task-checked": "- [x] Task",
     code: "```text\ncode\n```",
-    table: "| Column | Value |\n| --- | --- |\n| Item | Value |",
+    table: createMarkdownTable(TABLE_PICKER_DEFAULT_ROWS, TABLE_PICKER_DEFAULT_COLUMNS),
     math: "$$\nx = y\n$$",
     mermaid: "```mermaid\ngraph TD\n  A --> B\n```"
   };
@@ -2501,6 +2578,95 @@ async function chooseImagesForInsert(): Promise<void> {
   input.click();
 }
 
+async function handleToolbarKeydown(event: KeyboardEvent): Promise<void> {
+  const tableCell = closestElement(event.target, "[data-table-picker-cell]");
+  if (!tableCell) {
+    return;
+  }
+
+  const currentSize = readTablePickerCellSize(tableCell);
+  let nextSize = currentSize;
+  if (event.key === "ArrowRight") {
+    nextSize = { ...currentSize, columns: currentSize.columns + 1 };
+  } else if (event.key === "ArrowLeft") {
+    nextSize = { ...currentSize, columns: currentSize.columns - 1 };
+  } else if (event.key === "ArrowDown") {
+    nextSize = { ...currentSize, rows: currentSize.rows + 1 };
+  } else if (event.key === "ArrowUp") {
+    nextSize = { ...currentSize, rows: currentSize.rows - 1 };
+  } else if (event.key === "Enter" || event.key === " ") {
+    event.preventDefault();
+    closeToolbarMenus();
+    await insertPickedTable(currentSize);
+    return;
+  } else if (event.key === "Escape") {
+    event.preventDefault();
+    closeToolbarMenus();
+    return;
+  } else {
+    return;
+  }
+
+  event.preventDefault();
+  const normalized = normalizeTablePickerSize(nextSize.rows, nextSize.columns);
+  focusTablePickerCell(normalized);
+  updateTablePickerSelection(normalized);
+}
+
+async function insertPickedTable(size: { rows: number; columns: number }): Promise<void> {
+  const normalized = normalizeTablePickerSize(size.rows, size.columns);
+  if (currentMode === "wysiwyg") {
+    await ensureMilkdown();
+    milkdownEditor?.action(callCommand(insertTableCommand.key, {
+      row: normalized.rows,
+      col: normalized.columns
+    }));
+    return;
+  }
+  insertSourceBlockSnippet(createMarkdownTable(normalized.rows, normalized.columns));
+}
+
+function readTablePickerCellSize(cell: HTMLElement): { rows: number; columns: number } {
+  return normalizeTablePickerSize(Number(cell.dataset.tableRows), Number(cell.dataset.tableColumns));
+}
+
+function normalizeTablePickerSize(rows: number, columns: number): { rows: number; columns: number } {
+  return {
+    rows: clampInteger(rows, 1, TABLE_PICKER_MAX_ROWS),
+    columns: clampInteger(columns, 1, TABLE_PICKER_MAX_COLUMNS)
+  };
+}
+
+function clampInteger(value: number, min: number, max: number): number {
+  return Number.isInteger(value) ? Math.min(max, Math.max(min, value)) : min;
+}
+
+function updateTablePickerSelection(size = tablePickerSelection): void {
+  tablePickerSelection = normalizeTablePickerSize(size.rows, size.columns);
+  const panel = toolbarElement.querySelector('[data-menu="table"]') as HTMLElement | null;
+  if (!panel) {
+    return;
+  }
+  panel.querySelectorAll<HTMLElement>("[data-table-picker-cell]").forEach((cell) => {
+    const cellSize = readTablePickerCellSize(cell);
+    const selected = cellSize.rows <= tablePickerSelection.rows && cellSize.columns <= tablePickerSelection.columns;
+    cell.classList.toggle("is-selected", selected);
+    cell.setAttribute("aria-pressed", String(selected));
+  });
+  const sizeLabel = panel.querySelector(".toolbar-table-picker-size");
+  if (sizeLabel) {
+    sizeLabel.textContent = `${tablePickerSelection.rows} x ${tablePickerSelection.columns}`;
+  }
+}
+
+function focusTablePickerCell(size = tablePickerSelection): void {
+  const normalized = normalizeTablePickerSize(size.rows, size.columns);
+  const cell = toolbarElement.querySelector(
+    `[data-table-picker-cell][data-table-rows="${normalized.rows}"][data-table-columns="${normalized.columns}"]`
+  ) as HTMLElement | null;
+  cell?.focus();
+}
+
 function readImageFileData(file: File): Promise<{ id: string; name: string; dataUrl: string }> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -2529,7 +2695,18 @@ function toggleToolbarMenu(name: string): void {
   }
   toggle?.setAttribute("aria-expanded", String(open));
   if (open) {
+    hideHoverTooltip();
+    if (name === "table") {
+      tablePickerSelection = {
+        rows: TABLE_PICKER_DEFAULT_ROWS,
+        columns: TABLE_PICKER_DEFAULT_COLUMNS
+      };
+      updateTablePickerSelection();
+    }
     positionToolbarMenu(wrapper);
+    if (name === "table") {
+      focusTablePickerCell();
+    }
   }
 }
 
@@ -2541,7 +2718,7 @@ function positionToolbarMenu(wrapper: HTMLElement): void {
   }
   const rect = toggle.getBoundingClientRect();
   const menuWidth = menu.offsetWidth || 170;
-  const alignedLeft = wrapper.classList.contains("toolbar-more-menu") ? rect.right - menuWidth : rect.left;
+  const alignedLeft = wrapper.classList.contains("toolbar-export-menu") ? rect.right - menuWidth : rect.left;
   const left = Math.min(Math.max(8, alignedLeft), Math.max(8, window.innerWidth - menuWidth - 8));
   menu.style.top = `${Math.round(rect.bottom + 6)}px`;
   menu.style.left = `${Math.round(left)}px`;

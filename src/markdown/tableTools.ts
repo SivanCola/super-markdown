@@ -2,6 +2,21 @@ import { displayWidth, escapeMarkdownTableCell, isMarkdownTableDelimiter, splitM
 
 export { splitMarkdownTableRow } from "./table";
 
+export function createMarkdownTable(rows: number, columns: number): string {
+  const rowCount = normalizeTableDimension(rows);
+  const columnCount = normalizeTableDimension(columns);
+  const headers = Array.from({ length: columnCount }, (_, index) => `Column ${index + 1}`);
+  const separator = Array.from({ length: columnCount }, () => "---");
+  const emptyRow = Array.from({ length: columnCount }, () => "");
+  const bodyRows = Array.from({ length: Math.max(0, rowCount - 1) }, () => formatSimpleRow(emptyRow));
+
+  return [
+    formatSimpleRow(headers),
+    formatSimpleRow(separator),
+    ...bodyRows
+  ].join("\n");
+}
+
 export function mdTableToJson(text: string): Array<Record<string, string | null>> {
   const lines = text
     .trim()
@@ -57,6 +72,14 @@ export function jsonToMarkdownTable(value: unknown): string {
   const headerRow = formatCenteredRow(headers, widths);
   const separatorRow = `| ${widths.map((width) => "-".repeat(Math.max(3, width))).join(" | ")} |`;
   return [headerRow, separatorRow, ...rows.map((row) => formatCenteredRow(row, widths))].join("\n");
+}
+
+function formatSimpleRow(cells: string[]): string {
+  return `| ${cells.join(" | ")} |`;
+}
+
+function normalizeTableDimension(value: number): number {
+  return Number.isInteger(value) && value > 0 ? value : 1;
 }
 
 function formatCenteredRow(cells: string[], widths: number[]): string {

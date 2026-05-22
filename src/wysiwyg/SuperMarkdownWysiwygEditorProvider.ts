@@ -7,13 +7,16 @@ import { parseMarkdown, type MarkdownBlock } from "../markdown/core";
 import { extractMarkdownInlineLinks } from "../markdown/links";
 import { extractHeadings } from "../markdown/outline";
 import { renderMarkdown, resolveImageSrc } from "../markdown/render";
+import { createMarkdownTable } from "../markdown/tableTools";
 import { upsertToc } from "../markdown/toc";
 import { Heading, SuperMarkdownEditorLayout, WysiwygMode, WysiwygSettings } from "../types";
 import { escapeAttribute, escapeHtml, escapeJsonForScript, safeInlineUrl } from "../utils/html";
+import { fullDocumentRange } from "../utils/vscode";
+import { createNonce } from "../utils/webview";
 import { prepareUploadedImage, resolveImageDirectory, UploadedImageData } from "./assets";
 import { normalizeEditorLayout, normalizeEditorMode } from "./mode";
 import type { ImageResource } from "./protocol";
-import { renderToolbarIcon, SUPER_MARKDOWN_ISSUES_URL, TOOLBAR_GROUPS } from "./toolbar";
+import { getToolbarGroups, renderToolbarIcon, SUPER_MARKDOWN_ISSUES_URL } from "./toolbar";
 
 export const SUPER_MARKDOWN_EDITOR_VIEW_TYPE = "superMarkdown.editor";
 export const SUPER_MARKDOWN_TOOLBAR_COMMAND = "superMarkdown.webviewToolbar";
@@ -25,7 +28,7 @@ interface SuperMarkdownEditorOpenOptions {
 
 type WebviewMessage =
   | { type: "ready" }
-  | { type: "edit"; text?: unknown }
+  | { type: "edit"; text?: unknown; editRevision?: unknown }
   | { type: "copyCode"; text?: unknown }
   | { type: "setMode"; mode?: unknown }
   | { type: "export"; format?: unknown }
@@ -122,10 +125,11 @@ export class SuperMarkdownWysiwygEditorProvider implements vscode.CustomTextEdit
     };
 
     let applyingWebviewEdit = false;
-    const postState = async () => {
+    const postState = async (editRevision?: number) => {
       await webviewPanel.webview.postMessage({
         type: "setMarkdown",
         text: document.getText(),
+        editRevision,
         dirty: document.isDirty,
         preview: await this.renderPreviewState(document, webviewPanel.webview),
         imageResources: this.collectImageResources(document, webviewPanel.webview)
@@ -166,6 +170,7 @@ export class SuperMarkdownWysiwygEditorProvider implements vscode.CustomTextEdit
             break;
           case "edit":
             if (typeof message.text === "string") {
+              const editRevision = readEditRevision(message.editRevision);
               if (message.text !== document.getText()) {
                 applyingWebviewEdit = true;
                 try {
@@ -174,7 +179,7 @@ export class SuperMarkdownWysiwygEditorProvider implements vscode.CustomTextEdit
                   applyingWebviewEdit = false;
                 }
               }
-              void postState();
+              void postState(editRevision);
             }
             break;
           case "copyCode":
@@ -190,12 +195,12 @@ export class SuperMarkdownWysiwygEditorProvider implements vscode.CustomTextEdit
             break;
           case "export":
             if (typeof message.format === "string" && EXPORT_COMMANDS[message.format]) {
-              await vscode.commands.executeCommand(EXPORT_COMMANDS[message.format]);
+              await vscode.commands.executeCommand(EXPORT_COMMANDS[message.format], document.uri);
             }
             break;
           case "runHostCommand":
             if (typeof message.command === "string" && HOST_COMMANDS[message.command]) {
-              await vscode.commands.executeCommand(HOST_COMMANDS[message.command]);
+              await vscode.commands.executeCommand(HOST_COMMANDS[message.command], document.uri);
             }
             break;
           case "toolbarCommand":
@@ -257,6 +262,10 @@ export class SuperMarkdownWysiwygEditorProvider implements vscode.CustomTextEdit
     const preview = await this.renderPreviewState(document, webview, previewSettings);
     const initialMode = normalizeEditorMode(normalizedOptions.mode ?? settings.defaultMode);
     const initialLayout = normalizeEditorLayout(normalizedOptions.layout ?? settings.layout);
+    const initialWebviewContext = escapeAttribute(JSON.stringify({
+      webviewSection: "editor",
+      superMarkdownMode: initialMode
+    }));
     const isZhCn = previewSettings.activeLanguage === "zh-CN";
     const outlineRevealCurrentLabel = t("webview.revealCurrentHeading");
     const outlineCollapseLabel = t("webview.collapseOutline");
@@ -312,7 +321,6 @@ export class SuperMarkdownWysiwygEditorProvider implements vscode.CustomTextEdit
           hr: isZhCn ? "分割线" : "Rule",
           export: isZhCn ? "导出" : "Export",
           all: isZhCn ? "全部" : "All",
-          more: isZhCn ? "更多" : "More",
           switchBackgroundTheme: isZhCn ? "切换阅读主题" : "Switch Reading Theme",
           switchDisplayLanguage: isZhCn ? "切换界面语言" : "Switch display language",
           help: isZhCn ? "反馈问题" : "Report issue",
@@ -342,7 +350,7 @@ export class SuperMarkdownWysiwygEditorProvider implements vscode.CustomTextEdit
   <link rel="stylesheet" href="${versionedMedia("media/wysiwyg/editor.css")}">
   <title>${escapeHtml(document.fileName)}</title>
 </head>
-<body class="${settings.useVsCodeThemeColors ? "use-vscode-theme " : ""}layout-${initialLayout} mode-${initialMode} sm-theme-${previewSettings.theme}" data-script-state="html-rendered" data-script-diag="html-rendered" style="--sm-font-size: ${previewSettings.fontSize}px; --sm-max-width: ${previewSettings.maxWidth}px;">
+<body class="${settings.useVsCodeThemeColors ? "use-vscode-theme " : ""}layout-${initialLayout} mode-${initialMode} sm-theme-${previewSettings.theme}" data-vscode-context="${initialWebviewContext}" data-script-state="html-rendered" data-script-diag="html-rendered" style="--sm-font-size: ${previewSettings.fontSize}px; --sm-max-width: ${previewSettings.maxWidth}px;">
   <div class="workbench-shell">
     <button id="side-panel-toggle" class="side-panel-toggle" type="button" aria-controls="side-panel" aria-expanded="false" data-hover-tooltip="${escapeAttribute(t("webview.navigation"))}" aria-label="${escapeAttribute(t("webview.navigation"))}">
       <span aria-hidden="true">☰</span>
@@ -358,7 +366,7 @@ export class SuperMarkdownWysiwygEditorProvider implements vscode.CustomTextEdit
         <nav id="outline" class="outline"></nav>
       </section>
     </aside>
-    <div id="editor-toolbar-slot" class="editor-toolbar-slot" aria-label="Markdown toolbar" data-script-diag="html-rendered">${renderInitialToolbar(isZhCn, document.uri)}</div>
+    <div id="editor-toolbar-slot" class="editor-toolbar-slot" aria-label="Markdown toolbar" data-script-diag="html-rendered">${renderInitialToolbar(isZhCn, document.uri, initialMode, initialLayout)}</div>
     <section class="editor-panel">
       <main id="editor" class="editor-surface">
         <textarea id="source-editor" class="source-editor" spellcheck="false" aria-label="Markdown source">${escapeHtml(document.getText())}</textarea>
@@ -438,10 +446,12 @@ ${renderBootstrapScript()}
     try {
       const images = message.images.filter(isUploadedImageData);
       const settings = getWysiwygSettings();
-      const directory = resolveImageDirectory(document.uri.fsPath, settings);
+      const workspaceFolder = vscode.workspace.getWorkspaceFolder(document.uri);
+      const baseDirectory = workspaceFolder?.uri.fsPath;
+      const directory = resolveImageDirectory(document.uri.fsPath, settings, baseDirectory);
       const existingNames = new Set<string>(await fs.readdir(directory).catch(() => []));
       const stored = images.map((image) => {
-        const prepared = prepareUploadedImage(document.uri.fsPath, settings, image, existingNames);
+        const prepared = prepareUploadedImage(document.uri.fsPath, settings, image, existingNames, baseDirectory);
         existingNames.add(prepared.name);
         return prepared;
       });
@@ -493,7 +503,7 @@ ${renderBootstrapScript()}
       return;
     }
 
-    if (payload.action === "more") {
+    if (payload.action === "export") {
       const selected = await vscode.window.showQuickPick(
         [
           { label: "HTML", description: "Export HTML", command: EXPORT_COMMANDS.html },
@@ -503,19 +513,19 @@ ${renderBootstrapScript()}
         { title: "Export" }
       );
       if (selected) {
-        await vscode.commands.executeCommand(selected.command);
+        await vscode.commands.executeCommand(selected.command, document.uri);
       }
       return;
     }
 
     const exportType = TOOLBAR_EXPORT_ACTIONS[payload.action];
     if (exportType) {
-      await vscode.commands.executeCommand(EXPORT_COMMANDS[exportType]);
+      await vscode.commands.executeCommand(EXPORT_COMMANDS[exportType], document.uri);
       return;
     }
 
     if (payload.action === "organizeMarkdown") {
-      await vscode.commands.executeCommand(HOST_COMMANDS.organizeMarkdown);
+      await vscode.commands.executeCommand(HOST_COMMANDS.organizeMarkdown, document.uri);
       return;
     }
 
@@ -584,12 +594,6 @@ async function replaceDocument(document: vscode.TextDocument, text: string): Pro
   await vscode.workspace.applyEdit(edit);
 }
 
-function fullDocumentRange(document: vscode.TextDocument): vscode.Range {
-  const lastLine = Math.max(0, document.lineCount - 1);
-  const lastCharacter = document.lineAt(lastLine).text.length;
-  return new vscode.Range(0, 0, lastLine, lastCharacter);
-}
-
 function formatWebviewError(error: unknown): string {
   if (error instanceof Error) {
     return error.message || error.name;
@@ -648,6 +652,10 @@ function isToolbarCommandPayload(value: unknown): value is ToolbarCommandPayload
   return typeof candidate.action === "string" && typeof candidate.uri === "string";
 }
 
+function readEditRevision(value: unknown): number | undefined {
+  return typeof value === "number" && Number.isInteger(value) && value >= 0 ? value : undefined;
+}
+
 interface ToolbarSnippet {
   insert: string;
   wrap: (selected: string) => string;
@@ -689,7 +697,7 @@ function getToolbarSnippet(action: string): ToolbarSnippet {
     },
     image: block("![alt](image.png)"),
     code: block("```text\ncode\n```"),
-    table: block("| Column | Value |\n| --- | --- |\n| Item | Value |"),
+    table: block(createMarkdownTable(3, 3)),
     math: block("$$\nx = y\n$$"),
     mermaid: block("```mermaid\ngraph TD\n  A --> B\n```")
   };
@@ -732,7 +740,12 @@ function renderBootstrapScript(): string {
 })();`;
 }
 
-function renderInitialToolbar(isZhCn: boolean, documentUri: vscode.Uri): string {
+function renderInitialToolbar(
+  isZhCn: boolean,
+  documentUri: vscode.Uri,
+  mode: WysiwygMode,
+  layout: SuperMarkdownEditorLayout
+): string {
   const label = (zh: string, en: string) => isZhCn ? zh : en;
   const titles: Record<string, string> = {
     bold: label("加粗", "Bold"),
@@ -758,8 +771,8 @@ function renderInitialToolbar(isZhCn: boolean, documentUri: vscode.Uri): string 
     organizeMarkdown: label("整理 Markdown", "Organize Markdown"),
     switchBackgroundTheme: label("切换阅读主题", "Switch Reading Theme"),
     switchDisplayLanguage: label("切换界面语言", "Switch display language"),
+    export: label("导出", "Export"),
     help: label("反馈问题", "Report issue"),
-    more: label("更多", "More")
   };
   const commandUri = (action: string) => {
     const args = encodeURIComponent(JSON.stringify([{ action, uri: documentUri.toString() }]));
@@ -768,12 +781,13 @@ function renderInitialToolbar(isZhCn: boolean, documentUri: vscode.Uri): string 
   const button = (action: string) => {
     const title = titles[action] || action;
     const escapedTitle = escapeAttribute(title);
-    if (action === "heading" || action === "more") {
-      return `<a class="toolbar-button toolbar-menu-toggle" href="${escapeAttribute(commandUri(action))}" data-menu-toggle="${action}" data-hover-tooltip="${escapedTitle}" aria-label="${escapedTitle}" aria-expanded="false"><span class="toolbar-icon" aria-hidden="true">${renderToolbarIcon(action)}</span><span class="toolbar-caret codicon codicon-arrow-small-down" aria-hidden="true"></span></a>`;
+    if (action === "heading" || action === "export") {
+      const caret = action === "heading" ? `<span class="toolbar-caret codicon codicon-arrow-small-down" aria-hidden="true"></span>` : "";
+      return `<a class="toolbar-button toolbar-menu-toggle" href="${escapeAttribute(commandUri(action))}" data-menu-toggle="${action}" data-hover-tooltip="${escapedTitle}" aria-label="${escapedTitle}" aria-expanded="false"><span class="toolbar-icon" aria-hidden="true">${renderToolbarIcon(action)}</span>${caret}</a>`;
     }
     return `<a class="toolbar-button" href="${escapeAttribute(commandUri(action))}" data-action="${action}" data-hover-tooltip="${escapedTitle}" aria-label="${escapedTitle}"><span class="toolbar-icon" aria-hidden="true">${renderToolbarIcon(action)}</span></a>`;
   };
-  return TOOLBAR_GROUPS.map((group) => `<div class="toolbar-group toolbar-group-${group.name}">${group.actions.map(button).join("")}</div>`).join("");
+  return getToolbarGroups(mode, layout).map((group) => `<div class="toolbar-group toolbar-group-${group.name}">${group.actions.map(button).join("")}</div>`).join("");
 }
 
 function toVisualMarkdownBlock(block: MarkdownBlock): VisualMarkdownBlock {
@@ -799,13 +813,4 @@ function toVisualMarkdownBlock(block: MarkdownBlock): VisualMarkdownBlock {
     case "footnote":
       return { type: "footnote", id: block.id, text: block.text, raw: block.raw, line: block.line };
   }
-}
-
-function createNonce(): string {
-  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  let nonce = "";
-  for (let index = 0; index < 32; index += 1) {
-    nonce += alphabet[Math.floor(Math.random() * alphabet.length)];
-  }
-  return nonce;
 }

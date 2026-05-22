@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.0.0
+
+- Added the Markdown document library sidebar with a calmer workspace tree, compact document health counts, workspace summary, and quick document actions.
+- Added read-only preview toolbar support so preview, split, and WYSIWYG modes share export, reading theme, display language, and help controls.
+- Reworked toolbar export into a dedicated export button with HTML, PDF, and all-format menu actions.
+- Clarified resource directory handling for inserted and pasted Markdown images, including chooser-backed workspace paths and the default `assets` directory.
+- Fixed PDF and all-format export startup on current Chrome, Edge, and Chromium builds by avoiding the unreliable `DevToolsActivePort` file path.
+- Expanded syntax guide fixtures and regression coverage for nested Markdown files, images, exports, toolbar behavior, and Markdown table conversion.
+
 ## 0.1.3
 
 - Kept JSON and other multiline code blocks fully expanded across preview, split preview, and WYSIWYG mode.

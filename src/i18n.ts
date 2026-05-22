@@ -72,16 +72,13 @@ type TranslationKey =
   | "webview.codeThemeLight"
   | "webview.codeThemeDark"
   | "webview.save"
-  | "sidebar.imageStorage.title"
-  | "sidebar.imageStorage.directory"
-  | "sidebar.imageStorage.saving"
-  | "sidebar.imageStorage.saved"
-  | "sidebar.imageStorage.failed"
   | "sidebar.markdownLibrary.title"
   | "sidebar.markdownLibrary.noWorkspace"
   | "sidebar.markdownLibrary.noFiles"
+  | "sidebar.markdownLibrary.noProblemFiles"
   | "sidebar.markdownLibrary.open"
   | "sidebar.markdownLibrary.ok"
+  | "sidebar.markdownLibrary.problemFilter"
   | "sidebar.markdownLibrary.headings"
   | "sidebar.markdownLibrary.issues"
   | "sidebar.markdownLibrary.tasks"
@@ -90,6 +87,24 @@ type TranslationKey =
   | "sidebar.markdownLibrary.moreIssues"
   | "sidebar.workspaceSummary.title"
   | "sidebar.workspaceSummary.files"
+  | "sidebar.workspaceSummary.fileCount"
+  | "sidebar.workspaceSummary.document"
+  | "sidebar.workspaceSummary.folder"
+  | "sidebar.workspaceSummary.selectedDocument"
+  | "sidebar.workspaceSummary.selectedFolder"
+  | "sidebar.workspaceSummary.headings"
+  | "sidebar.workspaceSummary.errors"
+  | "sidebar.workspaceSummary.warnings"
+  | "sidebar.workspaceSummary.info"
+  | "sidebar.workspaceSummary.problemList"
+  | "sidebar.workspaceSummary.noIssues"
+  | "sidebar.workspaceSummary.openSource"
+  | "sidebar.workspaceSummary.openPreview"
+  | "sidebar.workspaceSummary.openSplit"
+  | "sidebar.workspaceSummary.openWysiwyg"
+  | "sidebar.workspaceSummary.organize"
+  | "sidebar.workspaceSummary.export"
+  | "sidebar.workspaceSummary.updated"
   | "sidebar.workspaceSummary.issues"
   | "sidebar.workspaceSummary.missingImages"
   | "sidebar.workspaceSummary.missingLinks"
@@ -103,6 +118,8 @@ type TranslationKey =
   | "sidebar.workspaceSummary.theme"
   | "sidebar.workspaceSummary.assets"
   | "sidebar.workspaceSummary.directory"
+  | "sidebar.workspaceSummary.directoryHelp"
+  | "sidebar.workspaceSummary.chooseDirectory"
   | "sidebar.workspaceSummary.noWorkspace"
   | "sidebar.workspaceSummary.refreshing"
   | "sidebar.workspaceSummary.refreshed"
@@ -233,16 +250,13 @@ const EN: Record<TranslationKey, string> = {
   "webview.codeThemeLight": "Light",
   "webview.codeThemeDark": "Dark",
   "webview.save": "Save",
-  "sidebar.imageStorage.title": "Image storage",
-  "sidebar.imageStorage.directory": "Directory",
-  "sidebar.imageStorage.saving": "Saving...",
-  "sidebar.imageStorage.saved": "Saved",
-  "sidebar.imageStorage.failed": "Save failed",
   "sidebar.markdownLibrary.title": "Document Library",
   "sidebar.markdownLibrary.noWorkspace": "Open a workspace folder to build the Markdown library.",
   "sidebar.markdownLibrary.noFiles": "No Markdown files found in this workspace.",
+  "sidebar.markdownLibrary.noProblemFiles": "No documents with issues.",
   "sidebar.markdownLibrary.open": "Open Markdown document",
   "sidebar.markdownLibrary.ok": "OK",
+  "sidebar.markdownLibrary.problemFilter": "Issues",
   "sidebar.markdownLibrary.headings": "{0} headings",
   "sidebar.markdownLibrary.issues": "{0} issues",
   "sidebar.markdownLibrary.tasks": "{0} tasks",
@@ -251,6 +265,24 @@ const EN: Record<TranslationKey, string> = {
   "sidebar.markdownLibrary.moreIssues": "{0} more issues",
   "sidebar.workspaceSummary.title": "Workspace Summary",
   "sidebar.workspaceSummary.files": "Files",
+  "sidebar.workspaceSummary.fileCount": "{0} files",
+  "sidebar.workspaceSummary.document": "Document",
+  "sidebar.workspaceSummary.folder": "Folder",
+  "sidebar.workspaceSummary.selectedDocument": "Document Details",
+  "sidebar.workspaceSummary.selectedFolder": "Folder Summary",
+  "sidebar.workspaceSummary.headings": "Headings",
+  "sidebar.workspaceSummary.errors": "Errors",
+  "sidebar.workspaceSummary.warnings": "Warnings",
+  "sidebar.workspaceSummary.info": "Info",
+  "sidebar.workspaceSummary.problemList": "Problems",
+  "sidebar.workspaceSummary.noIssues": "No issues",
+  "sidebar.workspaceSummary.openSource": "Source",
+  "sidebar.workspaceSummary.openPreview": "Preview",
+  "sidebar.workspaceSummary.openSplit": "Split",
+  "sidebar.workspaceSummary.openWysiwyg": "WYSIWYG",
+  "sidebar.workspaceSummary.organize": "Organize",
+  "sidebar.workspaceSummary.export": "Export",
+  "sidebar.workspaceSummary.updated": "Updated {0}",
   "sidebar.workspaceSummary.issues": "Issues",
   "sidebar.workspaceSummary.missingImages": "Missing images",
   "sidebar.workspaceSummary.missingLinks": "Missing links",
@@ -263,13 +295,15 @@ const EN: Record<TranslationKey, string> = {
   "sidebar.workspaceSummary.syntaxGuide": "Syntax guide",
   "sidebar.workspaceSummary.theme": "Reading theme",
   "sidebar.workspaceSummary.assets": "Assets",
-  "sidebar.workspaceSummary.directory": "Image directory",
+  "sidebar.workspaceSummary.directory": "Resource directory",
+  "sidebar.workspaceSummary.directoryHelp": "Inserted or pasted images are saved in this document project's resource directory. Default: assets.",
+  "sidebar.workspaceSummary.chooseDirectory": "Choose",
   "sidebar.workspaceSummary.noWorkspace": "Open a workspace folder first.",
   "sidebar.workspaceSummary.refreshing": "Refreshing...",
   "sidebar.workspaceSummary.refreshed": "Markdown library refreshed.",
-  "sidebar.workspaceSummary.saving": "Saving...",
-  "sidebar.workspaceSummary.saved": "Saved",
-  "sidebar.workspaceSummary.failed": "Save failed",
+  "sidebar.workspaceSummary.saving": "Saving resource directory...",
+  "sidebar.workspaceSummary.saved": "Resource directory saved.",
+  "sidebar.workspaceSummary.failed": "Resource directory save failed",
   "webview.copyMarkdown": "Copy Markdown",
   "webview.copyHtml": "Copy HTML",
   "export.quickPickTitle": "Super Markdown Export",
@@ -395,16 +429,13 @@ const ZH_CN: Record<TranslationKey, string> = {
   "webview.codeThemeLight": "浅色",
   "webview.codeThemeDark": "深色",
   "webview.save": "保存",
-  "sidebar.imageStorage.title": "图片保存",
-  "sidebar.imageStorage.directory": "保存目录",
-  "sidebar.imageStorage.saving": "保存中...",
-  "sidebar.imageStorage.saved": "已保存",
-  "sidebar.imageStorage.failed": "保存失败",
   "sidebar.markdownLibrary.title": "文档库",
   "sidebar.markdownLibrary.noWorkspace": "打开工作区文件夹后即可建立 Markdown 文档库。",
   "sidebar.markdownLibrary.noFiles": "当前工作区没有找到 Markdown 文件。",
+  "sidebar.markdownLibrary.noProblemFiles": "没有发现有问题的文档。",
   "sidebar.markdownLibrary.open": "打开 Markdown 文档",
   "sidebar.markdownLibrary.ok": "正常",
+  "sidebar.markdownLibrary.problemFilter": "问题",
   "sidebar.markdownLibrary.headings": "{0} 个标题",
   "sidebar.markdownLibrary.issues": "{0} 个问题",
   "sidebar.markdownLibrary.tasks": "{0} 个任务",
@@ -413,6 +444,24 @@ const ZH_CN: Record<TranslationKey, string> = {
   "sidebar.markdownLibrary.moreIssues": "还有 {0} 个问题",
   "sidebar.workspaceSummary.title": "工作区摘要",
   "sidebar.workspaceSummary.files": "文件",
+  "sidebar.workspaceSummary.fileCount": "{0} 个文件",
+  "sidebar.workspaceSummary.document": "文档",
+  "sidebar.workspaceSummary.folder": "文件夹",
+  "sidebar.workspaceSummary.selectedDocument": "文档详情",
+  "sidebar.workspaceSummary.selectedFolder": "文件夹摘要",
+  "sidebar.workspaceSummary.headings": "标题",
+  "sidebar.workspaceSummary.errors": "错误",
+  "sidebar.workspaceSummary.warnings": "警告",
+  "sidebar.workspaceSummary.info": "信息",
+  "sidebar.workspaceSummary.problemList": "问题列表",
+  "sidebar.workspaceSummary.noIssues": "没有问题",
+  "sidebar.workspaceSummary.openSource": "源码",
+  "sidebar.workspaceSummary.openPreview": "预览",
+  "sidebar.workspaceSummary.openSplit": "分屏",
+  "sidebar.workspaceSummary.openWysiwyg": "所见即所得",
+  "sidebar.workspaceSummary.organize": "整理",
+  "sidebar.workspaceSummary.export": "导出",
+  "sidebar.workspaceSummary.updated": "更新于 {0}",
   "sidebar.workspaceSummary.issues": "问题",
   "sidebar.workspaceSummary.missingImages": "缺失图片",
   "sidebar.workspaceSummary.missingLinks": "缺失链接",
@@ -425,13 +474,15 @@ const ZH_CN: Record<TranslationKey, string> = {
   "sidebar.workspaceSummary.syntaxGuide": "语法速查",
   "sidebar.workspaceSummary.theme": "阅读主题",
   "sidebar.workspaceSummary.assets": "资源",
-  "sidebar.workspaceSummary.directory": "图片目录",
+  "sidebar.workspaceSummary.directory": "资源目录",
+  "sidebar.workspaceSummary.directoryHelp": "插入或粘贴图片会保存到这个文档项目的资源目录。默认：assets。",
+  "sidebar.workspaceSummary.chooseDirectory": "选择",
   "sidebar.workspaceSummary.noWorkspace": "请先打开一个工作区文件夹。",
   "sidebar.workspaceSummary.refreshing": "刷新中...",
   "sidebar.workspaceSummary.refreshed": "Markdown 文档库已刷新。",
-  "sidebar.workspaceSummary.saving": "保存中...",
-  "sidebar.workspaceSummary.saved": "已保存",
-  "sidebar.workspaceSummary.failed": "保存失败",
+  "sidebar.workspaceSummary.saving": "正在保存资源目录...",
+  "sidebar.workspaceSummary.saved": "资源目录已保存。",
+  "sidebar.workspaceSummary.failed": "资源目录保存失败",
   "webview.copyMarkdown": "复制 Markdown",
   "webview.copyHtml": "复制 HTML",
   "export.quickPickTitle": "Super Markdown 导出",

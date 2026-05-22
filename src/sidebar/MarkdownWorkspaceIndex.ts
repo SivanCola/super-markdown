@@ -69,6 +69,11 @@ export class MarkdownWorkspaceIndex implements vscode.Disposable {
     );
   }
 
+  getFile(uri: vscode.Uri | string): MarkdownWorkspaceFile | undefined {
+    const key = typeof uri === "string" ? uri : uri.toString();
+    return this.entries.get(key);
+  }
+
   getSummary(): MarkdownWorkspaceSummary {
     return aggregateMarkdownWorkspaceSummary(this.getFiles());
   }

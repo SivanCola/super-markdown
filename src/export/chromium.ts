@@ -22,6 +22,39 @@ interface CdpMessage {
   error?: { message?: string };
 }
 
+interface PdfPrintOptions extends Record<string, unknown> {
+  printBackground: boolean;
+  landscape: boolean;
+  displayHeaderFooter: boolean;
+  headerTemplate: string;
+  footerTemplate: string;
+  marginTop: number;
+  marginRight: number;
+  marginBottom: number;
+  marginLeft: number;
+  paperWidth?: number;
+  paperHeight?: number;
+}
+
+interface SpawnedBrowser {
+  child: ChildProcess;
+  output(): string;
+}
+
+const PDF_PAPER_SIZES_INCHES: Record<string, { paperWidth: number; paperHeight: number }> = {
+  a0: { paperWidth: 33.11, paperHeight: 46.81 },
+  a1: { paperWidth: 23.39, paperHeight: 33.11 },
+  a2: { paperWidth: 16.54, paperHeight: 23.39 },
+  a3: { paperWidth: 11.69, paperHeight: 16.54 },
+  a4: { paperWidth: 8.27, paperHeight: 11.69 },
+  a5: { paperWidth: 5.83, paperHeight: 8.27 },
+  a6: { paperWidth: 4.13, paperHeight: 5.83 },
+  letter: { paperWidth: 8.5, paperHeight: 11 },
+  legal: { paperWidth: 8.5, paperHeight: 14 },
+  tabloid: { paperWidth: 11, paperHeight: 17 },
+  ledger: { paperWidth: 17, paperHeight: 11 }
+};
+
 export function findChromiumFromUserSetting(executablePath: string): string | undefined {
   if (!executablePath) {
     return undefined;
@@ -84,9 +117,10 @@ export async function exportHtmlWithChromium(
   await fsp.mkdir(profilePath, { recursive: true });
   await fsp.writeFile(htmlPath, html, "utf8");
 
-  const browser = spawnBrowser(executablePath, profilePath);
+  const port = await getAvailableLocalPort();
+  const browser = spawnBrowser(executablePath, profilePath, port);
   try {
-    const port = await waitForDevToolsPort(profilePath);
+    await waitForDevTools(port, browser);
     const target = await getPageTarget(port);
     if (!target.webSocketDebuggerUrl) {
       throw new Error("Chrome DevTools target unavailable.");
@@ -104,17 +138,7 @@ export async function exportHtmlWithChromium(
       }).catch(() => undefined);
 
       if (type === "pdf") {
-        const result = await client.send("Page.printToPDF", {
-          printBackground: settings.pdf.printBackground,
-          landscape: settings.pdf.landscape,
-          displayHeaderFooter: settings.pdf.displayHeaderFooter,
-          headerTemplate: settings.pdf.headerTemplate,
-          footerTemplate: settings.pdf.footerTemplate,
-          marginTop: cssLengthToInches(settings.pdf.margin.top),
-          marginRight: cssLengthToInches(settings.pdf.margin.right),
-          marginBottom: cssLengthToInches(settings.pdf.margin.bottom),
-          marginLeft: cssLengthToInches(settings.pdf.margin.left)
-        }) as { data?: string };
+        const result = await client.send("Page.printToPDF", buildPdfPrintOptions(settings)) as { data?: string };
         await fsp.writeFile(output, Buffer.from(result.data ?? "", "base64"));
       } else {
         const result = await client.send("Page.captureScreenshot", {
@@ -130,44 +154,69 @@ export async function exportHtmlWithChromium(
       client.dispose();
     }
   } finally {
-    browser.kill();
+    browser.child.kill();
     await fsp.rm(tempRoot, { recursive: true, force: true });
   }
 }
 
-function spawnBrowser(executablePath: string, profilePath: string): ChildProcess {
-  const args = [
+export function buildChromeLaunchArgs(profilePath: string, port: number): string[] {
+  return [
     "--headless=new",
     "--disable-gpu",
     "--disable-dev-shm-usage",
     "--no-first-run",
     "--no-default-browser-check",
-    "--remote-debugging-port=0",
+    `--remote-debugging-port=${port}`,
     `--user-data-dir=${profilePath}`,
     "about:blank"
   ];
-  const child = spawn(executablePath, args, { stdio: ["ignore", "pipe", "pipe"] });
-  child.stderr?.on("data", () => undefined);
-  child.stdout?.on("data", () => undefined);
-  return child;
 }
 
-async function waitForDevToolsPort(profilePath: string): Promise<number> {
-  const filename = path.join(profilePath, "DevToolsActivePort");
+function spawnBrowser(executablePath: string, profilePath: string, port: number): SpawnedBrowser {
+  const chunks: Buffer[] = [];
+  const child = spawn(executablePath, buildChromeLaunchArgs(profilePath, port), { stdio: ["ignore", "pipe", "pipe"] });
+  child.stderr?.on("data", (chunk) => chunks.push(Buffer.from(chunk)));
+  child.stdout?.on("data", (chunk) => chunks.push(Buffer.from(chunk)));
+  return {
+    child,
+    output: () => Buffer.concat(chunks).toString("utf8").trim()
+  };
+}
+
+async function getAvailableLocalPort(): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const server = net.createServer();
+    server.once("error", reject);
+    server.listen(0, "127.0.0.1", () => {
+      const address = server.address();
+      server.close(() => {
+        if (typeof address === "object" && address) {
+          resolve(address.port);
+        } else {
+          reject(new Error("Unable to allocate Chrome DevTools port."));
+        }
+      });
+    });
+  });
+}
+
+async function waitForDevTools(port: number, browser: SpawnedBrowser): Promise<void> {
   const deadline = Date.now() + 10000;
   while (Date.now() < deadline) {
+    if (browser.child.exitCode !== null) {
+      const output = browser.output();
+      throw new Error(output ? `Chrome exited before DevTools was ready: ${output}` : "Chrome exited before DevTools was ready.");
+    }
     try {
-      const content = await fsp.readFile(filename, "utf8");
-      const port = Number(content.split(/\r?\n/)[0]);
-      if (port > 0) {
-        return port;
-      }
+      await httpJson<unknown>(`http://127.0.0.1:${port}/json/version`);
+      return;
     } catch {
       // Browser is still starting.
     }
     await delay(100);
   }
-  throw new Error("Timed out waiting for Chrome DevTools.");
+  const output = browser.output();
+  throw new Error(output ? `Timed out waiting for Chrome DevTools: ${output}` : "Timed out waiting for Chrome DevTools.");
 }
 
 async function getPageTarget(port: number): Promise<DevToolsTarget> {
@@ -373,6 +422,21 @@ function decodeServerFrame(buffer: Buffer): { opcode: number; payload: Buffer; b
   return { opcode: first & 0x0f, payload, bytes: offset + maskLength + length };
 }
 
+export function buildPdfPrintOptions(settings: ExportSettings): PdfPrintOptions {
+  return {
+    printBackground: settings.pdf.printBackground,
+    landscape: settings.pdf.landscape,
+    displayHeaderFooter: settings.pdf.displayHeaderFooter,
+    headerTemplate: settings.pdf.headerTemplate,
+    footerTemplate: settings.pdf.footerTemplate,
+    marginTop: cssLengthToInches(settings.pdf.margin.top),
+    marginRight: cssLengthToInches(settings.pdf.margin.right),
+    marginBottom: cssLengthToInches(settings.pdf.margin.bottom),
+    marginLeft: cssLengthToInches(settings.pdf.margin.left),
+    ...resolvePdfPaperSizeInches(settings.pdf.format)
+  };
+}
+
 function cssLengthToInches(value: string): number {
   const match = value.trim().match(/^(\d+(?:\.\d+)?)(px|in|cm|mm)?$/);
   if (!match) {
@@ -390,6 +454,11 @@ function cssLengthToInches(value: string): number {
     return amount / 25.4;
   }
   return amount / 96;
+}
+
+function resolvePdfPaperSizeInches(format: string): { paperWidth?: number; paperHeight?: number } {
+  const key = format.trim().toLowerCase().replace(/[\s_-]+/g, "");
+  return PDF_PAPER_SIZES_INCHES[key] ?? PDF_PAPER_SIZES_INCHES.a4;
 }
 
 function delay(ms: number): Promise<void> {

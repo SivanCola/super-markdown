@@ -7,13 +7,22 @@ export const TOOLBAR_GROUPS: ToolbarGroup[] = [
   { name: "text", actions: ["bold", "italic", "underline", "strike", "highlight"] },
   { name: "structure", actions: ["heading", "hr", "quote", "list", "ordered-list", "task", "task-checked"] },
   { name: "insert", actions: ["link", "image", "inline-code", "code", "table"] },
-  { name: "advanced", actions: ["math", "mermaid", "toc", "organizeMarkdown", "more"] },
-  { name: "help", actions: ["switchBackgroundTheme", "switchDisplayLanguage", "help"] }
+  { name: "advanced", actions: ["math", "mermaid", "toc", "organizeMarkdown"] },
+  { name: "help", actions: ["switchBackgroundTheme", "switchDisplayLanguage", "export", "help"] }
+];
+
+export const PREVIEW_TOOLBAR_GROUPS: ToolbarGroup[] = [
+  { name: "preview", actions: ["switchBackgroundTheme", "switchDisplayLanguage", "export", "help"] }
 ];
 
 export const HEADING_MENU_ACTIONS = ["heading-1", "heading-2", "heading-3", "heading-4", "heading-5", "heading-6"];
 
-export const MORE_MENU_ACTIONS = ["export-html", "export-pdf", "export-all"];
+export const EXPORT_MENU_ACTIONS = ["export-html", "export-pdf", "export-all"];
+
+export const PREVIEW_TOOLBAR_ACTIONS = new Set([
+  ...PREVIEW_TOOLBAR_GROUPS.flatMap((group) => group.actions),
+  ...EXPORT_MENU_ACTIONS
+]);
 
 export const HOST_TOOLBAR_ACTIONS = new Set([
   "toc",
@@ -27,6 +36,10 @@ export const HOST_TOOLBAR_ACTIONS = new Set([
 ]);
 
 export const SUPER_MARKDOWN_ISSUES_URL = "https://github.com/SivanCola/super-markdown/issues";
+
+export function getToolbarGroups(mode: string, layout?: string): ToolbarGroup[] {
+  return mode === "preview" || layout === "previewOnly" ? PREVIEW_TOOLBAR_GROUPS : TOOLBAR_GROUPS;
+}
 
 const TOOLBAR_CODICON_ACTIONS: Record<string, string> = {
   bold: "bold",
@@ -54,8 +67,8 @@ const TOOLBAR_CODICON_ACTIONS: Record<string, string> = {
   organizeMarkdown: "tools",
   switchBackgroundTheme: "color-mode",
   switchDisplayLanguage: "globe",
+  export: "export",
   help: "question",
-  more: "more",
   "export-html": "export",
   "export-pdf": "export",
   "export-all": "export"

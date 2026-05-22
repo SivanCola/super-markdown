@@ -94,6 +94,7 @@ suite("visual editor assets", () => {
       "help",
       "organizeMarkdown",
       "switchBackgroundTheme",
+      "switchDisplayLanguage",
       "toc"
     ]);
     assert.equal(SUPER_MARKDOWN_ISSUES_URL, "https://github.com/SivanCola/super-markdown/issues");
@@ -105,6 +106,7 @@ suite("visual editor assets", () => {
 
     assert.match(renderToolbarIcon("inline-code"), /codicon-code/);
     assert.match(renderToolbarIcon("switchBackgroundTheme"), /codicon-color-mode/);
+    assert.match(renderToolbarIcon("switchDisplayLanguage"), /codicon-globe/);
     assert.match(renderToolbarIcon("underline"), /toolbar-custom-icon/);
     assert.match(renderToolbarIcon("math"), /toolbar-custom-icon/);
     assert.match(renderToolbarIcon("mermaid"), /toolbar-custom-icon/);

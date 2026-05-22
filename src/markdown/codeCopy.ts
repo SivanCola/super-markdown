@@ -16,11 +16,11 @@ export interface CodeActionsOptions {
 
 export function renderCodeCopyButton(labels: CodeCopyLabels, copyText?: string): string {
   const copyTextAttribute = copyText === undefined ? "" : ` data-copy-text="${escapeAttribute(copyText)}"`;
-  return `<button type="button" class="${CODE_BLOCK_CLASSES.copyButton}" data-copy-label="${escapeAttribute(labels.copyLabel)}" data-copied-label="${escapeAttribute(labels.copiedLabel)}"${copyTextAttribute}>${escapeHtml(labels.copyLabel)}</button>`;
+  return `<button type="button" class="${CODE_BLOCK_CLASSES.copyButton}" data-copy-label="${escapeAttribute(labels.copyLabel)}" data-copied-label="${escapeAttribute(labels.copiedLabel)}" data-hover-tooltip="${escapeAttribute(labels.copyLabel)}" aria-label="${escapeAttribute(labels.copyLabel)}"${copyTextAttribute}>${escapeHtml(labels.copyLabel)}</button>`;
 }
 
 export function renderBlockToneToggleButton(labels: BlockToneLabels): string {
-  return `<button type="button" class="${CODE_BLOCK_CLASSES.toneButton}" data-block-tone="auto" data-tone-label="${escapeAttribute(labels.toneLabel)}" data-tone-auto-label="${escapeAttribute(labels.autoLabel)}" data-tone-light-label="${escapeAttribute(labels.lightLabel)}" data-tone-dark-label="${escapeAttribute(labels.darkLabel)}" title="${escapeAttribute(labels.toneLabel)}" aria-label="${escapeAttribute(labels.toneLabel)}">${escapeHtml(labels.autoLabel)}</button>`;
+  return `<button type="button" class="${CODE_BLOCK_CLASSES.toneButton}" data-block-tone="auto" data-tone-label="${escapeAttribute(labels.toneLabel)}" data-tone-auto-label="${escapeAttribute(labels.autoLabel)}" data-tone-light-label="${escapeAttribute(labels.lightLabel)}" data-tone-dark-label="${escapeAttribute(labels.darkLabel)}" data-hover-tooltip="${escapeAttribute(labels.toneLabel)}" aria-label="${escapeAttribute(labels.toneLabel)}">${escapeHtml(labels.autoLabel)}</button>`;
 }
 
 export function renderCodeActions(options: CodeActionsOptions): string {
@@ -47,7 +47,7 @@ function setRenderBlockTone(block, button, tone) {
   })[tone] : button.getAttribute("data-tone-auto-label");
   button.textContent = label || tone;
   const title = button.getAttribute("data-tone-label") || "Colors";
-  button.setAttribute("title", title + ": " + button.textContent);
+  button.setAttribute("data-hover-tooltip", title + ": " + button.textContent);
   button.setAttribute("aria-label", title + ": " + button.textContent);
 }
 document.addEventListener("click", async function (event) {

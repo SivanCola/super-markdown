@@ -26,6 +26,66 @@ suite("extension manifest", () => {
     });
   });
 
+  test("contributes the Markdown workspace library to the VS Code activity bar", () => {
+    const extensionSource = fs.readFileSync(path.join(root, "src", "extension.ts"), "utf8");
+    const summaryProviderSource = fs.readFileSync(path.join(root, "src", "sidebar", "WorkspaceSummaryViewProvider.ts"), "utf8");
+    const i18nSource = fs.readFileSync(path.join(root, "src", "i18n.ts"), "utf8");
+
+    assert.equal(manifest.activationEvents.includes("onView:superMarkdown.markdownLibrary"), true);
+    assert.equal(manifest.activationEvents.includes("onView:superMarkdown.workspaceSummary"), true);
+    assert.equal(manifest.activationEvents.includes("onCommand:superMarkdown.markdownLibrary.refresh"), true);
+    assert.deepEqual(manifest.contributes.viewsContainers.activitybar, [
+      {
+        id: "superMarkdown",
+        title: "%superMarkdown.views.container%",
+        icon: "images/activity-bar-fold-m.svg"
+      }
+    ]);
+    assert.deepEqual(manifest.contributes.views.superMarkdown, [
+      {
+        id: "superMarkdown.markdownLibrary",
+        name: "%superMarkdown.views.markdownLibrary%"
+      },
+      {
+        id: "superMarkdown.workspaceSummary",
+        name: "%superMarkdown.views.workspaceSummary%",
+        type: "webview"
+      }
+    ]);
+    assert.equal(extensionSource.includes("markdownLibraryTreeView.title = t(\"sidebar.markdownLibrary.title\")"), true);
+    assert.equal(summaryProviderSource.includes("this.view.title = t(\"sidebar.workspaceSummary.title\")"), true);
+    assert.equal(i18nSource.includes("sidebar.markdownLibrary.title"), true);
+    assert.equal(i18nSource.includes("sidebar.workspaceSummary.title"), true);
+  });
+
+  test("wires Markdown library view menus to dedicated wrapper commands", () => {
+    const commandIds = manifest.contributes.commands.map((item: { command: string }) => item.command);
+    const viewTitleCommands = manifest.contributes.menus["view/title"] as Array<{ command?: string; when?: string }>;
+    const viewItemCommands = manifest.contributes.menus["view/item/context"] as Array<{ command?: string; when?: string }>;
+
+    for (const command of [
+      "superMarkdown.markdownLibrary.refresh",
+      "superMarkdown.markdownLibrary.openEditor",
+      "superMarkdown.markdownLibrary.openPreview",
+      "superMarkdown.markdownLibrary.openSplitEditMode",
+      "superMarkdown.markdownLibrary.openWysiwygEditor",
+      "superMarkdown.markdownLibrary.openNativeTextEditor",
+      "superMarkdown.markdownLibrary.organizeMarkdown",
+      "superMarkdown.markdownLibrary.export"
+    ]) {
+      assert.equal(commandIds.includes(command), true);
+    }
+
+    assert.deepEqual(
+      viewTitleCommands.map((item) => item.when),
+      ["view == superMarkdown.markdownLibrary", "view == superMarkdown.workspaceSummary"]
+    );
+    assert.equal(
+      viewItemCommands.every((item) => item.when === "view == superMarkdown.markdownLibrary && viewItem == superMarkdown.markdownFile"),
+      true
+    );
+  });
+
   test("declares limited Restricted Mode support for webview editing", () => {
     assert.deepEqual(manifest.capabilities.untrustedWorkspaces.supported, "limited");
     assert.match(manifest.capabilities.untrustedWorkspaces.description, /split scroll sync/);
@@ -88,6 +148,29 @@ suite("extension manifest", () => {
     ]) {
       assert.equal(manifest.contributes.commands.some((item: { command: string }) => item.command === command), true);
     }
+  });
+
+  test("declares display language switching consistently", () => {
+    const commandIds = manifest.contributes.commands.map((item: { command: string }) => item.command);
+    const packageNls = JSON.parse(fs.readFileSync(path.join(root, "package.nls.json"), "utf8"));
+    const packageZhNls = JSON.parse(fs.readFileSync(path.join(root, "package.nls.zh-cn.json"), "utf8"));
+    const i18nSource = fs.readFileSync(path.join(root, "src", "i18n.ts"), "utf8");
+    const extensionSource = fs.readFileSync(path.join(root, "src", "extension.ts"), "utf8");
+
+    for (const command of [
+      "superMarkdown.switchDisplayLanguage",
+      "superMarkdown.en.switchDisplayLanguage",
+      "superMarkdown.zhCN.switchDisplayLanguage"
+    ]) {
+      assert.equal(manifest.activationEvents.includes(`onCommand:${command}`), true);
+      assert.equal(commandIds.includes(command), true);
+    }
+    assert.equal(packageNls["superMarkdown.command.switchDisplayLanguage"] !== undefined, true);
+    assert.equal(packageZhNls["superMarkdown.command.switchDisplayLanguage"] !== undefined, true);
+    assert.equal(i18nSource.includes("language.auto.label"), true);
+    assert.equal(i18nSource.includes("language.zhCN.label"), true);
+    assert.equal(i18nSource.includes("language.en.label"), true);
+    assert.equal(extensionSource.includes("superMarkdown.switchDisplayLanguage"), true);
   });
 
   test("keeps the editor title context menu aligned with Markdown mode actions", () => {

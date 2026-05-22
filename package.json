@@ -60,6 +60,14 @@
     "onCommand:superMarkdown.openSyntaxGuide",
     "onCommand:superMarkdown.copyTableAsJson",
     "onCommand:superMarkdown.copyJsonAsTable",
+    "onCommand:superMarkdown.markdownLibrary.refresh",
+    "onCommand:superMarkdown.markdownLibrary.openEditor",
+    "onCommand:superMarkdown.markdownLibrary.openPreview",
+    "onCommand:superMarkdown.markdownLibrary.openSplitEditMode",
+    "onCommand:superMarkdown.markdownLibrary.openWysiwygEditor",
+    "onCommand:superMarkdown.markdownLibrary.openNativeTextEditor",
+    "onCommand:superMarkdown.markdownLibrary.organizeMarkdown",
+    "onCommand:superMarkdown.markdownLibrary.export",
     "onCustomEditor:superMarkdown.editor",
     "onCommand:superMarkdown.en.openEditor",
     "onCommand:superMarkdown.zhCN.openEditor",
@@ -78,7 +86,9 @@
     "onCommand:superMarkdown.en.refreshPreview",
     "onCommand:superMarkdown.zhCN.refreshPreview",
     "onCommand:superMarkdown.en.organizeMarkdown",
-    "onCommand:superMarkdown.zhCN.organizeMarkdown"
+    "onCommand:superMarkdown.zhCN.organizeMarkdown",
+    "onView:superMarkdown.markdownLibrary",
+    "onView:superMarkdown.workspaceSummary"
   ],
   "main": "./out/extension.js",
   "files": [
@@ -142,6 +152,46 @@
         "command": "superMarkdown.refreshPreview",
         "title": "%superMarkdown.command.refreshPreview%",
         "icon": "$(refresh)"
+      },
+      {
+        "command": "superMarkdown.markdownLibrary.refresh",
+        "title": "%superMarkdown.command.markdownLibrary.refresh%",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "superMarkdown.markdownLibrary.openEditor",
+        "title": "%superMarkdown.command.openEditor%",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "superMarkdown.markdownLibrary.openPreview",
+        "title": "%superMarkdown.command.previewMode%",
+        "icon": "$(markdown)"
+      },
+      {
+        "command": "superMarkdown.markdownLibrary.openSplitEditMode",
+        "title": "%superMarkdown.command.splitEditMode%",
+        "icon": "$(split-horizontal)"
+      },
+      {
+        "command": "superMarkdown.markdownLibrary.openWysiwygEditor",
+        "title": "%superMarkdown.command.openWysiwygEditor%",
+        "icon": "$(notebook-edit)"
+      },
+      {
+        "command": "superMarkdown.markdownLibrary.openNativeTextEditor",
+        "title": "%superMarkdown.command.openNativeTextEditor%",
+        "icon": "$(file-code)"
+      },
+      {
+        "command": "superMarkdown.markdownLibrary.organizeMarkdown",
+        "title": "%superMarkdown.command.organizeMarkdown%",
+        "icon": "$(wand)"
+      },
+      {
+        "command": "superMarkdown.markdownLibrary.export",
+        "title": "%superMarkdown.command.export.choose%",
+        "icon": "$(export)"
       },
       {
         "command": "superMarkdown.organizeMarkdown",
@@ -310,6 +360,28 @@
         "priority": "default"
       }
     ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "superMarkdown",
+          "title": "%superMarkdown.views.container%",
+          "icon": "images/activity-bar-fold-m.svg"
+        }
+      ]
+    },
+    "views": {
+      "superMarkdown": [
+        {
+          "id": "superMarkdown.markdownLibrary",
+          "name": "%superMarkdown.views.markdownLibrary%"
+        },
+        {
+          "id": "superMarkdown.workspaceSummary",
+          "name": "%superMarkdown.views.workspaceSummary%",
+          "type": "webview"
+        }
+      ]
+    },
     "keybindings": [
       {
         "command": "superMarkdown.openSplitEditMode",
@@ -441,6 +513,55 @@
           "group": "navigation@23"
         }
       ],
+      "view/title": [
+        {
+          "command": "superMarkdown.markdownLibrary.refresh",
+          "when": "view == superMarkdown.markdownLibrary",
+          "group": "navigation"
+        },
+        {
+          "command": "superMarkdown.markdownLibrary.refresh",
+          "when": "view == superMarkdown.workspaceSummary",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "superMarkdown.markdownLibrary.openEditor",
+          "when": "view == superMarkdown.markdownLibrary && viewItem == superMarkdown.markdownFile",
+          "group": "navigation@10"
+        },
+        {
+          "command": "superMarkdown.markdownLibrary.openPreview",
+          "when": "view == superMarkdown.markdownLibrary && viewItem == superMarkdown.markdownFile",
+          "group": "navigation@20"
+        },
+        {
+          "command": "superMarkdown.markdownLibrary.openSplitEditMode",
+          "when": "view == superMarkdown.markdownLibrary && viewItem == superMarkdown.markdownFile",
+          "group": "navigation@21"
+        },
+        {
+          "command": "superMarkdown.markdownLibrary.openWysiwygEditor",
+          "when": "view == superMarkdown.markdownLibrary && viewItem == superMarkdown.markdownFile",
+          "group": "navigation@22"
+        },
+        {
+          "command": "superMarkdown.markdownLibrary.openNativeTextEditor",
+          "when": "view == superMarkdown.markdownLibrary && viewItem == superMarkdown.markdownFile",
+          "group": "navigation@30"
+        },
+        {
+          "command": "superMarkdown.markdownLibrary.organizeMarkdown",
+          "when": "view == superMarkdown.markdownLibrary && viewItem == superMarkdown.markdownFile",
+          "group": "2_document@10"
+        },
+        {
+          "command": "superMarkdown.markdownLibrary.export",
+          "when": "view == superMarkdown.markdownLibrary && viewItem == superMarkdown.markdownFile",
+          "group": "2_document@20"
+        }
+      ],
       "commandPalette": [
         {
           "command": "superMarkdown.openEditor",
@@ -476,6 +597,34 @@
         },
         {
           "command": "superMarkdown.organizeMarkdown",
+          "when": "false"
+        },
+        {
+          "command": "superMarkdown.markdownLibrary.openEditor",
+          "when": "false"
+        },
+        {
+          "command": "superMarkdown.markdownLibrary.openPreview",
+          "when": "false"
+        },
+        {
+          "command": "superMarkdown.markdownLibrary.openSplitEditMode",
+          "when": "false"
+        },
+        {
+          "command": "superMarkdown.markdownLibrary.openWysiwygEditor",
+          "when": "false"
+        },
+        {
+          "command": "superMarkdown.markdownLibrary.openNativeTextEditor",
+          "when": "false"
+        },
+        {
+          "command": "superMarkdown.markdownLibrary.organizeMarkdown",
+          "when": "false"
+        },
+        {
+          "command": "superMarkdown.markdownLibrary.export",
           "when": "false"
         },
         {

@@ -60,6 +60,10 @@ type TranslationKey =
   | "webview.showOutline"
   | "webview.hideOutline"
   | "webview.resizeOutline"
+  | "webview.resizeSplit"
+  | "webview.revealCurrentHeading"
+  | "webview.collapseOutline"
+  | "webview.footnote"
   | "webview.copy"
   | "webview.copied"
   | "webview.copyCode"
@@ -68,6 +72,43 @@ type TranslationKey =
   | "webview.codeThemeLight"
   | "webview.codeThemeDark"
   | "webview.save"
+  | "sidebar.imageStorage.title"
+  | "sidebar.imageStorage.directory"
+  | "sidebar.imageStorage.saving"
+  | "sidebar.imageStorage.saved"
+  | "sidebar.imageStorage.failed"
+  | "sidebar.markdownLibrary.title"
+  | "sidebar.markdownLibrary.noWorkspace"
+  | "sidebar.markdownLibrary.noFiles"
+  | "sidebar.markdownLibrary.open"
+  | "sidebar.markdownLibrary.ok"
+  | "sidebar.markdownLibrary.headings"
+  | "sidebar.markdownLibrary.issues"
+  | "sidebar.markdownLibrary.tasks"
+  | "sidebar.markdownLibrary.images"
+  | "sidebar.markdownLibrary.links"
+  | "sidebar.markdownLibrary.moreIssues"
+  | "sidebar.workspaceSummary.title"
+  | "sidebar.workspaceSummary.files"
+  | "sidebar.workspaceSummary.issues"
+  | "sidebar.workspaceSummary.missingImages"
+  | "sidebar.workspaceSummary.missingLinks"
+  | "sidebar.workspaceSummary.tasks"
+  | "sidebar.workspaceSummary.staleToc"
+  | "sidebar.workspaceSummary.images"
+  | "sidebar.workspaceSummary.links"
+  | "sidebar.workspaceSummary.actions"
+  | "sidebar.workspaceSummary.refresh"
+  | "sidebar.workspaceSummary.syntaxGuide"
+  | "sidebar.workspaceSummary.theme"
+  | "sidebar.workspaceSummary.assets"
+  | "sidebar.workspaceSummary.directory"
+  | "sidebar.workspaceSummary.noWorkspace"
+  | "sidebar.workspaceSummary.refreshing"
+  | "sidebar.workspaceSummary.refreshed"
+  | "sidebar.workspaceSummary.saving"
+  | "sidebar.workspaceSummary.saved"
+  | "sidebar.workspaceSummary.failed"
   | "webview.copyMarkdown"
   | "webview.copyHtml"
   | "export.quickPickTitle"
@@ -180,6 +221,10 @@ const EN: Record<TranslationKey, string> = {
   "webview.showOutline": "Show outline",
   "webview.hideOutline": "Hide outline",
   "webview.resizeOutline": "Resize outline",
+  "webview.resizeSplit": "Resize editor and preview panes",
+  "webview.revealCurrentHeading": "Reveal current heading",
+  "webview.collapseOutline": "Collapse outline",
+  "webview.footnote": "Footnote",
   "webview.copy": "Copy",
   "webview.copied": "Copied",
   "webview.copyCode": "Copy code",
@@ -188,6 +233,43 @@ const EN: Record<TranslationKey, string> = {
   "webview.codeThemeLight": "Light",
   "webview.codeThemeDark": "Dark",
   "webview.save": "Save",
+  "sidebar.imageStorage.title": "Image storage",
+  "sidebar.imageStorage.directory": "Directory",
+  "sidebar.imageStorage.saving": "Saving...",
+  "sidebar.imageStorage.saved": "Saved",
+  "sidebar.imageStorage.failed": "Save failed",
+  "sidebar.markdownLibrary.title": "Document Library",
+  "sidebar.markdownLibrary.noWorkspace": "Open a workspace folder to build the Markdown library.",
+  "sidebar.markdownLibrary.noFiles": "No Markdown files found in this workspace.",
+  "sidebar.markdownLibrary.open": "Open Markdown document",
+  "sidebar.markdownLibrary.ok": "OK",
+  "sidebar.markdownLibrary.headings": "{0} headings",
+  "sidebar.markdownLibrary.issues": "{0} issues",
+  "sidebar.markdownLibrary.tasks": "{0} tasks",
+  "sidebar.markdownLibrary.images": "{0} images",
+  "sidebar.markdownLibrary.links": "{0} links",
+  "sidebar.markdownLibrary.moreIssues": "{0} more issues",
+  "sidebar.workspaceSummary.title": "Workspace Summary",
+  "sidebar.workspaceSummary.files": "Files",
+  "sidebar.workspaceSummary.issues": "Issues",
+  "sidebar.workspaceSummary.missingImages": "Missing images",
+  "sidebar.workspaceSummary.missingLinks": "Missing links",
+  "sidebar.workspaceSummary.tasks": "Tasks",
+  "sidebar.workspaceSummary.staleToc": "Stale TOC",
+  "sidebar.workspaceSummary.images": "Images",
+  "sidebar.workspaceSummary.links": "Links",
+  "sidebar.workspaceSummary.actions": "Actions",
+  "sidebar.workspaceSummary.refresh": "Refresh index",
+  "sidebar.workspaceSummary.syntaxGuide": "Syntax guide",
+  "sidebar.workspaceSummary.theme": "Reading theme",
+  "sidebar.workspaceSummary.assets": "Assets",
+  "sidebar.workspaceSummary.directory": "Image directory",
+  "sidebar.workspaceSummary.noWorkspace": "Open a workspace folder first.",
+  "sidebar.workspaceSummary.refreshing": "Refreshing...",
+  "sidebar.workspaceSummary.refreshed": "Markdown library refreshed.",
+  "sidebar.workspaceSummary.saving": "Saving...",
+  "sidebar.workspaceSummary.saved": "Saved",
+  "sidebar.workspaceSummary.failed": "Save failed",
   "webview.copyMarkdown": "Copy Markdown",
   "webview.copyHtml": "Copy HTML",
   "export.quickPickTitle": "Super Markdown Export",
@@ -301,6 +383,10 @@ const ZH_CN: Record<TranslationKey, string> = {
   "webview.showOutline": "显示大纲",
   "webview.hideOutline": "隐藏大纲",
   "webview.resizeOutline": "调整大纲高度",
+  "webview.resizeSplit": "调整编辑区和预览区宽度",
+  "webview.revealCurrentHeading": "定位当前标题",
+  "webview.collapseOutline": "收起目录",
+  "webview.footnote": "脚注",
   "webview.copy": "复制",
   "webview.copied": "已复制",
   "webview.copyCode": "复制代码",
@@ -309,6 +395,43 @@ const ZH_CN: Record<TranslationKey, string> = {
   "webview.codeThemeLight": "浅色",
   "webview.codeThemeDark": "深色",
   "webview.save": "保存",
+  "sidebar.imageStorage.title": "图片保存",
+  "sidebar.imageStorage.directory": "保存目录",
+  "sidebar.imageStorage.saving": "保存中...",
+  "sidebar.imageStorage.saved": "已保存",
+  "sidebar.imageStorage.failed": "保存失败",
+  "sidebar.markdownLibrary.title": "文档库",
+  "sidebar.markdownLibrary.noWorkspace": "打开工作区文件夹后即可建立 Markdown 文档库。",
+  "sidebar.markdownLibrary.noFiles": "当前工作区没有找到 Markdown 文件。",
+  "sidebar.markdownLibrary.open": "打开 Markdown 文档",
+  "sidebar.markdownLibrary.ok": "正常",
+  "sidebar.markdownLibrary.headings": "{0} 个标题",
+  "sidebar.markdownLibrary.issues": "{0} 个问题",
+  "sidebar.markdownLibrary.tasks": "{0} 个任务",
+  "sidebar.markdownLibrary.images": "{0} 张图片",
+  "sidebar.markdownLibrary.links": "{0} 个链接",
+  "sidebar.markdownLibrary.moreIssues": "还有 {0} 个问题",
+  "sidebar.workspaceSummary.title": "工作区摘要",
+  "sidebar.workspaceSummary.files": "文件",
+  "sidebar.workspaceSummary.issues": "问题",
+  "sidebar.workspaceSummary.missingImages": "缺失图片",
+  "sidebar.workspaceSummary.missingLinks": "缺失链接",
+  "sidebar.workspaceSummary.tasks": "未完成任务",
+  "sidebar.workspaceSummary.staleToc": "过期目录",
+  "sidebar.workspaceSummary.images": "图片",
+  "sidebar.workspaceSummary.links": "链接",
+  "sidebar.workspaceSummary.actions": "操作",
+  "sidebar.workspaceSummary.refresh": "刷新索引",
+  "sidebar.workspaceSummary.syntaxGuide": "语法速查",
+  "sidebar.workspaceSummary.theme": "阅读主题",
+  "sidebar.workspaceSummary.assets": "资源",
+  "sidebar.workspaceSummary.directory": "图片目录",
+  "sidebar.workspaceSummary.noWorkspace": "请先打开一个工作区文件夹。",
+  "sidebar.workspaceSummary.refreshing": "刷新中...",
+  "sidebar.workspaceSummary.refreshed": "Markdown 文档库已刷新。",
+  "sidebar.workspaceSummary.saving": "保存中...",
+  "sidebar.workspaceSummary.saved": "已保存",
+  "sidebar.workspaceSummary.failed": "保存失败",
   "webview.copyMarkdown": "复制 Markdown",
   "webview.copyHtml": "复制 HTML",
   "export.quickPickTitle": "Super Markdown 导出",
@@ -498,7 +621,9 @@ export function getWebviewTranslations(): Record<string, string> {
     codeThemeDark: t("webview.codeThemeDark"),
     showOutline: t("webview.showOutline"),
     hideOutline: t("webview.hideOutline"),
-    resizeOutline: t("webview.resizeOutline")
+    resizeOutline: t("webview.resizeOutline"),
+    revealCurrentHeading: t("webview.revealCurrentHeading"),
+    collapseOutline: t("webview.collapseOutline")
   };
 }
 

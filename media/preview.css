@@ -1,9 +1,39 @@
 :root {
   color-scheme: light dark;
+  --sm-scrollbar-size: 10px;
+  --sm-scrollbar-track: transparent;
+  --sm-scrollbar-thumb: rgba(127, 127, 127, 0.38);
+  --sm-scrollbar-thumb-hover: rgba(127, 127, 127, 0.58);
 }
 
 * {
   box-sizing: border-box;
+  scrollbar-color: var(--sm-scrollbar-thumb) var(--sm-scrollbar-track);
+  scrollbar-width: thin;
+}
+
+*::-webkit-scrollbar {
+  width: var(--sm-scrollbar-size);
+  height: var(--sm-scrollbar-size);
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--sm-scrollbar-track);
+}
+
+*::-webkit-scrollbar-thumb {
+  min-height: 36px;
+  border: 2px solid var(--sm-scrollbar-track);
+  border-radius: 999px;
+  background-color: var(--sm-scrollbar-thumb);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: var(--sm-scrollbar-thumb-hover);
+}
+
+*::-webkit-scrollbar-corner {
+  background: var(--sm-scrollbar-track);
 }
 
 html,
@@ -38,6 +68,9 @@ body {
   --sm-quote-text: var(--vscode-textBlockQuote-foreground);
   --sm-table-header-bg: var(--vscode-editorWidget-background);
   --sm-focus: var(--vscode-focusBorder);
+  --sm-scrollbar-track: color-mix(in srgb, var(--sm-page-bg) 94%, var(--sm-border));
+  --sm-scrollbar-thumb: color-mix(in srgb, var(--sm-muted) 44%, transparent);
+  --sm-scrollbar-thumb-hover: color-mix(in srgb, var(--sm-muted) 68%, var(--sm-border));
 
   background: var(--sm-page-bg);
   color: var(--sm-text);
@@ -1498,14 +1531,24 @@ body.sm-theme-high-contrast .diagram-block:not(.render-block-tone-light) {
   white-space: pre;
 }
 
-body.vscode-dark .code-block:not(.render-block-tone-light) .shiki,
-body.vscode-high-contrast .code-block:not(.render-block-tone-light) .shiki,
+body.sm-theme-system.vscode-dark .code-block:not(.render-block-tone-light) .shiki,
+body.sm-theme-system.vscode-high-contrast .code-block:not(.render-block-tone-light) .shiki,
+body.sm-theme-dark .code-block:not(.render-block-tone-light) .shiki,
+body.sm-theme-forest .code-block:not(.render-block-tone-light) .shiki,
+body.sm-theme-ink .code-block:not(.render-block-tone-light) .shiki,
+body.sm-theme-terminal .code-block:not(.render-block-tone-light) .shiki,
+body.sm-theme-high-contrast .code-block:not(.render-block-tone-light) .shiki,
 .code-block.render-block-tone-dark .shiki {
   color: var(--shiki-dark, var(--sm-render-block-text));
 }
 
-body.vscode-dark .code-block:not(.render-block-tone-light) .shiki span,
-body.vscode-high-contrast .code-block:not(.render-block-tone-light) .shiki span,
+body.sm-theme-system.vscode-dark .code-block:not(.render-block-tone-light) .shiki span,
+body.sm-theme-system.vscode-high-contrast .code-block:not(.render-block-tone-light) .shiki span,
+body.sm-theme-dark .code-block:not(.render-block-tone-light) .shiki span,
+body.sm-theme-forest .code-block:not(.render-block-tone-light) .shiki span,
+body.sm-theme-ink .code-block:not(.render-block-tone-light) .shiki span,
+body.sm-theme-terminal .code-block:not(.render-block-tone-light) .shiki span,
+body.sm-theme-high-contrast .code-block:not(.render-block-tone-light) .shiki span,
 .code-block.render-block-tone-dark .shiki span {
   color: var(--shiki-dark, var(--sm-render-block-text));
 }
@@ -1516,8 +1559,8 @@ body.vscode-high-contrast .code-block:not(.render-block-tone-light) .shiki span,
 }
 
 @media (prefers-color-scheme: dark) {
-  body:not(.vscode-light) .code-block:not(.render-block-tone-light) .shiki,
-  body:not(.vscode-light) .code-block:not(.render-block-tone-light) .shiki span {
+  body.sm-theme-system:not(.vscode-light) .code-block:not(.render-block-tone-light) .shiki,
+  body.sm-theme-system:not(.vscode-light) .code-block:not(.render-block-tone-light) .shiki span {
     color: var(--shiki-dark, var(--sm-render-block-text));
   }
 }

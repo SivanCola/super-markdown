@@ -6,6 +6,7 @@ export type HarnessMode = "split" | "wysiwyg";
 export const editorRuntimePath = path.join(process.cwd(), "media", "wysiwyg", "editor.js");
 const codiconStylePath = path.join(process.cwd(), "node_modules", "@vscode", "codicons", "dist", "codicon.css");
 const codiconFontPath = path.join(process.cwd(), "node_modules", "@vscode", "codicons", "dist", "codicon.ttf");
+const previewStylePath = path.join(process.cwd(), "media", "preview.css");
 const editorStylePath = path.join(process.cwd(), "media", "wysiwyg", "editor.css");
 
 interface HarnessOptions {
@@ -14,6 +15,8 @@ interface HarnessOptions {
   previewHtml?: string;
   headings?: Array<{ level: number; text: string; slug?: string; line: number }>;
   imageResources?: Array<{ source: string; resolved: string }>;
+  bodyClass?: string;
+  bodyStyle?: string;
 }
 
 export function createWebviewHarnessHtml(options: HarnessOptions): string {
@@ -36,7 +39,10 @@ export function createWebviewHarnessHtml(options: HarnessOptions): string {
       mathEdit: "Edit",
       mathDone: "Done",
       rawHtmlEscaped: "Raw HTML escaped",
+      footnote: "Footnote",
       noHeadings: "No headings",
+      outlineRevealCurrent: "Reveal current heading",
+      outlineCollapse: "Collapse outline",
       toolbar: {}
     }
   });
@@ -47,27 +53,35 @@ export function createWebviewHarnessHtml(options: HarnessOptions): string {
   <meta charset="utf-8">
   <title>Super Markdown toolbar harness</title>
   <style>${readCodiconStyle()}</style>
+  <style>${fs.readFileSync(previewStylePath, "utf8")}</style>
   <style>${fs.readFileSync(editorStylePath, "utf8")}</style>
   <style>
     body { margin: 0; font-family: sans-serif; }
-    .workbench-shell { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding: 16px; }
-    .editor-toolbar-slot { grid-column: 1 / -1; display: flex; gap: 4px; flex-wrap: wrap; }
+    .workbench-shell { display: grid; grid-template-columns: 44px minmax(0, 1fr) minmax(0, 1fr); gap: 0; padding: 16px; }
+    .editor-toolbar-slot { grid-column: 1 / -1; display: flex; min-width: 0; gap: 4px; flex-wrap: wrap; overflow: hidden; }
     .toolbar-group { display: inline-flex; gap: 2px; }
     .toolbar-menu[hidden] { display: none; }
+    body.harness-compact-side-panel #side-panel { display: none; }
+    body.harness-compact-side-panel.side-panel-open #side-panel { display: block; }
     .source-editor, .visual-editor, .markdown-preview { height: 220px; min-height: 220px; border: 1px solid #ccc; overflow: auto; }
     .source-editor { width: 100%; }
     .visual-editor { display: block; position: relative; inset: auto; padding: 12px; }
     .visual-editor .milkdown { max-width: none; }
   </style>
 </head>
-<body>
+<body class="${escapeAttribute(options.bodyClass ?? "")}" style="${escapeAttribute(options.bodyStyle ?? "")}">
   <div class="workbench-shell">
-    <button id="side-panel-toggle" type="button" aria-expanded="false">Navigation</button>
+    <button id="side-panel-toggle" class="side-panel-toggle" type="button" aria-expanded="false" data-hover-tooltip="Document navigation" aria-label="Document navigation">Navigation</button>
     <aside id="side-panel" aria-hidden="true">
-      <button id="outline-current" type="button">Current</button>
-      <button id="side-panel-collapse" type="button">Collapse</button>
-      <input id="outline-search" type="search">
-      <nav id="outline"></nav>
+      <div class="panel-heading">
+        <span class="panel-title">Headings</span>
+        <button id="outline-current" class="outline-tool" type="button" data-hover-tooltip="Reveal current heading" aria-label="Reveal current heading">Current</button>
+        <button id="side-panel-collapse" class="outline-tool" type="button" data-hover-tooltip="Collapse outline" aria-label="Collapse outline">Collapse</button>
+      </div>
+      <section class="panel-content">
+        <input id="outline-search" type="search">
+        <nav id="outline"></nav>
+      </section>
     </aside>
     <div id="editor-toolbar-slot" class="editor-toolbar-slot" aria-label="Markdown toolbar"></div>
     <section class="editor-panel">
@@ -76,6 +90,7 @@ export function createWebviewHarnessHtml(options: HarnessOptions): string {
         <div id="visual-editor" class="visual-editor" aria-label="Visual Markdown editor"></div>
       </main>
     </section>
+    <div id="split-resizer" class="split-resizer" role="separator" aria-orientation="vertical" aria-valuemin="20" aria-valuemax="80" aria-valuenow="50" tabindex="0" data-hover-tooltip="Resize editor and preview panes" aria-label="Resize editor and preview panes"></div>
     <aside class="preview-panel">
       <main id="preview" class="markdown-preview"></main>
     </aside>
@@ -113,4 +128,8 @@ function escapeHtml(value: string): string {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
+}
+
+function escapeAttribute(value: string): string {
+  return escapeHtml(value);
 }

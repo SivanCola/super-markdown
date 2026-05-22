@@ -53,6 +53,7 @@ const EXPECTATIONS: Record<string, ActionExpectation> = {
   toc: { message: { type: "toolbarCommand", action: "toc" } },
   organizeMarkdown: { message: { type: "runHostCommand", command: "organizeMarkdown" } },
   switchBackgroundTheme: { message: { type: "toolbarCommand", action: "switchBackgroundTheme" } },
+  switchDisplayLanguage: { message: { type: "toolbarCommand", action: "switchDisplayLanguage" } },
   more: { menu: "more" },
   "export-html": { message: { type: "export", format: "html" } },
   "export-pdf": { message: { type: "export", format: "pdf" } },
@@ -72,7 +73,223 @@ test("toolbar uses Codicon icons with a small custom fallback set", async ({ pag
   await expect(page.locator(".toolbar-custom-icon")).toHaveCount(4);
   await expect(page.locator('[data-action="inline-code"] .codicon-code')).toBeVisible();
   await expect(page.locator('[data-action="switchBackgroundTheme"] .codicon-color-mode')).toBeVisible();
+  await expect(page.locator('[data-action="switchDisplayLanguage"] .codicon-globe')).toBeVisible();
   await expect(page.locator('[data-menu-toggle="more"] .codicon-more')).toBeVisible();
+});
+
+test("toolbar places display language switch between reading theme and help", async ({ page }) => {
+  await openHarness(page, "split");
+
+  const helpActions = await page.locator(".toolbar-group-help [data-action]").evaluateAll((buttons) =>
+    buttons.map((button) => (button as HTMLElement).dataset.action)
+  );
+
+  expect(helpActions).toEqual(["switchBackgroundTheme", "switchDisplayLanguage", "help"]);
+});
+
+test("toolbar menu keeps internal theme colors over dark VS Code dropdown colors", async ({ page }) => {
+  await openHarness(page, "split", {
+    bodyClass: "sm-theme-paper vscode-dark",
+    bodyStyle: [
+      "--vscode-dropdown-background: #050505",
+      "--vscode-dropdown-foreground: #fafafa",
+      "--vscode-icon-foreground: #fafafa",
+      "--vscode-list-hoverBackground: #111111"
+    ].join("; ")
+  });
+
+  await openToolbarMenu(page, "more");
+
+  const colors = await page.evaluate(() => {
+    function resolveCssColor(value: string, property: "backgroundColor" | "color"): string {
+      const probe = document.createElement("div");
+      if (property === "backgroundColor") {
+        probe.style.backgroundColor = value.trim();
+      } else {
+        probe.style.color = value.trim();
+      }
+      document.body.append(probe);
+      const color = getComputedStyle(probe)[property];
+      probe.remove();
+      return color;
+    }
+
+    const bodyStyle = getComputedStyle(document.body);
+    const menu = document.querySelector('[data-menu="more"]') as HTMLElement;
+    const menuButton = menu.querySelector(".toolbar-menu-button") as HTMLElement;
+    const menuIcon = menuButton.querySelector(".toolbar-menu-icon") as HTMLElement;
+    const toggle = document.querySelector('[data-menu-toggle="more"]') as HTMLElement;
+
+    return {
+      darkDropdownBackground: resolveCssColor("var(--vscode-dropdown-background)", "backgroundColor"),
+      menuBackground: getComputedStyle(menu).backgroundColor,
+      menuBackgroundToken: resolveCssColor(bodyStyle.getPropertyValue("--sm-menu-bg"), "backgroundColor"),
+      menuText: getComputedStyle(menuButton).color,
+      menuTextToken: resolveCssColor(bodyStyle.getPropertyValue("--sm-menu-text"), "color"),
+      menuIcon: getComputedStyle(menuIcon).color,
+      menuIconToken: resolveCssColor(bodyStyle.getPropertyValue("--sm-menu-icon"), "color"),
+      toggleBackground: getComputedStyle(toggle).backgroundColor,
+      toggleBackgroundToken: resolveCssColor(bodyStyle.getPropertyValue("--sm-toolbar-active-bg"), "backgroundColor")
+    };
+  });
+
+  expect(colors.menuBackground).toBe(colors.menuBackgroundToken);
+  expect(colors.menuText).toBe(colors.menuTextToken);
+  expect(colors.menuIcon).toBe(colors.menuIconToken);
+  expect(colors.toggleBackground).toBe(colors.toggleBackgroundToken);
+  expect(colors.menuBackground).not.toBe(colors.darkDropdownBackground);
+
+  await page.locator('[data-menu="more"] .toolbar-menu-button').first().hover();
+  const hoverColors = await page.evaluate(() => {
+    const bodyStyle = getComputedStyle(document.body);
+    const menuButton = document.querySelector('[data-menu="more"] .toolbar-menu-button') as HTMLElement;
+    const probe = document.createElement("div");
+    probe.style.backgroundColor = bodyStyle.getPropertyValue("--sm-menu-hover-bg").trim();
+    document.body.append(probe);
+    const hoverToken = getComputedStyle(probe).backgroundColor;
+    probe.remove();
+    return {
+      menuHover: getComputedStyle(menuButton).backgroundColor,
+      menuHoverToken: hoverToken
+    };
+  });
+  expect(hoverColors.menuHover).toBe(hoverColors.menuHoverToken);
+});
+
+test("reading themes choose outline and code colors independently from the VS Code shell", async ({ page }) => {
+  await openHarness(page, "split", {
+    bodyClass: "sm-theme-paper vscode-dark",
+    bodyStyle: [
+      "--vscode-foreground: #cccccc",
+      "--vscode-descriptionForeground: #bbbbbb",
+      "--vscode-scrollbarSlider-background: #000000",
+      "--vscode-scrollbarSlider-hoverBackground: #000000"
+    ].join("; "),
+    headings: [
+      { level: 2, text: "Readable heading", slug: "readable-heading", line: 0 },
+      { level: 2, text: "Readable second heading", slug: "readable-second-heading", line: 4 }
+    ],
+    previewHtml: `
+      <figure class="code-block">
+        <figcaption><span class="code-language">json</span></figcaption>
+        <pre><code class="shiki"><span style="--shiki-light:#111111;--shiki-dark:#eeeeee">"code"</span></code></pre>
+      </figure>
+    `
+  });
+
+  await page.locator("#side-panel-toggle").click();
+  await expect(page.locator(".outline-item")).toHaveCount(2);
+
+  const colors = await page.evaluate(() => {
+    function resolveCssColor(value: string, property: "backgroundColor" | "color"): string {
+      const probe = document.createElement("div");
+      if (property === "backgroundColor") {
+        probe.style.backgroundColor = value.trim();
+      } else {
+        probe.style.color = value.trim();
+      }
+      document.body.append(probe);
+      const color = getComputedStyle(probe)[property];
+      probe.remove();
+      return color;
+    }
+
+    const visualRoot = document.querySelector(".visual-editor") as HTMLElement;
+    visualRoot.innerHTML = `
+      <div class="ProseMirror">
+        <figure class="visual-code-node-view">
+          <div class="visual-code-frame">
+            <pre class="visual-code-highlight"><code><span style="--shiki-light:#111111;--shiki-dark:#eeeeee">"code"</span></code></pre>
+          </div>
+        </figure>
+      </div>
+    `;
+
+    const bodyStyle = getComputedStyle(document.body);
+    const outline = document.querySelectorAll(".outline-item")[1] as HTMLElement;
+    const outlineScroller = document.querySelector("#outline") as HTMLElement;
+    const sourceEditor = document.querySelector("#source-editor") as HTMLElement;
+    const preview = document.querySelector("#preview") as HTMLElement;
+    const previewToken = document.querySelector(".code-block .shiki span") as HTMLElement;
+    const visualToken = document.querySelector(".visual-code-highlight span") as HTMLElement;
+
+    return {
+      outline: getComputedStyle(outline).color,
+      themeText: resolveCssColor(bodyStyle.getPropertyValue("--sm-text"), "color"),
+      shellForeground: resolveCssColor("var(--vscode-foreground)", "color"),
+      outlineScrollbarThumb: getComputedStyle(outlineScroller, "::-webkit-scrollbar-thumb").backgroundColor,
+      sourceScrollbarThumb: getComputedStyle(sourceEditor, "::-webkit-scrollbar-thumb").backgroundColor,
+      previewScrollbarThumb: getComputedStyle(preview, "::-webkit-scrollbar-thumb").backgroundColor,
+      expectedScrollbarThumb: resolveCssColor(bodyStyle.getPropertyValue("--sm-scrollbar-thumb"), "backgroundColor"),
+      shellScrollbarThumb: resolveCssColor("var(--vscode-scrollbarSlider-background)", "backgroundColor"),
+      previewToken: getComputedStyle(previewToken).color,
+      visualToken: getComputedStyle(visualToken).color,
+      expectedLightToken: resolveCssColor("#111111", "color"),
+      expectedDarkToken: resolveCssColor("#eeeeee", "color")
+    };
+  });
+
+  expect(colors.outline).toBe(colors.themeText);
+  expect(colors.outline).not.toBe(colors.shellForeground);
+  expect(colors.outlineScrollbarThumb).toBe(colors.expectedScrollbarThumb);
+  expect(colors.sourceScrollbarThumb).toBe(colors.expectedScrollbarThumb);
+  expect(colors.previewScrollbarThumb).toBe(colors.expectedScrollbarThumb);
+  expect(colors.sourceScrollbarThumb).not.toBe(colors.shellScrollbarThumb);
+  expect(colors.previewToken).toBe(colors.expectedLightToken);
+  expect(colors.visualToken).toBe(colors.expectedLightToken);
+  expect(colors.previewToken).not.toBe(colors.expectedDarkToken);
+});
+
+test("webview controls share delayed hover tooltips", async ({ page }) => {
+  await openHarness(page, "split");
+
+  await expect(page.locator('[data-action="bold"]')).not.toHaveAttribute("title", /.+/);
+  await page.locator('[data-action="bold"]').hover();
+  await expect(page.locator("#hover-tooltip")).toHaveText("Bold");
+  await page.mouse.move(0, 0);
+  await expect(page.locator("#hover-tooltip")).toBeHidden();
+
+  await page.locator("#side-panel-toggle").click();
+
+  await page.locator("#outline-current").hover();
+  await page.waitForTimeout(250);
+  await expect(page.locator(".hover-tooltip.is-visible")).toHaveCount(0, { timeout: 100 });
+  await expect(page.locator("#hover-tooltip")).toHaveText("Reveal current heading");
+
+  await page.locator("#side-panel-collapse").hover();
+  await expect(page.locator("#hover-tooltip")).toHaveText("Collapse outline");
+
+  await page.mouse.move(0, 0);
+  await expect(page.locator("#hover-tooltip")).toBeHidden();
+});
+
+test("split resizer adjusts editor and preview widths", async ({ page }) => {
+  await openHarness(page, "split", { bodyClass: "harness-compact-side-panel" });
+
+  const editorBefore = await page.locator(".editor-panel").boundingBox();
+  const previewBefore = await page.locator(".preview-panel").boundingBox();
+  const resizer = await page.locator("#split-resizer").boundingBox();
+  expect(editorBefore).not.toBeNull();
+  expect(previewBefore).not.toBeNull();
+  expect(resizer).not.toBeNull();
+
+  await page.mouse.move(resizer!.x + resizer!.width / 2, resizer!.y + resizer!.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(resizer!.x - 120, resizer!.y + resizer!.height / 2);
+  await page.mouse.up();
+
+  const editorAfter = await page.locator(".editor-panel").boundingBox();
+  const previewAfter = await page.locator(".preview-panel").boundingBox();
+  expect(editorAfter!.width).toBeLessThan(editorBefore!.width - 40);
+  expect(previewAfter!.width).toBeGreaterThan(previewBefore!.width + 40);
+
+  const state = await page.evaluate(() => (window as unknown as { __state?: { splitRatio?: number } }).__state);
+  expect(state?.splitRatio).toBeLessThan(0.5);
+  await expect(page.locator("#split-resizer")).toHaveAttribute("aria-valuenow", String(Math.round((state?.splitRatio || 0) * 100)));
+
+  await page.locator("#split-resizer").focus();
+  await page.keyboard.press("Enter");
+  await expect(page.locator("#split-resizer")).toHaveAttribute("aria-valuenow", "50");
 });
 
 test("mermaid preview failures stay local to the diagram", async ({ page }) => {
@@ -384,7 +601,7 @@ test.describe("wysiwyg rich editing scenarios", () => {
       ].join("\n")
     });
 
-    await expect(page.locator(".ProseMirror")).toBeVisible();
+    await expect(page.locator(".visual-editor")).toBeVisible();
     await expect(page.locator(".visual-html-source").first()).toHaveJSProperty("tagName", "SPAN");
     await expect(page.locator(".visual-safe-html-kbd")).toHaveCount(3);
     await expect.poll(async () => {
@@ -411,14 +628,15 @@ test.describe("wysiwyg rich editing scenarios", () => {
     expect(uploadMessage.images[0].dataUrl).toContain("data:image/png;base64,");
 
     await clearMessages(page);
-    await page.evaluate(() => {
+    await page.evaluate((requestId) => {
       window.dispatchEvent(new MessageEvent("message", {
         data: {
           type: "uploadImagesResult",
+          requestId,
           images: [{ markdown: "![diagram](assets/diagram.png)" }]
         }
       }));
-    });
+    }, uploadMessage.requestId);
     await expectEditMessage(page, ["![diagram](assets/diagram.png)"]);
 
     await clearMessages(page);
@@ -431,6 +649,51 @@ test.describe("wysiwyg rich editing scenarios", () => {
       }));
     });
     await expectPostedMessage(page, { type: "error", message: "UploadError: Cannot write image" });
+    await expect.poll(async () => {
+      const messages = await readMessages(page);
+      return messages.filter((message) => message.type === "edit");
+    }).toEqual([]);
+  });
+
+  test("pastes and drops images into the split source editor", async ({ page }) => {
+    await openHarness(page, "split", { text: "before\nafter" });
+    await clearMessages(page);
+    await placeSourceCursor(page, "before\n".length);
+    await dispatchImagePaste(page, "#source-editor", "pasted.png");
+
+    const pasteUpload = await waitForUploadImagesMessage(page);
+    expect(pasteUpload.images[0].name).toBe("pasted.png");
+    await resolveUpload(page, pasteUpload.requestId, "![pasted.png](assets/pasted.png)");
+    await expectSourceValue(page, ["before\n\n![pasted.png](assets/pasted.png)", "after"]);
+
+    await clearMessages(page);
+    await placeSourceCursor(page, await page.locator("#source-editor").evaluate((element) => (element as HTMLTextAreaElement).value.length));
+    await dispatchImageDrop(page, "#source-editor", "dropped.png");
+    const dropUpload = await waitForUploadImagesMessage(page);
+    expect(dropUpload.images[0].name).toBe("dropped.png");
+    await resolveUpload(page, dropUpload.requestId, "![dropped.png](assets/dropped.png)");
+    await expectSourceValue(page, ["![dropped.png](assets/dropped.png)"]);
+  });
+
+  test("pastes and drops images into the WYSIWYG editor at the active document position", async ({ page }) => {
+    await openHarness(page, "wysiwyg", { text: "alpha\n\nomega" });
+    await clearMessages(page);
+    await page.locator(".ProseMirror").click();
+    await page.keyboard.press(await getSelectAllShortcut(page));
+    await page.keyboard.press("ArrowRight");
+    await dispatchImagePaste(page, ".ProseMirror", "visual-paste.png");
+
+    const pasteUpload = await waitForUploadImagesMessage(page);
+    expect(pasteUpload.images[0].name).toBe("visual-paste.png");
+    await resolveUpload(page, pasteUpload.requestId, "![visual-paste.png](assets/visual-paste.png)");
+    await expectEditMessage(page, ["assets/visual-paste.png"]);
+
+    await clearMessages(page);
+    await dispatchImageDrop(page, ".ProseMirror", "visual-drop.png");
+    const dropUpload = await waitForUploadImagesMessage(page);
+    expect(dropUpload.images[0].name).toBe("visual-drop.png");
+    await resolveUpload(page, dropUpload.requestId, "![visual-drop.png](assets/visual-drop.png)");
+    await expectEditMessage(page, ["assets/visual-drop.png"]);
   });
 
   test("uses outline headings to navigate a long WYSIWYG document", async ({ page }) => {
@@ -457,6 +720,9 @@ test.describe("wysiwyg rich editing scenarios", () => {
         .join("")
     });
 
+    await page.locator("#side-panel-toggle").click();
+    await expect(page.locator("#side-panel")).toBeVisible();
+    await page.locator('.outline-item[data-line="102"]').scrollIntoViewIfNeeded();
     await page.locator('.outline-item[data-line="102"]').click();
     await expect(page.locator(".outline-item.is-active")).toContainText("Section 18");
     const visualScrollTop = await page.locator(".visual-editor").evaluate((element) => element.scrollTop);
@@ -496,7 +762,8 @@ async function openHarness(page: Page, mode: HarnessMode, options: OpenHarnessOp
   await page.waitForFunction(() => document.body.dataset.scriptState === "runtime-ready");
   await expect(page.locator("body")).not.toHaveAttribute("data-script-state", "error");
   if (mode === "wysiwyg") {
-    await expect(page.locator(".ProseMirror")).toBeVisible();
+    await expect(page.locator(".visual-editor")).toBeVisible();
+    await expect(page.locator(".ProseMirror")).toHaveCount(1);
   }
 }
 
@@ -576,7 +843,7 @@ async function expectLatestEditText(page: Page, requiredFragments: string[], for
   }, { required: requiredFragments, forbidden: forbiddenFragments });
 }
 
-async function waitForUploadImagesMessage(page: Page): Promise<{ type: string; images: Array<{ name: string; dataUrl: string }> }> {
+async function waitForUploadImagesMessage(page: Page): Promise<{ type: string; requestId: string; images: Array<{ name: string; dataUrl: string }> }> {
   const index = await page.waitForFunction(() => {
     const messages = ((window as unknown as { __messages?: HostMessage[] }).__messages) || [];
     const matchIndex = messages.findIndex((message) => message.type === "uploadImages" && Array.isArray(message.images));
@@ -585,7 +852,51 @@ async function waitForUploadImagesMessage(page: Page): Promise<{ type: string; i
   const messageIndex = Number(await index.jsonValue()) - 1;
   return page.evaluate((targetIndex) => {
     return ((window as unknown as { __messages: HostMessage[] }).__messages)[targetIndex];
-  }, messageIndex) as Promise<{ type: string; images: Array<{ name: string; dataUrl: string }> }>;
+  }, messageIndex) as Promise<{ type: string; requestId: string; images: Array<{ name: string; dataUrl: string }> }>;
+}
+
+async function resolveUpload(page: Page, requestId: string, markdown: string): Promise<void> {
+  await page.evaluate(({ id, imageMarkdown }) => {
+    window.dispatchEvent(new MessageEvent("message", {
+      data: {
+        type: "uploadImagesResult",
+        requestId: id,
+        images: [{ markdown: imageMarkdown }]
+      }
+    }));
+  }, { id: requestId, imageMarkdown: markdown });
+}
+
+async function placeSourceCursor(page: Page, position: number): Promise<void> {
+  await page.locator("#source-editor").focus();
+  await page.evaluate((cursor) => {
+    const source = document.getElementById("source-editor") as HTMLTextAreaElement;
+    source.setSelectionRange(cursor, cursor);
+    source.dispatchEvent(new Event("select", { bubbles: true }));
+  }, position);
+}
+
+async function dispatchImagePaste(page: Page, selector: string, name: string): Promise<void> {
+  await dispatchImageTransferEvent(page, selector, name, "paste");
+}
+
+async function dispatchImageDrop(page: Page, selector: string, name: string): Promise<void> {
+  await dispatchImageTransferEvent(page, selector, name, "drop");
+}
+
+async function dispatchImageTransferEvent(page: Page, selector: string, name: string, eventName: "paste" | "drop"): Promise<void> {
+  await page.locator(selector).evaluate((target, options) => {
+    const transfer = new DataTransfer();
+    transfer.items.add(new File([new Uint8Array([1, 2, 3])], options.name, { type: "image/png" }));
+    const event = options.eventName === "paste"
+      ? new ClipboardEvent("paste", { bubbles: true, cancelable: true, clipboardData: transfer })
+      : new DragEvent("drop", { bubbles: true, cancelable: true, dataTransfer: transfer });
+    Object.defineProperty(event, options.eventName === "paste" ? "clipboardData" : "dataTransfer", {
+      configurable: true,
+      value: transfer
+    });
+    target.dispatchEvent(event);
+  }, { name, eventName });
 }
 
 async function clearMessages(page: Page): Promise<void> {

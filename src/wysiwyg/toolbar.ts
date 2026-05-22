@@ -8,7 +8,7 @@ export const TOOLBAR_GROUPS: ToolbarGroup[] = [
   { name: "structure", actions: ["heading", "hr", "quote", "list", "ordered-list", "task", "task-checked"] },
   { name: "insert", actions: ["link", "image", "inline-code", "code", "table"] },
   { name: "advanced", actions: ["math", "mermaid", "toc", "organizeMarkdown", "more"] },
-  { name: "help", actions: ["switchBackgroundTheme", "help"] }
+  { name: "help", actions: ["switchBackgroundTheme", "switchDisplayLanguage", "help"] }
 ];
 
 export const HEADING_MENU_ACTIONS = ["heading-1", "heading-2", "heading-3", "heading-4", "heading-5", "heading-6"];
@@ -19,6 +19,7 @@ export const HOST_TOOLBAR_ACTIONS = new Set([
   "toc",
   "organizeMarkdown",
   "switchBackgroundTheme",
+  "switchDisplayLanguage",
   "help",
   "export-html",
   "export-pdf",
@@ -52,6 +53,7 @@ const TOOLBAR_CODICON_ACTIONS: Record<string, string> = {
   toc: "list-tree",
   organizeMarkdown: "tools",
   switchBackgroundTheme: "color-mode",
+  switchDisplayLanguage: "globe",
   help: "question",
   more: "more",
   "export-html": "export",

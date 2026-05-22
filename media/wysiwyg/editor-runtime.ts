@@ -20,6 +20,7 @@ import { listener, listenerCtx } from "@milkdown/kit/plugin/listener";
 import { clipboard } from "@milkdown/kit/plugin/clipboard";
 import { history } from "@milkdown/kit/plugin/history";
 import { trailing } from "@milkdown/kit/plugin/trailing";
+import { upload, uploadConfig } from "@milkdown/kit/plugin/upload";
 import { $nodeSchema, $remark, callCommand, getMarkdown, insert, replaceAll, replaceRange } from "@milkdown/kit/utils";
 import {
   CODE_BLOCK_CLASSES,
@@ -64,18 +65,21 @@ type Payload = {
   translations?: {
     toolbar?: Record<string, string>;
     noHeadings?: string;
+    outlineRevealCurrent?: string;
+    outlineCollapse?: string;
     copiedCode?: string;
     copyCode?: string;
-	    codeTheme?: string;
-	    codeThemeAuto?: string;
-	    codeThemeLight?: string;
-	    codeThemeDark?: string;
-	    editLanguage?: string;
-	    mathEdit?: string;
-	    mathDone?: string;
-	    rawHtmlEscaped?: string;
-	  };
-	};
+    codeTheme?: string;
+    codeThemeAuto?: string;
+    codeThemeLight?: string;
+    codeThemeDark?: string;
+    editLanguage?: string;
+    mathEdit?: string;
+    mathDone?: string;
+    rawHtmlEscaped?: string;
+    footnote?: string;
+  };
+};
 
 const vscode = acquireVsCodeApi();
 const payloadElement = document.getElementById("payload") as HTMLElement | null;
@@ -109,7 +113,8 @@ const visualLabels = {
   editLanguage: translations.editLanguage || "Edit language",
   mathEdit: translations.mathEdit || "Edit",
   mathDone: translations.mathDone || "Done",
-  rawHtmlEscaped: translations.rawHtmlEscaped || "Raw HTML escaped"
+  rawHtmlEscaped: translations.rawHtmlEscaped || "Raw HTML escaped",
+  footnote: translations.footnote || "Footnote"
 };
 const mathRenderOptions = { katexEnabled: payload.katexEnabled !== false };
 const sourceEditor = mustElement<HTMLTextAreaElement>("source-editor");
@@ -122,10 +127,18 @@ const sidePanelCollapseElement = document.getElementById("side-panel-collapse") 
 const outlineCurrentElement = document.getElementById("outline-current") as HTMLButtonElement | null;
 const outlineElement = mustElement<HTMLElement>("outline");
 const searchElement = mustElement<HTMLInputElement>("outline-search");
+const editorPanelElement = document.querySelector(".editor-panel") as HTMLElement | null;
+const previewPanelElement = document.querySelector(".preview-panel") as HTMLElement | null;
+const splitResizerElement = document.getElementById("split-resizer") as HTMLElement | null;
+const initialRuntimeState = readRuntimeState();
+const DEFAULT_SPLIT_RATIO = 0.5;
+const SPLIT_KEYBOARD_STEP = 0.03;
+const SPLIT_MIN_PANE_WIDTH = 240;
 
 let currentMarkdown = payload.text || "";
 let currentMode = normalizeMode(payload.mode || "source");
 let currentLayout = normalizeLayout(payload.layout || "workbench");
+let splitRatio = normalizeSplitRatio(initialRuntimeState.splitRatio);
 let previewState = normalizePreviewState(payload.preview);
 let imageResources = normalizeImageResources(payload.imageResources);
 let milkdownEditor: Editor | null = null;
@@ -143,6 +156,31 @@ let activeSourceSelection = { start: 0, end: 0 };
 let sidePanelOpen = false;
 let currentOutlineHeadings: PreviewState["headings"] = [];
 let activeOutlineId = "";
+let hoverTooltipTimer: number | undefined;
+let hoverTooltipElement: HTMLElement | null = null;
+let hoverTooltipTarget: HTMLElement | null = null;
+let splitResizePointerId: number | null = null;
+const HOVER_TOOLTIP_TARGET_SELECTOR = [
+  "[data-hover-tooltip]",
+  ".toolbar-button",
+  ".toolbar-menu-button",
+  ".side-panel-toggle",
+  ".outline-tool",
+  ".outline-item",
+  ".visual-math-inline",
+  ".visual-footnote-reference",
+  ".visual-html-source",
+  ".mermaid-render-error",
+  `.${CODE_BLOCK_CLASSES.language}`,
+  `.${CODE_BLOCK_CLASSES.toneButton}`,
+  `.${CODE_BLOCK_CLASSES.copyButton}`
+].join(",");
+
+type UploadedMarkdownImage = { id?: string; name?: string; markdown: string };
+const pendingImageUploads = new Map<string, {
+  resolve: (images: UploadedMarkdownImage[]) => void;
+  reject: (error: unknown) => void;
+}>();
 
 async function boot(): Promise<void> {
   try {
@@ -151,6 +189,7 @@ async function boot(): Promise<void> {
     renderPreview();
     renderSidePanels(currentMarkdown);
     bindEvents();
+    applySplitRatio(false);
     applyLayout();
     setScriptState("runtime-ready", "ready");
     post("ready");
@@ -203,6 +242,25 @@ function normalizeMode(mode: string): string {
 
 function normalizeLayout(layout: string): string {
   return ["workbench", "editorOnly", "splitEdit", "previewOnly"].includes(layout) ? layout : "workbench";
+}
+
+function readRuntimeState(): Record<string, unknown> {
+  const state = vscode.getState();
+  return state && typeof state === "object" ? state as Record<string, unknown> : {};
+}
+
+function saveRuntimeState(update: Record<string, unknown>): void {
+  vscode.setState({ ...readRuntimeState(), ...update });
+}
+
+function normalizeSplitRatio(value: unknown): number {
+  return typeof value === "number" && Number.isFinite(value)
+    ? clamp(value, 0.2, 0.8)
+    : DEFAULT_SPLIT_RATIO;
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(Math.max(value, min), max);
 }
 
 function normalizePreviewState(value: unknown): PreviewState | null {
@@ -307,12 +365,12 @@ function renderToolbarItem(action: string): string {
 }
 
 function toolbarButton(action: string, title: string, icon: string): string {
-  return `<button type="button" class="toolbar-button" data-action="${action}" title="${escapeAttribute(title)}" aria-label="${escapeAttribute(title)}"><span class="toolbar-icon" aria-hidden="true">${icon}</span></button>`;
+  return `<button type="button" class="toolbar-button" data-action="${action}" data-hover-tooltip="${escapeAttribute(title)}" aria-label="${escapeAttribute(title)}"><span class="toolbar-icon" aria-hidden="true">${icon}</span></button>`;
 }
 
 function toolbarMenu(action: string, title: string, icon: string, menuActions: string[], className: string): string {
   return `<div class="toolbar-menu-wrapper ${className}">
-    <button type="button" class="toolbar-button toolbar-menu-toggle" data-menu-toggle="${action}" title="${escapeAttribute(title)}" aria-label="${escapeAttribute(title)}" aria-expanded="false">
+    <button type="button" class="toolbar-button toolbar-menu-toggle" data-menu-toggle="${action}" data-hover-tooltip="${escapeAttribute(title)}" aria-label="${escapeAttribute(title)}" aria-expanded="false">
       <span class="toolbar-icon" aria-hidden="true">${icon}</span>
       <span class="toolbar-caret codicon codicon-arrow-small-down" aria-hidden="true"></span>
     </button>
@@ -324,7 +382,7 @@ function toolbarMenu(action: string, title: string, icon: string, menuActions: s
 
 function toolbarMenuButton(action: string): string {
   const title = toolbarTitle(action);
-  return `<button type="button" class="toolbar-menu-button" data-action="${action}" title="${escapeAttribute(title)}" aria-label="${escapeAttribute(title)}">
+  return `<button type="button" class="toolbar-menu-button" data-action="${action}" data-hover-tooltip="${escapeAttribute(title)}" aria-label="${escapeAttribute(title)}">
     <span class="toolbar-menu-icon" aria-hidden="true">${toolbarIcon(action)}</span>
     <span class="toolbar-menu-label">${escapeHtml(title)}</span>
   </button>`;
@@ -363,6 +421,7 @@ function toolbarTitle(action: string): string {
     more: label("more", "More"),
     organizeMarkdown: label("organizeMarkdown", "Organize Markdown"),
     switchBackgroundTheme: label("switchBackgroundTheme", "Switch Reading Theme"),
+    switchDisplayLanguage: label("switchDisplayLanguage", "Switch display language"),
     help: label("help", "Help"),
     "export-html": `${label("export", "Export")} HTML`,
     "export-pdf": `${label("export", "Export")} PDF`,
@@ -378,6 +437,13 @@ function bindEvents(): void {
     renderSidePanels(currentMarkdown);
     syncMilkdownFromMarkdown(currentMarkdown);
     syncToHost();
+  });
+  sourceEditor.addEventListener("paste", (event) => {
+    void handleSourceImagePaste(event);
+  });
+  sourceEditor.addEventListener("dragover", handleSourceImageDragOver);
+  sourceEditor.addEventListener("drop", (event) => {
+    void handleSourceImageDrop(event);
   });
   for (const eventName of ["focus", "select", "click", "keyup", "mouseup"]) {
     sourceEditor.addEventListener(eventName, rememberSourceSelection);
@@ -403,11 +469,20 @@ function bindEvents(): void {
   });
   previewElement.addEventListener("click", handleCodeBlockActionClick);
   visualEditor.addEventListener("click", handleCodeBlockActionClick);
+  visualEditor.addEventListener("paste", (event) => {
+    void handleVisualImagePaste(event);
+  });
+  visualEditor.addEventListener("dragover", handleVisualImageDragOver);
+  visualEditor.addEventListener("drop", (event) => {
+    void handleVisualImageDrop(event);
+  });
   sidePanelToggleElement.addEventListener("click", toggleSidePanelFromEvent);
   sidePanelCollapseElement?.addEventListener("click", () => setSidePanelOpen(false));
   outlineCurrentElement?.addEventListener("click", revealActiveOutlineItem);
   searchElement.addEventListener("input", () => renderSidePanels(currentMarkdown));
   outlineElement.addEventListener("click", handleOutlineClick);
+  bindHoverTooltips();
+  bindSplitResizer();
   document.addEventListener("click", (event) => {
     if (!toolbarElement.contains(event.target as Node)) {
       closeToolbarMenus();
@@ -419,6 +494,234 @@ function bindEvents(): void {
     }
   });
   window.addEventListener("message", handleHostMessage);
+}
+
+function bindHoverTooltips(): void {
+  document.addEventListener("mouseover", (event) => {
+    const target = getHoverTooltipTarget(event.target);
+    if (!target || target.contains(event.relatedTarget as Node | null)) {
+      return;
+    }
+    scheduleHoverTooltip(target);
+  });
+  document.addEventListener("mouseout", (event) => {
+    const target = getHoverTooltipTarget(event.target);
+    if (!target || target.contains(event.relatedTarget as Node | null)) {
+      return;
+    }
+    hideHoverTooltip();
+  });
+  document.addEventListener("focusin", (event) => {
+    const target = getHoverTooltipTarget(event.target);
+    if (target) {
+      scheduleHoverTooltip(target);
+    }
+  });
+  document.addEventListener("focusout", hideHoverTooltip);
+  document.addEventListener("click", (event) => {
+    if (getHoverTooltipTarget(event.target)) {
+      hideHoverTooltip();
+    }
+  });
+  window.addEventListener("scroll", hideHoverTooltip, true);
+  window.addEventListener("resize", hideHoverTooltip);
+}
+
+function getHoverTooltipTarget(target: EventTarget | null): HTMLElement | null {
+  return closestElement(target, HOVER_TOOLTIP_TARGET_SELECTOR);
+}
+
+function scheduleHoverTooltip(target: HTMLElement): void {
+  const title = target.getAttribute("title") || "";
+  const text = target.dataset.hoverTooltip || title || target.getAttribute("aria-label") || "";
+  if (!text.trim()) {
+    return;
+  }
+  if (!target.dataset.hoverTooltip) {
+    target.dataset.hoverTooltip = text;
+  }
+  if (title) {
+    target.removeAttribute("title");
+  }
+  hideHoverTooltip();
+  hoverTooltipTarget = target;
+  hoverTooltipTimer = window.setTimeout(() => showHoverTooltip(target, text), 500);
+}
+
+function showHoverTooltip(target: HTMLElement, text: string): void {
+  const tooltip = ensureHoverTooltip();
+  tooltip.textContent = text;
+  tooltip.style.visibility = "hidden";
+  tooltip.classList.add("is-visible");
+  target.setAttribute("aria-describedby", tooltip.id);
+
+  const targetRect = target.getBoundingClientRect();
+  const tooltipRect = tooltip.getBoundingClientRect();
+  const gap = 8;
+  const viewportPadding = 8;
+  const maxLeft = Math.max(viewportPadding, window.innerWidth - tooltipRect.width - viewportPadding);
+  const left = Math.min(
+    Math.max(viewportPadding, targetRect.left + targetRect.width / 2 - tooltipRect.width / 2),
+    maxLeft
+  );
+  const bottomTop = targetRect.bottom + gap;
+  const top = bottomTop + tooltipRect.height <= window.innerHeight - viewportPadding
+    ? bottomTop
+    : Math.max(viewportPadding, targetRect.top - tooltipRect.height - gap);
+
+  tooltip.style.left = `${Math.round(left)}px`;
+  tooltip.style.top = `${Math.round(top)}px`;
+  tooltip.style.visibility = "";
+}
+
+function ensureHoverTooltip(): HTMLElement {
+  if (hoverTooltipElement) {
+    return hoverTooltipElement;
+  }
+  hoverTooltipElement = document.createElement("div");
+  hoverTooltipElement.id = "hover-tooltip";
+  hoverTooltipElement.className = "hover-tooltip";
+  hoverTooltipElement.setAttribute("role", "tooltip");
+  document.body.appendChild(hoverTooltipElement);
+  return hoverTooltipElement;
+}
+
+function hideHoverTooltip(): void {
+  window.clearTimeout(hoverTooltipTimer);
+  hoverTooltipTimer = undefined;
+  hoverTooltipTarget?.removeAttribute("aria-describedby");
+  hoverTooltipTarget = null;
+  if (hoverTooltipElement) {
+    hoverTooltipElement.classList.remove("is-visible");
+    hoverTooltipElement.removeAttribute("style");
+  }
+}
+
+function bindSplitResizer(): void {
+  if (!splitResizerElement) {
+    return;
+  }
+  splitResizerElement.addEventListener("pointerdown", beginSplitResize);
+  splitResizerElement.addEventListener("pointermove", handleSplitResizePointerMove);
+  splitResizerElement.addEventListener("pointerup", endSplitResize);
+  splitResizerElement.addEventListener("pointercancel", endSplitResize);
+  splitResizerElement.addEventListener("lostpointercapture", endSplitResize);
+  splitResizerElement.addEventListener("dblclick", () => setSplitRatio(DEFAULT_SPLIT_RATIO, true));
+  splitResizerElement.addEventListener("keydown", handleSplitResizeKeydown);
+  window.addEventListener("resize", () => applySplitRatio(false));
+}
+
+function beginSplitResize(event: PointerEvent): void {
+  if (!isSplitResizeAvailable() || event.button !== 0 || !splitResizerElement) {
+    return;
+  }
+  event.preventDefault();
+  hideHoverTooltip();
+  splitResizePointerId = event.pointerId;
+  splitResizerElement.setPointerCapture(event.pointerId);
+  document.body.classList.add("is-resizing-split");
+  updateSplitRatioFromClientX(event.clientX);
+}
+
+function handleSplitResizePointerMove(event: PointerEvent): void {
+  if (splitResizePointerId !== event.pointerId) {
+    return;
+  }
+  event.preventDefault();
+  updateSplitRatioFromClientX(event.clientX);
+}
+
+function endSplitResize(event?: PointerEvent): void {
+  if (splitResizePointerId === null) {
+    return;
+  }
+  if (event && event.pointerId !== splitResizePointerId) {
+    return;
+  }
+  if (event && splitResizerElement?.hasPointerCapture(event.pointerId)) {
+    splitResizerElement.releasePointerCapture(event.pointerId);
+  }
+  splitResizePointerId = null;
+  document.body.classList.remove("is-resizing-split");
+}
+
+function handleSplitResizeKeydown(event: KeyboardEvent): void {
+  if (!isSplitResizeAvailable()) {
+    return;
+  }
+  if (event.key === "ArrowLeft") {
+    event.preventDefault();
+    setSplitRatio(splitRatio - SPLIT_KEYBOARD_STEP, true);
+  } else if (event.key === "ArrowRight") {
+    event.preventDefault();
+    setSplitRatio(splitRatio + SPLIT_KEYBOARD_STEP, true);
+  } else if (event.key === "Home") {
+    event.preventDefault();
+    setSplitRatio(0.2, true);
+  } else if (event.key === "End") {
+    event.preventDefault();
+    setSplitRatio(0.8, true);
+  } else if (event.key === "Enter" || event.key === " ") {
+    event.preventDefault();
+    setSplitRatio(DEFAULT_SPLIT_RATIO, true);
+  }
+}
+
+function updateSplitRatioFromClientX(clientX: number): void {
+  const bounds = getSplitResizeBounds();
+  if (!bounds) {
+    return;
+  }
+  setSplitRatio((clientX - bounds.left) / bounds.width, true, bounds.width);
+}
+
+function getSplitResizeBounds(): { left: number; width: number } | null {
+  if (!editorPanelElement || !previewPanelElement) {
+    return null;
+  }
+  const editorRect = editorPanelElement.getBoundingClientRect();
+  const previewRect = previewPanelElement.getBoundingClientRect();
+  const left = editorRect.left;
+  const right = previewRect.right;
+  const width = right - left;
+  return width > 0 ? { left, width } : null;
+}
+
+function setSplitRatio(nextRatio: number, persist: boolean, availableWidth?: number): void {
+  const bounds = availableWidth === undefined ? getSplitResizeBounds() : { width: availableWidth };
+  splitRatio = clampSplitRatio(nextRatio, bounds?.width);
+  applySplitRatio(persist);
+}
+
+function applySplitRatio(persist: boolean): void {
+  const editorSize = Math.round(splitRatio * 1000) / 1000;
+  const previewSize = Math.round((1 - splitRatio) * 1000) / 1000;
+  document.body.style.setProperty("--sm-split-editor-size", `${editorSize}fr`);
+  document.body.style.setProperty("--sm-split-preview-size", `${previewSize}fr`);
+  if (splitResizerElement) {
+    const percentage = Math.round(splitRatio * 100);
+    splitResizerElement.setAttribute("aria-valuenow", String(percentage));
+    splitResizerElement.setAttribute("aria-valuetext", `${percentage}%`);
+    splitResizerElement.setAttribute("aria-hidden", isSplitResizeAvailable() ? "false" : "true");
+  }
+  if (persist) {
+    saveRuntimeState({ splitRatio });
+  }
+}
+
+function clampSplitRatio(nextRatio: number, availableWidth?: number): number {
+  if (!Number.isFinite(nextRatio)) {
+    return splitRatio;
+  }
+  if (!availableWidth || availableWidth <= 0) {
+    return clamp(nextRatio, 0.2, 0.8);
+  }
+  const minimumRatio = Math.min(0.45, SPLIT_MIN_PANE_WIDTH / availableWidth);
+  return clamp(nextRatio, minimumRatio, 1 - minimumRatio);
+}
+
+function isSplitResizeAvailable(): boolean {
+  return Boolean(splitResizerElement && (currentMode === "split" || currentLayout === "splitEdit") && window.innerWidth > 820);
 }
 
 function handleHostMessage(event: MessageEvent): void {
@@ -436,12 +739,200 @@ function handleHostMessage(event: MessageEvent): void {
     }
     applyLayout();
   } else if (message.type === "uploadImagesResult") {
+    handleUploadImagesResult(message);
+  }
+}
+
+function handleUploadImagesResult(message: { requestId?: unknown; images?: unknown; error?: unknown }): void {
+  const requestId = typeof message.requestId === "string" ? message.requestId : "";
+  const pending = requestId ? pendingImageUploads.get(requestId) : undefined;
+  if (pending) {
+    pendingImageUploads.delete(requestId);
     if (Array.isArray(message.images)) {
-      insertMarkdown(message.images.map((image: { markdown?: string }) => image.markdown).filter(Boolean).join("\n"));
-    } else if (message.error !== undefined) {
-      insertMarkdown("![alt](image.png)");
-      post("error", { message: getErrorMessage(message.error) });
+      pending.resolve(normalizeUploadedMarkdownImages(message.images));
+    } else {
+      pending.reject(message.error === undefined ? new Error("Image upload failed") : message.error);
     }
+    return;
+  }
+
+  if (Array.isArray(message.images)) {
+    insertMarkdown(markdownFromUploadedImages(normalizeUploadedMarkdownImages(message.images)));
+  } else if (message.error !== undefined) {
+    post("error", { message: getErrorMessage(message.error) });
+  }
+}
+
+function normalizeUploadedMarkdownImages(images: unknown[]): UploadedMarkdownImage[] {
+  return images
+    .map((image) => {
+      const candidate = image as Partial<UploadedMarkdownImage>;
+      if (typeof candidate.markdown !== "string" || !candidate.markdown.trim()) {
+        return null;
+      }
+      return {
+        id: typeof candidate.id === "string" ? candidate.id : undefined,
+        name: typeof candidate.name === "string" ? candidate.name : undefined,
+        markdown: candidate.markdown
+      };
+    })
+    .filter((image): image is UploadedMarkdownImage => Boolean(image));
+}
+
+function markdownFromUploadedImages(images: UploadedMarkdownImage[]): string {
+  return images.map((image) => image.markdown).filter(Boolean).join("\n");
+}
+
+function createImageNodeFromMarkdown(markdown: string, imageNode: { createAndFill(attrs: Record<string, string>): ProseNode | null }): ProseNode | null {
+  const parsed = parseUploadedImageMarkdown(markdown);
+  if (!parsed) {
+    return null;
+  }
+  return imageNode.createAndFill({ src: parsed.src, alt: parsed.alt });
+}
+
+function parseUploadedImageMarkdown(markdown: string): { alt: string; src: string } | null {
+  const match = markdown.match(/^!\[((?:\\.|[^\]])*)\]\(([^)]+)\)$/);
+  if (!match) {
+    return null;
+  }
+  return {
+    alt: match[1].replace(/\\([[\\\]])/g, "$1"),
+    src: match[2].trim()
+  };
+}
+
+async function uploadImageFiles(files: File[]): Promise<UploadedMarkdownImage[]> {
+  const images = files.filter(isImageFile);
+  if (!images.length) {
+    return [];
+  }
+  const requestId = createUploadRequestId();
+  const payloadImages = await Promise.all(images.map(readImageFileData));
+  const result = new Promise<UploadedMarkdownImage[]>((resolve, reject) => {
+    pendingImageUploads.set(requestId, { resolve, reject });
+  });
+  post("uploadImages", { requestId, images: payloadImages });
+  return result;
+}
+
+function createUploadRequestId(): string {
+  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+function isImageFile(file: File): boolean {
+  return file.type.startsWith("image/");
+}
+
+function getImageFilesFromTransfer(dataTransfer: DataTransfer | null | undefined): File[] {
+  if (!dataTransfer) {
+    return [];
+  }
+  const files: File[] = [];
+  const seen = new Set<string>();
+  const addFile = (file: File | null) => {
+    if (!file || !isImageFile(file)) {
+      return;
+    }
+    const key = `${file.name}:${file.size}:${file.lastModified}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      files.push(file);
+    }
+  };
+
+  Array.from(dataTransfer.files || []).forEach(addFile);
+  Array.from(dataTransfer.items || []).forEach((item) => {
+    if (item.kind === "file" && item.type.startsWith("image/")) {
+      addFile(item.getAsFile());
+    }
+  });
+  return files;
+}
+
+async function handleSourceImagePaste(event: ClipboardEvent): Promise<void> {
+  const files = getImageFilesFromTransfer(event.clipboardData);
+  if (!files.length) {
+    return;
+  }
+  event.preventDefault();
+  await uploadAndInsertSourceImages(files);
+}
+
+function handleSourceImageDragOver(event: DragEvent): void {
+  const files = getImageFilesFromTransfer(event.dataTransfer);
+  if (!files.length) {
+    return;
+  }
+  event.preventDefault();
+  if (event.dataTransfer) {
+    event.dataTransfer.dropEffect = "copy";
+  }
+}
+
+async function handleSourceImageDrop(event: DragEvent): Promise<void> {
+  const files = getImageFilesFromTransfer(event.dataTransfer);
+  if (!files.length) {
+    return;
+  }
+  event.preventDefault();
+  sourceEditor.focus();
+  await uploadAndInsertSourceImages(files);
+}
+
+async function uploadAndInsertSourceImages(files: File[]): Promise<void> {
+  try {
+    const uploaded = await uploadImageFiles(files);
+    const markdown = markdownFromUploadedImages(uploaded);
+    if (markdown) {
+      insertSourceBlockSnippet(markdown);
+    }
+  } catch (error) {
+    post("error", { message: getErrorMessage(error) });
+  }
+}
+
+async function handleVisualImagePaste(event: ClipboardEvent): Promise<void> {
+  if (event.defaultPrevented) {
+    return;
+  }
+  const files = getImageFilesFromTransfer(event.clipboardData);
+  if (!files.length) {
+    return;
+  }
+  event.preventDefault();
+  await uploadAndInsertVisualImages(files);
+}
+
+function handleVisualImageDragOver(event: DragEvent): void {
+  const files = getImageFilesFromTransfer(event.dataTransfer);
+  if (!files.length) {
+    return;
+  }
+  event.preventDefault();
+  if (event.dataTransfer) {
+    event.dataTransfer.dropEffect = "copy";
+  }
+}
+
+async function handleVisualImageDrop(event: DragEvent): Promise<void> {
+  if (event.defaultPrevented) {
+    return;
+  }
+  const files = getImageFilesFromTransfer(event.dataTransfer);
+  if (!files.length) {
+    return;
+  }
+  event.preventDefault();
+  await uploadAndInsertVisualImages(files);
+}
+
+async function uploadAndInsertVisualImages(files: File[]): Promise<void> {
+  try {
+    const uploaded = await uploadImageFiles(files);
+    insertMarkdown(markdownFromUploadedImages(uploaded));
+  } catch (error) {
+    post("error", { message: getErrorMessage(error) });
   }
 }
 
@@ -587,6 +1078,8 @@ function createCodeBlockCopyButton(): HTMLButtonElement {
   button.className = CODE_BLOCK_CLASSES.copyButton;
   button.dataset.copyLabel = codeCopyLabels.copyLabel;
   button.dataset.copiedLabel = codeCopyLabels.copiedLabel;
+  button.dataset.hoverTooltip = codeCopyLabels.copyLabel;
+  button.setAttribute("aria-label", codeCopyLabels.copyLabel);
   button.textContent = codeCopyLabels.copyLabel;
   return button;
 }
@@ -624,7 +1117,7 @@ function createCodeBlockNodeView(node: ProseNode, view: unknown, getPos: (() => 
   const language = document.createElement("button");
   language.type = "button";
   language.className = `${CODE_BLOCK_CLASSES.language} visual-code-language-button`;
-  language.title = visualLabels.editLanguage;
+  language.dataset.hoverTooltip = visualLabels.editLanguage;
   language.setAttribute("aria-label", visualLabels.editLanguage);
 
   const languageInput = document.createElement("input");
@@ -1111,7 +1604,7 @@ function createMathInlineNodeView(node: ProseNode, view: unknown, getPos: (() =>
     currentNode = nextNode;
     const value = getNodeTextAttribute(nextNode, "value");
     dom.dataset.value = value;
-    dom.title = value;
+    dom.dataset.hoverTooltip = value;
     preview.innerHTML = renderKatexHtml(value, false, mathRenderOptions);
     if (!dom.classList.contains("is-editing")) {
       input.value = value;
@@ -1270,7 +1763,7 @@ function createFootnoteReferenceNodeView(node: ProseNode): NodeView {
     dom.id = model.referenceId;
     dom.dataset.label = model.label;
     dom.textContent = model.label;
-    dom.title = `Footnote ${model.label}`;
+    dom.dataset.hoverTooltip = `${visualLabels.footnote} ${model.label}`;
   };
   update(currentNode);
 
@@ -1342,7 +1835,7 @@ function createHtmlNodeView(node: ProseNode): NodeView {
     currentNode = nextNode;
     const value = getNodeTextAttribute(nextNode, "value");
     dom.dataset.value = value;
-    dom.title = `${visualLabels.rawHtmlEscaped}: ${value}`;
+    dom.dataset.hoverTooltip = `${visualLabels.rawHtmlEscaped}: ${value}`;
     source.innerHTML = renderInertInlineHtml(value);
   };
   update(currentNode);
@@ -1544,8 +2037,8 @@ async function renderMermaidNode(mermaid: MermaidRuntime, node: HTMLElement): Pr
 function markMermaidRenderError(node: HTMLElement, error: unknown, source = node.dataset.superMarkdownMermaidSource || node.textContent || ""): void {
   const message = getErrorMessage(error);
   node.dataset.superMarkdownMermaidError = message;
+  node.dataset.hoverTooltip = message;
   node.classList.add("mermaid-render-error");
-  node.title = message;
   node.textContent = source ? `${message}\n\n${source}` : message;
 }
 
@@ -1554,7 +2047,7 @@ function resetMermaidElement(node: HTMLElement, source: string): void {
   node.removeAttribute("data-processed");
   delete node.dataset.superMarkdownMermaidError;
   delete node.dataset.superMarkdownMermaidSource;
-  node.title = "";
+  delete node.dataset.hoverTooltip;
   node.textContent = source;
 }
 
@@ -1623,6 +2116,7 @@ function setMode(mode: string, notify: boolean): void {
 function applyMode(): void {
   document.body.classList.remove("mode-source", "mode-wysiwyg", "mode-preview", "mode-split");
   document.body.classList.add(`mode-${currentMode}`);
+  applySplitRatio(false);
   if (currentMode === "wysiwyg") {
     void ensureMilkdown().catch(() => undefined);
   }
@@ -1652,6 +2146,26 @@ async function ensureMilkdown(): Promise<void> {
           syncToHost();
         });
         ctx.update(nodeViewCtx, registerVisualNodeViews);
+        ctx.update(uploadConfig.key, (config) => ({
+          ...config,
+          enableHtmlFileUploader: false,
+          uploader: async (files, schema) => {
+            let uploaded: UploadedMarkdownImage[];
+            try {
+              uploaded = await uploadImageFiles(Array.from(files || []));
+            } catch (error) {
+              post("error", { message: getErrorMessage(error) });
+              throw error;
+            }
+            const imageNode = schema.nodes.image;
+            if (!imageNode) {
+              throw new Error("Missing image node schema");
+            }
+            return uploaded
+              .map((image) => createImageNodeFromMarkdown(image.markdown, imageNode))
+              .filter((node): node is ProseNode => Boolean(node));
+          }
+        }));
       })
       .use(commonmark)
       .use(gfm)
@@ -1662,6 +2176,7 @@ async function ensureMilkdown(): Promise<void> {
       .use(safeHtmlInlineSchema)
       .use(listener)
       .use(clipboard)
+      .use(upload)
       .use(history)
       .use(trailing);
     await milkdownEditor.create();
@@ -1708,6 +2223,10 @@ async function handleToolbarAction(action: string): Promise<void> {
     return;
   }
   if (action === "switchBackgroundTheme") {
+    post("toolbarCommand", { action });
+    return;
+  }
+  if (action === "switchDisplayLanguage") {
     post("toolbarCommand", { action });
     return;
   }
@@ -1905,6 +2424,30 @@ function insertSourceSnippet(snippet: string): void {
   syncToHost();
 }
 
+function insertSourceBlockSnippet(snippet: string): void {
+  if (!snippet) {
+    return;
+  }
+  const selection = getSourceSelection();
+  const prefix = getBlockInsertionPrefix(selection.start);
+  const suffix = selection.end < sourceEditor.value.length && !sourceEditor.value.slice(selection.end).startsWith("\n")
+    ? "\n\n"
+    : "";
+  sourceEditor.setRangeText(`${prefix}${snippet}${suffix}`, selection.start, selection.end, "end");
+  currentMarkdown = sourceEditor.value;
+  rememberSourceSelection();
+  syncMilkdownFromMarkdown(currentMarkdown);
+  syncToHost();
+}
+
+function getBlockInsertionPrefix(position: number): string {
+  const before = sourceEditor.value.slice(0, position);
+  if (!before || before.endsWith("\n\n")) {
+    return "";
+  }
+  return before.endsWith("\n") ? "\n" : "\n\n";
+}
+
 function needsBlockPadding(position: number): boolean {
   return position > 0 && !sourceEditor.value.slice(0, position).endsWith("\n\n");
 }
@@ -1941,8 +2484,15 @@ async function chooseImagesForInsert(): Promise<void> {
       if (!files.length) {
         return;
       }
-      const images = await Promise.all(files.map(readImageFileData));
-      post("uploadImages", { requestId: Date.now(), images });
+      const uploaded = await uploadImageFiles(files);
+      const markdown = markdownFromUploadedImages(uploaded);
+      if (currentMode === "wysiwyg" && milkdownEditor) {
+        insertMarkdown(markdown);
+      } else {
+        insertSourceBlockSnippet(markdown);
+      }
+    } catch (error) {
+      post("error", { message: getErrorMessage(error) });
     } finally {
       input.remove();
     }
@@ -2051,7 +2601,7 @@ function renderOutline(headings: PreviewState["headings"]): void {
       return `<div class="outline-node level-${heading.level}">
         <div class="outline-row">
           <span class="outline-disclosure-placeholder" aria-hidden="true"></span>
-          <button type="button" class="outline-item${id === activeOutlineId ? " is-active" : ""}" data-outline-id="${escapeAttribute(id)}" data-line="${heading.line}" data-slug="${escapeAttribute(heading.slug || "")}" title="${escapeAttribute(heading.text)}">${escapeHtml(heading.text)}</button>
+          <button type="button" class="outline-item${id === activeOutlineId ? " is-active" : ""}" data-outline-id="${escapeAttribute(id)}" data-line="${heading.line}" data-slug="${escapeAttribute(heading.slug || "")}" data-hover-tooltip="${escapeAttribute(heading.text)}" aria-label="${escapeAttribute(heading.text)}">${escapeHtml(heading.text)}</button>
         </div>
       </div>`;
     }).join("")
@@ -2368,7 +2918,7 @@ function cycleCodeBlockTone(buttonElement: HTMLElement): void {
 
 function updateToneButtonTitle(buttonElement: HTMLElement, tone: string): void {
   const title = `${codeToneLabels.toneLabel}: ${codeBlockToneLabel(normalizeCodeBlockTone(tone), codeToneLabels)}`;
-  buttonElement.setAttribute("title", title);
+  buttonElement.dataset.hoverTooltip = title;
   buttonElement.setAttribute("aria-label", title);
 }
 

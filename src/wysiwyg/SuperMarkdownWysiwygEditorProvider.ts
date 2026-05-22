@@ -258,6 +258,9 @@ export class SuperMarkdownWysiwygEditorProvider implements vscode.CustomTextEdit
     const initialMode = normalizeEditorMode(normalizedOptions.mode ?? settings.defaultMode);
     const initialLayout = normalizeEditorLayout(normalizedOptions.layout ?? settings.layout);
     const isZhCn = previewSettings.activeLanguage === "zh-CN";
+    const outlineRevealCurrentLabel = t("webview.revealCurrentHeading");
+    const outlineCollapseLabel = t("webview.collapseOutline");
+    const splitResizeLabel = t("webview.resizeSplit");
     const payload = escapeJsonForScript(JSON.stringify({
       text: document.getText(),
       mode: initialMode,
@@ -280,9 +283,12 @@ export class SuperMarkdownWysiwygEditorProvider implements vscode.CustomTextEdit
                 mathEdit: isZhCn ? "编辑" : "Edit",
                 mathDone: isZhCn ? "完成" : "Done",
                 rawHtmlEscaped: isZhCn ? "原始 HTML 已转义" : "Raw HTML escaped",
+                footnote: t("webview.footnote"),
                 outline: t("webview.headings"),
         preview: t("webview.markdownPreview"),
         noHeadings: t("webview.noHeadings"),
+        outlineRevealCurrent: outlineRevealCurrentLabel,
+        outlineCollapse: outlineCollapseLabel,
         toolbar: {
           heading: isZhCn ? "标题" : "Heading",
           bold: isZhCn ? "加粗" : "Bold",
@@ -308,6 +314,7 @@ export class SuperMarkdownWysiwygEditorProvider implements vscode.CustomTextEdit
           all: isZhCn ? "全部" : "All",
           more: isZhCn ? "更多" : "More",
           switchBackgroundTheme: isZhCn ? "切换阅读主题" : "Switch Reading Theme",
+          switchDisplayLanguage: isZhCn ? "切换界面语言" : "Switch display language",
           help: isZhCn ? "反馈问题" : "Report issue",
           organizeMarkdown: isZhCn ? "整理 Markdown" : "Organize Markdown"
         }
@@ -337,14 +344,14 @@ export class SuperMarkdownWysiwygEditorProvider implements vscode.CustomTextEdit
 </head>
 <body class="${settings.useVsCodeThemeColors ? "use-vscode-theme " : ""}layout-${initialLayout} mode-${initialMode} sm-theme-${previewSettings.theme}" data-script-state="html-rendered" data-script-diag="html-rendered" style="--sm-font-size: ${previewSettings.fontSize}px; --sm-max-width: ${previewSettings.maxWidth}px;">
   <div class="workbench-shell">
-    <button id="side-panel-toggle" class="side-panel-toggle" type="button" aria-controls="side-panel" aria-expanded="false" title="${escapeHtml(t("webview.navigation"))}">
+    <button id="side-panel-toggle" class="side-panel-toggle" type="button" aria-controls="side-panel" aria-expanded="false" data-hover-tooltip="${escapeAttribute(t("webview.navigation"))}" aria-label="${escapeAttribute(t("webview.navigation"))}">
       <span aria-hidden="true">☰</span>
     </button>
     <aside id="side-panel" class="side-panel">
       <div class="panel-heading">
         <span class="panel-title">${escapeHtml(t("webview.headings"))}</span>
-        <button id="outline-current" class="outline-tool" type="button" title="${isZhCn ? "定位当前标题" : "Reveal current heading"}" aria-label="${isZhCn ? "定位当前标题" : "Reveal current heading"}">⌾</button>
-        <button id="side-panel-collapse" class="outline-tool" type="button" title="${isZhCn ? "收起目录" : "Collapse outline"}" aria-label="${isZhCn ? "收起目录" : "Collapse outline"}">←</button>
+        <button id="outline-current" class="outline-tool" type="button" data-hover-tooltip="${escapeAttribute(outlineRevealCurrentLabel)}" aria-label="${escapeAttribute(outlineRevealCurrentLabel)}">⌾</button>
+        <button id="side-panel-collapse" class="outline-tool" type="button" data-hover-tooltip="${escapeAttribute(outlineCollapseLabel)}" aria-label="${escapeAttribute(outlineCollapseLabel)}">←</button>
       </div>
       <section class="panel-content">
         <input id="outline-search" class="outline-search" type="search" placeholder="${escapeHtml(t("webview.searchHeadings"))}">
@@ -358,6 +365,7 @@ export class SuperMarkdownWysiwygEditorProvider implements vscode.CustomTextEdit
         <div id="visual-editor" class="visual-editor" aria-label="Visual Markdown editor"></div>
       </main>
     </section>
+    <div id="split-resizer" class="split-resizer" role="separator" aria-orientation="vertical" aria-valuemin="20" aria-valuemax="80" aria-valuenow="50" tabindex="0" data-hover-tooltip="${escapeAttribute(splitResizeLabel)}" aria-label="${escapeAttribute(splitResizeLabel)}"></div>
     <aside class="preview-panel">
       <div class="preview-title">${escapeHtml(t("webview.markdownPreview"))}</div>
       <main id="preview" class="markdown-preview">
@@ -427,28 +435,36 @@ ${renderBootstrapScript()}
       return;
     }
 
-    const images = message.images.filter(isUploadedImageData);
-    const settings = getWysiwygSettings();
-    const directory = resolveImageDirectory(document.uri.fsPath, settings);
-    const existingNames = new Set<string>(await fs.readdir(directory).catch(() => []));
-    const stored = images.map((image) => {
-      const prepared = prepareUploadedImage(document.uri.fsPath, settings, image, existingNames);
-      existingNames.add(prepared.name);
-      return prepared;
-    });
+    try {
+      const images = message.images.filter(isUploadedImageData);
+      const settings = getWysiwygSettings();
+      const directory = resolveImageDirectory(document.uri.fsPath, settings);
+      const existingNames = new Set<string>(await fs.readdir(directory).catch(() => []));
+      const stored = images.map((image) => {
+        const prepared = prepareUploadedImage(document.uri.fsPath, settings, image, existingNames);
+        existingNames.add(prepared.name);
+        return prepared;
+      });
 
-    await fs.mkdir(directory, { recursive: true });
-    await Promise.all(stored.map((image) => fs.writeFile(image.absolutePath, image.buffer)));
+      await fs.mkdir(directory, { recursive: true });
+      await Promise.all(stored.map((image) => fs.writeFile(image.absolutePath, image.buffer)));
 
-    await webview.postMessage({
-      type: "uploadImagesResult",
-      requestId: message.requestId,
-      images: stored.map((image) => ({
-        id: image.id,
-        name: image.name,
-        markdown: `![${escapeMarkdownAlt(image.name)}](${encodeURI(image.markdownPath)})`
-      }))
-    });
+      await webview.postMessage({
+        type: "uploadImagesResult",
+        requestId: message.requestId,
+        images: stored.map((image) => ({
+          id: image.id,
+          name: image.name,
+          markdown: `![${escapeMarkdownAlt(image.name)}](${encodeURI(image.markdownPath)})`
+        }))
+      });
+    } catch (error) {
+      await webview.postMessage({
+        type: "uploadImagesResult",
+        requestId: message.requestId,
+        error: formatWebviewError(error)
+      });
+    }
   }
 
   async handleToolbarCommand(payload: unknown): Promise<void> {
@@ -505,6 +521,11 @@ ${renderBootstrapScript()}
 
     if (payload.action === "switchBackgroundTheme") {
       await vscode.commands.executeCommand("superMarkdown.switchBackgroundTheme");
+      return;
+    }
+
+    if (payload.action === "switchDisplayLanguage") {
+      await vscode.commands.executeCommand("superMarkdown.switchDisplayLanguage");
       return;
     }
 
@@ -736,6 +757,7 @@ function renderInitialToolbar(isZhCn: boolean, documentUri: vscode.Uri): string 
     toc: label("目录", "Table of contents"),
     organizeMarkdown: label("整理 Markdown", "Organize Markdown"),
     switchBackgroundTheme: label("切换阅读主题", "Switch Reading Theme"),
+    switchDisplayLanguage: label("切换界面语言", "Switch display language"),
     help: label("反馈问题", "Report issue"),
     more: label("更多", "More")
   };
@@ -744,11 +766,12 @@ function renderInitialToolbar(isZhCn: boolean, documentUri: vscode.Uri): string 
     return `command:${SUPER_MARKDOWN_TOOLBAR_COMMAND}?${args}`;
   };
   const button = (action: string) => {
-    const title = escapeHtml(titles[action] || action);
+    const title = titles[action] || action;
+    const escapedTitle = escapeAttribute(title);
     if (action === "heading" || action === "more") {
-      return `<a class="toolbar-button toolbar-menu-toggle" href="${escapeAttribute(commandUri(action))}" data-menu-toggle="${action}" title="${title}" aria-label="${title}" aria-expanded="false"><span class="toolbar-icon" aria-hidden="true">${renderToolbarIcon(action)}</span><span class="toolbar-caret codicon codicon-arrow-small-down" aria-hidden="true"></span></a>`;
+      return `<a class="toolbar-button toolbar-menu-toggle" href="${escapeAttribute(commandUri(action))}" data-menu-toggle="${action}" data-hover-tooltip="${escapedTitle}" aria-label="${escapedTitle}" aria-expanded="false"><span class="toolbar-icon" aria-hidden="true">${renderToolbarIcon(action)}</span><span class="toolbar-caret codicon codicon-arrow-small-down" aria-hidden="true"></span></a>`;
     }
-    return `<a class="toolbar-button" href="${escapeAttribute(commandUri(action))}" data-action="${action}" title="${title}" aria-label="${title}"><span class="toolbar-icon" aria-hidden="true">${renderToolbarIcon(action)}</span></a>`;
+    return `<a class="toolbar-button" href="${escapeAttribute(commandUri(action))}" data-action="${action}" data-hover-tooltip="${escapedTitle}" aria-label="${escapedTitle}"><span class="toolbar-icon" aria-hidden="true">${renderToolbarIcon(action)}</span></a>`;
   };
   return TOOLBAR_GROUPS.map((group) => `<div class="toolbar-group toolbar-group-${group.name}">${group.actions.map(button).join("")}</div>`).join("");
 }

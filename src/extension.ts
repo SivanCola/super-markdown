@@ -23,6 +23,16 @@ import {
   resolveMarkdownDocument,
 } from "./preview/document";
 import {
+  MarkdownLibraryTreeProvider,
+  SUPER_MARKDOWN_MARKDOWN_LIBRARY_VIEW_ID
+} from "./sidebar/MarkdownLibraryTreeProvider";
+import { MarkdownWorkspaceIndex } from "./sidebar/MarkdownWorkspaceIndex";
+import { isMarkdownWorkspacePath } from "./sidebar/markdownWorkspace";
+import {
+  SUPER_MARKDOWN_WORKSPACE_SUMMARY_VIEW_ID,
+  WorkspaceSummaryViewProvider
+} from "./sidebar/WorkspaceSummaryViewProvider";
+import {
   SUPER_MARKDOWN_EDITOR_VIEW_TYPE,
   SUPER_MARKDOWN_TOOLBAR_COMMAND,
   SuperMarkdownWysiwygEditorProvider
@@ -34,13 +44,31 @@ export function activate(context: vscode.ExtensionContext): void {
   const organizedProvider = new OrganizedDocumentProvider();
   const organizeOutput = vscode.window.createOutputChannel("Super Markdown");
   const superMarkdownEditorProvider = new SuperMarkdownWysiwygEditorProvider(context);
+  const markdownWorkspaceIndex = new MarkdownWorkspaceIndex();
+  const markdownLibraryTreeProvider = new MarkdownLibraryTreeProvider(markdownWorkspaceIndex);
+  const workspaceSummaryViewProvider = new WorkspaceSummaryViewProvider(markdownWorkspaceIndex);
+  const markdownLibraryTreeView = vscode.window.createTreeView(SUPER_MARKDOWN_MARKDOWN_LIBRARY_VIEW_ID, {
+    treeDataProvider: markdownLibraryTreeProvider,
+    showCollapseAll: true
+  });
+  const updateMarkdownLibraryView = () => {
+    markdownLibraryTreeView.title = t("sidebar.markdownLibrary.title");
+    markdownLibraryTreeView.message = markdownLibraryTreeProvider.getEmptyMessage();
+  };
   void migratePreviewThemeConfiguration();
   void updateDisplayLanguageContexts();
+  updateMarkdownLibraryView();
+  void markdownWorkspaceIndex.refresh().then(updateMarkdownLibraryView);
 
   context.subscriptions.push(
     displayLanguageChanged,
     organizedProvider,
     organizeOutput,
+    markdownWorkspaceIndex,
+    markdownLibraryTreeProvider,
+    workspaceSummaryViewProvider,
+    markdownLibraryTreeView,
+    markdownWorkspaceIndex.onDidChange(updateMarkdownLibraryView),
     ...registerLocalizedCommandAliases(),
     vscode.languages.registerDocumentFormattingEditProvider("markdown", {
       provideDocumentFormattingEdits(document) {
@@ -61,6 +89,7 @@ export function activate(context: vscode.ExtensionContext): void {
         }
       }
     ),
+    vscode.window.registerWebviewViewProvider(SUPER_MARKDOWN_WORKSPACE_SUMMARY_VIEW_ID, workspaceSummaryViewProvider),
     vscode.commands.registerCommand("superMarkdown.openPreview", async (resource?: vscode.Uri) => {
       const document = await requireMarkdownDocument(resource);
       if (document) {
@@ -124,29 +153,74 @@ export function activate(context: vscode.ExtensionContext): void {
         });
       }
     }),
-    vscode.commands.registerCommand("superMarkdown.organizeMarkdown", async () => {
-      await organizeActiveMarkdownDocument(organizedProvider, organizeOutput);
+    vscode.commands.registerCommand("superMarkdown.organizeMarkdown", async (resource?: vscode.Uri) => {
+      await organizeActiveMarkdownDocument(organizedProvider, organizeOutput, resource);
     }),
-    vscode.commands.registerCommand("superMarkdown.export.settings", async () => {
-      await exportActiveMarkdown(context, "settings");
+    vscode.commands.registerCommand("superMarkdown.export.settings", async (resource?: vscode.Uri) => {
+      await exportActiveMarkdown(context, "settings", resource);
     }),
-    vscode.commands.registerCommand("superMarkdown.export.html", async () => {
-      await exportActiveMarkdown(context, "html");
+    vscode.commands.registerCommand("superMarkdown.export.html", async (resource?: vscode.Uri) => {
+      await exportActiveMarkdown(context, "html", resource);
     }),
-    vscode.commands.registerCommand("superMarkdown.export.pdf", async () => {
-      await exportActiveMarkdown(context, "pdf");
+    vscode.commands.registerCommand("superMarkdown.export.pdf", async (resource?: vscode.Uri) => {
+      await exportActiveMarkdown(context, "pdf", resource);
     }),
-    vscode.commands.registerCommand("superMarkdown.export.png", async () => {
-      await exportActiveMarkdown(context, "png");
+    vscode.commands.registerCommand("superMarkdown.export.png", async (resource?: vscode.Uri) => {
+      await exportActiveMarkdown(context, "png", resource);
     }),
-    vscode.commands.registerCommand("superMarkdown.export.jpeg", async () => {
-      await exportActiveMarkdown(context, "jpeg");
+    vscode.commands.registerCommand("superMarkdown.export.jpeg", async (resource?: vscode.Uri) => {
+      await exportActiveMarkdown(context, "jpeg", resource);
     }),
-    vscode.commands.registerCommand("superMarkdown.export.all", async () => {
-      await exportActiveMarkdown(context, "all");
+    vscode.commands.registerCommand("superMarkdown.export.all", async (resource?: vscode.Uri) => {
+      await exportActiveMarkdown(context, "all", resource);
     }),
-    vscode.commands.registerCommand("superMarkdown.export.choose", async () => {
-      await chooseExportFormat(context);
+    vscode.commands.registerCommand("superMarkdown.export.choose", async (resource?: vscode.Uri) => {
+      await chooseExportFormat(context, resource);
+    }),
+    vscode.commands.registerCommand("superMarkdown.markdownLibrary.refresh", async () => {
+      await markdownWorkspaceIndex.refresh();
+    }),
+    vscode.commands.registerCommand("superMarkdown.markdownLibrary.openEditor", async (node?: unknown) => {
+      const uri = resolveMarkdownLibraryUri(node);
+      if (uri) {
+        await vscode.commands.executeCommand("superMarkdown.openEditor", uri);
+      }
+    }),
+    vscode.commands.registerCommand("superMarkdown.markdownLibrary.openPreview", async (node?: unknown) => {
+      const uri = resolveMarkdownLibraryUri(node);
+      if (uri) {
+        await vscode.commands.executeCommand("superMarkdown.openPreview", uri);
+      }
+    }),
+    vscode.commands.registerCommand("superMarkdown.markdownLibrary.openSplitEditMode", async (node?: unknown) => {
+      const uri = resolveMarkdownLibraryUri(node);
+      if (uri) {
+        await vscode.commands.executeCommand("superMarkdown.openSplitEditMode", uri);
+      }
+    }),
+    vscode.commands.registerCommand("superMarkdown.markdownLibrary.openWysiwygEditor", async (node?: unknown) => {
+      const uri = resolveMarkdownLibraryUri(node);
+      if (uri) {
+        await vscode.commands.executeCommand("superMarkdown.openWysiwygEditor", uri);
+      }
+    }),
+    vscode.commands.registerCommand("superMarkdown.markdownLibrary.openNativeTextEditor", async (node?: unknown) => {
+      const uri = resolveMarkdownLibraryUri(node);
+      if (uri) {
+        await vscode.commands.executeCommand("superMarkdown.openNativeTextEditor", uri);
+      }
+    }),
+    vscode.commands.registerCommand("superMarkdown.markdownLibrary.organizeMarkdown", async (node?: unknown) => {
+      const uri = resolveMarkdownLibraryUri(node);
+      if (uri) {
+        await vscode.commands.executeCommand("superMarkdown.organizeMarkdown", uri);
+      }
+    }),
+    vscode.commands.registerCommand("superMarkdown.markdownLibrary.export", async (node?: unknown) => {
+      const uri = resolveMarkdownLibraryUri(node);
+      if (uri) {
+        await chooseExportFormat(context, uri);
+      }
     }),
     vscode.commands.registerCommand("superMarkdown.openSyntaxGuide", async () => {
       await openSyntaxGuide(context);
@@ -161,8 +235,17 @@ export function activate(context: vscode.ExtensionContext): void {
       if (event.affectsConfiguration("superMarkdown.displayLanguage")) {
         void updateDisplayLanguageContexts();
         displayLanguageChanged.fire();
+        markdownLibraryTreeProvider.refresh();
+        updateMarkdownLibraryView();
+      }
+      if (event.affectsConfiguration("superMarkdown.toc.levels")) {
+        void markdownWorkspaceIndex.refresh();
       }
     }),
+    vscode.workspace.onDidChangeWorkspaceFolders(() => {
+      void markdownWorkspaceIndex.refresh();
+    }),
+    ...createMarkdownWorkspaceWatchers(markdownWorkspaceIndex),
     vscode.workspace.onWillSaveTextDocument((event) => {
       const settings = getPreviewSettings();
       if (!settings.updateTocOnSave || event.document.languageId !== "markdown") {
@@ -176,6 +259,9 @@ export function activate(context: vscode.ExtensionContext): void {
     }),
     vscode.workspace.onDidSaveTextDocument((document) => {
       void exportOnSave(context, document);
+      if (document.uri.scheme === "file" && isMarkdownWorkspacePath(document.uri.fsPath)) {
+        void markdownWorkspaceIndex.refreshFile(document.uri);
+      }
     })
   );
 }
@@ -184,11 +270,46 @@ export function deactivate(): void {
   // VS Code disposes registered subscriptions for this extension.
 }
 
+function createMarkdownWorkspaceWatchers(index: MarkdownWorkspaceIndex): vscode.Disposable[] {
+  return [".md", ".markdown", ".mdown", ".mkdn"].map((extension) => {
+    const watcher = vscode.workspace.createFileSystemWatcher(`**/*${extension}`);
+    watcher.onDidCreate((uri) => {
+      void index.refreshFile(uri);
+    });
+    watcher.onDidChange((uri) => {
+      void index.refreshFile(uri);
+    });
+    watcher.onDidDelete((uri) => {
+      index.removeFile(uri);
+    });
+    return watcher;
+  });
+}
+
+function resolveMarkdownLibraryUri(node: unknown): vscode.Uri | undefined {
+  if (node instanceof vscode.Uri) {
+    return node;
+  }
+
+  if (typeof node !== "object" || node === null) {
+    return undefined;
+  }
+
+  const maybeFile = "file" in node ? (node as { file?: { uriString?: unknown } }).file : undefined;
+  if (maybeFile && typeof maybeFile.uriString === "string") {
+    return vscode.Uri.parse(maybeFile.uriString);
+  }
+
+  const maybeResourceUri = "resourceUri" in node ? (node as { resourceUri?: unknown }).resourceUri : undefined;
+  return maybeResourceUri instanceof vscode.Uri ? maybeResourceUri : undefined;
+}
+
 async function organizeActiveMarkdownDocument(
   provider: OrganizedDocumentProvider,
-  output: vscode.OutputChannel
+  output: vscode.OutputChannel,
+  resource?: vscode.Uri
 ): Promise<void> {
-  const document = await requireMarkdownDocument();
+  const document = await requireMarkdownDocument(resource);
   if (!document) {
     return;
   }
@@ -394,8 +515,8 @@ function registerLocalizedCommandAliases(): vscode.Disposable[] {
   );
 }
 
-async function exportActiveMarkdown(context: vscode.ExtensionContext, type: ExportCommandType): Promise<void> {
-  const document = await requireMarkdownDocument();
+async function exportActiveMarkdown(context: vscode.ExtensionContext, type: ExportCommandType, resource?: vscode.Uri): Promise<void> {
+  const document = await requireMarkdownDocument(resource);
   if (!document) {
     return;
   }
@@ -413,7 +534,7 @@ async function exportActiveMarkdown(context: vscode.ExtensionContext, type: Expo
   }
 }
 
-async function chooseExportFormat(context: vscode.ExtensionContext): Promise<void> {
+async function chooseExportFormat(context: vscode.ExtensionContext, resource?: vscode.Uri): Promise<void> {
   const items: Array<vscode.QuickPickItem & { type: ExportCommandType }> = [
     {
       label: t("export.settings.label"),
@@ -451,7 +572,7 @@ async function chooseExportFormat(context: vscode.ExtensionContext): Promise<voi
     placeHolder: t("export.quickPickPlaceholder")
   });
   if (selected) {
-    await exportActiveMarkdown(context, selected.type);
+    await exportActiveMarkdown(context, selected.type, resource);
   }
 }
 
